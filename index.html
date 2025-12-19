@@ -247,7 +247,7 @@ const API = {
  endpoints: {
   login: { method:"POST", path:"/api/auth/login" },
   register: { method:"POST", path:"/api/auth/register" }, 
-  whoami: { method:"GET", path:"/api/auth/me" },
+ whoami: { method:"GET", path:"/api/users/{id}" },
   addCourse: { method:"POST", path:"/api/courses" },
   addCanteen: { method:"POST", path:"/api/canteen/items" },
   addStudent: { method:"POST", path:"/api/users" },
@@ -874,7 +874,12 @@ $("#btnWhoAmI").onclick = async () => {
   if(!store.token) return toast("warn","Not Authenticated","Login first.");
   setBusy(true);
   try{
-    const data = await apiCall("whoami");
+   const id = store.user?.id || store.user?.userId;
+if(!id) throw new Error("User ID not found");
+const data = await apiCall("whoami", null, {
+  pathParams: { id }
+});
+
     // store user if returned
     if(data && typeof data === "object") store.user = data?.user || data;
     toast("ok","WhoAmI","Fetched user info.");
@@ -906,6 +911,7 @@ $("#btnTestAuth").onclick = async () => {
 </script>
 </body>
 </html>
+
 
 
 
