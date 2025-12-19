@@ -286,7 +286,7 @@ const API = {
     }),
     addStudent: (v) => ({
   id: 0,
-  username: v.username,
+  username:v.fullName,
   email: v.email,
   password: v.password,
   role: "STUDENT"
@@ -295,7 +295,7 @@ const API = {
 
    addTeacher: (v) => ({
   id: 0,
-  username: v.username,
+  username: v.fullName,
   email: v.email,
   password: v.password,
   role: "TEACHER"
@@ -946,6 +946,7 @@ $("#btnTestAuth").onclick = async () => {
 </script>
 </body>
 </html>
+
 
 
 
