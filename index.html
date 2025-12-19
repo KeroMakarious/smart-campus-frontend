@@ -411,9 +411,10 @@ async function apiCall(key, body=null, extraOpts={}){
     extraOpts.headers || {}
   );
 
-  if(store.token){
-    headers["Authorization"] = `Bearer ${store.token}`;
-  }
+  if(store.token && key !== "login" && key !== "register"){
+  headers["Authorization"] = `Bearer ${store.token}`;
+}
+
 
   const res = await fetch(url, {
     method: ep.method,
@@ -552,7 +553,8 @@ function viewLogin(){
       toast("ok","Logged in","Token saved. Opening dashboard.");
       state.tab = "admin";
     }catch(e){
-      toast("danger","Login Failed", e.message || "Unknown error");
+      toast("danger","Login Failed", `HTTP ${e.status || "-"} | ${e.message || "No message"}`);
+
     }finally{
       setBusy(false);
     }
@@ -903,6 +905,7 @@ $("#btnTestAuth").onclick = async () => {
 </script>
 </body>
 </html>
+
 
 
 
