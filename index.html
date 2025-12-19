@@ -244,15 +244,16 @@ const API = {
   // - admin create: /admin/students, /admin/teachers
   // - courses: /courses
   // - canteen items: /canteen/items
-  endpoints: {
+ endpoints: {
   login: { method:"POST", path:"/api/auth/login" },
-  register: { method:"POST", path:"/api/users" }, 
+  register: { method:"POST", path:"/api/auth/register" }, 
   whoami: { method:"GET", path:"/api/auth/me" },
   addCourse: { method:"POST", path:"/api/courses" },
   addCanteen: { method:"POST", path:"/api/canteen/items" },
   addStudent: { method:"POST", path:"/api/users" },
   addTeacher: { method:"POST", path:"/api/users" },
 },
+
 
 
   // Payload fields mapping: CHANGE field names to match backend DTOs.
@@ -905,6 +906,7 @@ $("#btnTestAuth").onclick = async () => {
 </script>
 </body>
 </html>
+
 
 
 
