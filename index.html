@@ -361,11 +361,11 @@ function isEmail(email){
 
 function validatePassword(pw){
   const p = String(pw||"");
-  if(p.length < API.validation.passwordMin) return `Password must be at least ${API.validation.passwordMin} characters`;
-  // exceptions & sanity (no spaces, etc.)
+  // no length restriction on frontend
   if(/\s/.test(p)) return "Password must not contain spaces";
   return "";
 }
+
 
 function safeJsonParse(text){
   try { return JSON.parse(text); } catch { return null; }
@@ -902,4 +902,5 @@ $("#btnTestAuth").onclick = async () => {
 </script>
 </body>
 </html>
+
 
