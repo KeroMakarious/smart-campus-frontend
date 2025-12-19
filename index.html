@@ -793,7 +793,7 @@ function viewDashboard(){
       if(state.busy) return;
 
       const v = {
-        fullName: root.querySelector("#sName").value.trim(),
+        username: root.querySelector("#sName").value.trim(),
         email: root.querySelector("#sEmail").value.trim(),
         password: root.querySelector("#sPass").value,
         level: root.querySelector("#sLevel").value,
@@ -827,7 +827,7 @@ function viewDashboard(){
       if(state.busy) return;
 
       const v = {
-        fullName: root.querySelector("#tName").value.trim(),
+        username: root.querySelector("#tName").value.trim(),
         email: root.querySelector("#tEmail").value.trim(),
         password: root.querySelector("#tPass").value,
         title: root.querySelector("#tTitle").value.trim(),
@@ -919,6 +919,7 @@ $("#btnTestAuth").onclick = async () => {
 </script>
 </body>
 </html>
+
 
 
 
