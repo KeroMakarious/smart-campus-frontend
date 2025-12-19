@@ -231,82 +231,72 @@
    1) CONFIG (EDIT THIS)
    ========================= */
 const API = {
-  // Your backend base URL:
   baseUrl: "https://just-presence-production-79e0.up.railway.app",
-
-  // Swagger UI link (for quick open):
   swaggerUrl: "https://just-presence-production-79e0.up.railway.app/swagger-ui/index.html#/",
 
-  // Endpoints: CHANGE THESE PATHS to match Swagger exactly.
-  // Common patterns:
-  // - auth: /api/auth/login, /auth/login, /login
-  // - register: /api/auth/register
-  // - admin create: /admin/students, /admin/teachers
-  // - courses: /courses
-  // - canteen items: /canteen/items
- endpoints: {
-  login: { method:"POST", path:"/api/auth/login" },
-  register: { method:"POST", path:"/api/auth/register" }, 
-  whoami: { method:"GET", path:"/api/users" }, 
-  addCourse: { method:"POST", path:"/api/courses" },
-  addCanteen: { method:"POST", path:"/api/canteen/items" },
-  addStudent: { method:"POST", path:"/api/users" },
-  addTeacher: { method:"POST", path:"/api/users" },
-},
+  endpoints: {
+    login:    { method:"POST", path:"/api/auth/login" },
+    register: { method:"POST", path:"/api/auth/register" },
 
+    // FIX: backend عندك مفيهوش /api/auth/me. استخدم users/{id}
+    whoami:   { method:"GET",  path:"/api/users/{id}" },
 
+    addCourse:   { method:"POST", path:"/api/courses" },
+    addCanteen:  { method:"POST", path:"/api/canteen/items" },
+    addStudent:  { method:"POST", path:"/api/users" },
+    addTeacher:  { method:"POST", path:"/api/users" },
+  },
 
-  // Payload fields mapping: CHANGE field names to match backend DTOs.
-  // Keep your UI labels, but map them to exact JSON keys backend expects.
   payloadMaps: {
     login: (v) => ({
-      email: v.email,              // maybe "username" in some backends
+      email: v.email,
       password: v.password
     }),
-    register: (v) => ({
-  id: 0,
-  username: v.username,
-  email: v.email,
-  password: v.password,
-  role: v.role
-}),
 
+    // FIX: UI عندك regName = fullName. لازم يتحول لـ username
+    register: (v) => ({
+      id: 0,
+      username: v.fullName,
+      email: v.email,
+      password: v.password,
+      role: v.role
+    }),
 
     addCourse: (v) => ({
-      name: v.courseName,          // maybe "courseName"
-      code: v.courseCode,          // maybe "code"
-      credits: Number(v.credits),  // maybe "creditHours"
+      name: v.courseName,
+      code: v.courseCode,
+      credits: Number(v.credits),
       teacherId: v.teacherId ? Number(v.teacherId) : null
     }),
+
     addCanteen: (v) => ({
       name: v.itemName,
       price: Number(v.price),
       quantity: Number(v.quantity),
       category: v.category || null
     }),
+
+    // FIX: كان v.fullName غلط (مش موجود). هنا الـ UI بعت username
     addStudent: (v) => ({
-  id: 0,
-  username: v.fullName,
-  email: v.email,
-  password: v.password,
-  role: "STUDENT"
-}),
+      id: 0,
+      username: v.username,
+      email: v.email,
+      password: v.password,
+      role: "STUDENT"
+    }),
 
-
-   addTeacher: (v) => ({
-  id: 0,
-  username:  v.fullName,
-  email: v.email,
-  password: v.password,
-  role: "TEACHER"
-}),
-
-
+    addTeacher: (v) => ({
+      id: 0,
+      username: v.username,
+      email: v.email,
+      password: v.password,
+      role: "TEACHER"
+    }),
   },
 
-  // Validation rules
   validation: {
-    passwordMin: 1
+    // FIX: backend اشتكى "Password must be at least 6 characters"
+    passwordMin: 6
   }
 };
 
@@ -322,7 +312,7 @@ const store = {
 };
 
 const state = {
-  tab: "login",   // login | register | admin
+  tab: "login",
   busy: false
 };
 
@@ -357,24 +347,21 @@ function escapeHtml(s){
 }
 
 function isEmail(email){
-  // practical email regex
   return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i.test(String(email||"").trim());
 }
 
 function validatePassword(pw){
   const p = String(pw||"");
-  // no length restriction on frontend
   if(/\s/.test(p)) return "Password must not contain spaces";
+  if(p.length < API.validation.passwordMin) return `Password must be at least ${API.validation.passwordMin} characters`;
   return "";
 }
-
 
 function safeJsonParse(text){
   try { return JSON.parse(text); } catch { return null; }
 }
 
 function decodeJwt(token){
-  // best-effort decode (no verify)
   try{
     const parts = token.split(".");
     if(parts.length !== 3) return null;
@@ -384,12 +371,19 @@ function decodeJwt(token){
   }catch{ return null; }
 }
 
+function extractUserIdFromJwtPayload(p){
+  if(!p) return null;
+  // شائع: id / userId / sub
+  if(p.id != null) return p.id;
+  if(p.userId != null) return p.userId;
+  if(p.sub != null) return p.sub;
+  return null;
+}
+
 function currentRole(){
   const u = store.user;
   if(u?.role) return u.role;
-  // fallback from jwt
   const p = decodeJwt(store.token);
-  // adapt possible claims
   return p?.role || p?.roles?.[0] || p?.authorities?.[0] || "-";
 }
 
@@ -401,11 +395,36 @@ function setBusy(b){
 /* =========================
    4) API CLIENT
    ========================= */
+function buildUrl(ep, extraOpts={}){
+  let path = ep.path;
+
+  // supports {id} templating
+  const pp = extraOpts.pathParams || {};
+  for(const [k,v] of Object.entries(pp)){
+    path = path.replaceAll(`{${k}}`, encodeURIComponent(String(v)));
+  }
+
+  // optional query params
+  const qp = extraOpts.queryParams || null;
+  let url = API.baseUrl + path;
+  if(qp && typeof qp === "object"){
+    const usp = new URLSearchParams();
+    for(const [k,v] of Object.entries(qp)){
+      if(v === undefined || v === null || v === "") continue;
+      usp.set(k, String(v));
+    }
+    const qs = usp.toString();
+    if(qs) url += (url.includes("?") ? "&" : "?") + qs;
+  }
+  return url;
+}
+
 async function apiCall(key, body=null, extraOpts={}){
   const ep = API.endpoints[key];
   if(!ep) throw new Error(`Endpoint not configured: ${key}`);
 
-  const url = API.baseUrl + ep.path;
+  const url = buildUrl(ep, extraOpts);
+
   const headers = Object.assign(
     { "Accept":"application/json" },
     (body ? { "Content-Type":"application/json" } : {}),
@@ -413,9 +432,8 @@ async function apiCall(key, body=null, extraOpts={}){
   );
 
   if(store.token && key !== "login" && key !== "register"){
-  headers["Authorization"] = `Bearer ${store.token}`;
-}
-
+    headers["Authorization"] = `Bearer ${store.token}`;
+  }
 
   const res = await fetch(url, {
     method: ep.method,
@@ -442,8 +460,8 @@ async function apiCall(key, body=null, extraOpts={}){
 function renderTabs(){
   const isAuthed = !!store.token;
   const role = currentRole();
-  const tabs = [];
 
+  const tabs = [];
   if(!isAuthed){
     tabs.push({id:"login", label:"Login"});
     tabs.push({id:"register", label:"Register"});
@@ -461,18 +479,16 @@ function renderTabs(){
     wrap.appendChild(b);
   }
 
-  // title
   const titleMap = {login:"Login", register:"Register", admin:"Dashboard"};
   $("#pageTitle").textContent = titleMap[state.tab] || "Smart Campus";
 
-  // badges
   $("#authBadge").textContent = isAuthed ? "AUTH" : "GUEST";
   $("#authBadge").className = "badge " + (isAuthed ? "ok" : "warn");
   $("#btnLogout").style.display = isAuthed ? "inline-block" : "none";
-  $("#roleBadge").textContent = "ROLE: " + role;
-  $("#roleBadge").className = "badge " + (role === "ADMIN" ? "ok" : role === "-" ? "warn" : "badge");
 
-  // runtime info
+  $("#roleBadge").textContent = "ROLE: " + role;
+  $("#roleBadge").className = "badge " + (String(role).toUpperCase().includes("ADMIN") ? "ok" : (role === "-" ? "warn" : ""));
+
   $("#envTxt").textContent = "API: " + API.baseUrl;
   $("#kvBase").textContent = API.baseUrl;
   $("#kvToken").textContent = store.token ? (store.token.slice(0,18) + "…") : "-";
@@ -521,6 +537,7 @@ function viewLogin(){
   `;
 
   root.querySelector("#btnGoRegister").onclick = () => { state.tab = "register"; render(); };
+
   root.querySelector("#btnLogin").onclick = async () => {
     if(state.busy) return;
 
@@ -536,26 +553,29 @@ function viewLogin(){
       const payload = API.payloadMaps.login({email, password});
       const data = await apiCall("login", payload);
 
-      // adapt token extraction patterns
       const token = data?.token || data?.accessToken || data?.jwt || data?.data?.token;
       if(!token) throw new Error("Login success but token not found in response. Update token extraction.");
 
       store.token = token;
 
-      // adapt user extraction patterns
       const user = data?.user || data?.data?.user || data?.profile || null;
-      if(user) store.user = user;
-      else{
-        // best effort decode jwt
+      if(user){
+        store.user = user;
+      }else{
         const p = decodeJwt(token);
-        store.user = p ? { email: p.email || email, role: p.role || p.roles?.[0] || "-" } : { email };
+        const maybeId = extractUserIdFromJwtPayload(p);
+        store.user = {
+          id: maybeId ?? null,
+          userId: maybeId ?? null,
+          email: p?.email || email,
+          role: p?.role || p?.roles?.[0] || p?.authorities?.[0] || "-"
+        };
       }
 
       toast("ok","Logged in","Token saved. Opening dashboard.");
       state.tab = "admin";
     }catch(e){
       toast("danger","Login Failed", `HTTP ${e.status || "-"} | ${e.message || "No message"}`);
-
     }finally{
       setBusy(false);
     }
@@ -622,7 +642,7 @@ function viewRegister(){
     setBusy(true);
     try{
       const payload = API.payloadMaps.register({fullName, email, password, role});
-      const data = await apiCall("register", payload);
+      await apiCall("register", payload);
 
       toast("ok","Registered","Account created. Now login.");
       state.tab = "login";
@@ -691,7 +711,7 @@ function viewDashboard(){
       </div>
       <div class="bd">
         <div class="row">
-          <div><label>Full Name</label><input id="sName" placeholder="Student Name" ${isAdmin ? "" : "disabled"} /></div>
+          <div><label>Username</label><input id="sName" placeholder="Student Username" ${isAdmin ? "" : "disabled"} /></div>
           <div><label>Email</label><input id="sEmail" placeholder="student@example.com" ${isAdmin ? "" : "disabled"} /></div>
         </div>
         <div class="row" style="margin-top:12px">
@@ -715,7 +735,7 @@ function viewDashboard(){
       </div>
       <div class="bd">
         <div class="row">
-          <div><label>Full Name</label><input id="tName" placeholder="Teacher Name" ${isAdmin ? "" : "disabled"} /></div>
+          <div><label>Username</label><input id="tName" placeholder="Teacher Username" ${isAdmin ? "" : "disabled"} /></div>
           <div><label>Email</label><input id="tEmail" placeholder="teacher@example.com" ${isAdmin ? "" : "disabled"} /></div>
         </div>
         <div class="row" style="margin-top:12px">
@@ -733,7 +753,6 @@ function viewDashboard(){
     </div>
   `;
 
-  // handlers
   root.querySelector("#btnAddCourse").onclick = async () => {
     if(state.busy) return;
     const v = {
@@ -799,7 +818,8 @@ function viewDashboard(){
         level: root.querySelector("#sLevel").value,
         department: root.querySelector("#sDept").value.trim(),
       };
-      if(v.fullName.length < 2) return toast("warn","Invalid","Name required.");
+
+      if(v.username.length < 2) return toast("warn","Invalid","Username required.");
       if(!isEmail(v.email)) return toast("warn","Invalid","Valid email required.");
       const pwErr = validatePassword(v.password);
       if(pwErr) return toast("warn","Invalid Password", pwErr);
@@ -833,7 +853,8 @@ function viewDashboard(){
         title: root.querySelector("#tTitle").value.trim(),
         department: root.querySelector("#tDept").value.trim(),
       };
-      if(v.fullName.length < 2) return toast("warn","Invalid","Name required.");
+
+      if(v.username.length < 2) return toast("warn","Invalid","Username required.");
       if(!isEmail(v.email)) return toast("warn","Invalid","Valid email required.");
       const pwErr = validatePassword(v.password);
       if(pwErr) return toast("warn","Invalid Password", pwErr);
@@ -858,7 +879,7 @@ function viewDashboard(){
 }
 
 /* =========================
-   7) TOPBAR ACTIONS
+   7) TOPBAR + BUTTONS
    ========================= */
 $("#btnSwagger").onclick = () => window.open(API.swaggerUrl, "_blank", "noopener,noreferrer");
 
@@ -870,82 +891,55 @@ $("#btnLogout").onclick = () => {
   render();
 };
 
+// WhoAmI => GET /api/users/{id}
 $("#btnWhoAmI").onclick = async () => {
-  if (!store.token) {
-    toast("warn", "Not Authenticated", "Login first.");
-    return;
-  }
+  if(!store.token) return toast("warn","Not Authenticated","Login first.");
 
-  const id = store.user?.id || store.user?.userId;
-  if (!id) {
-    toast("danger", "Error", "User ID not found");
-    return;
-  }
+  const id = store.user?.id ?? store.user?.userId;
+  if(id === null || id === undefined || id === "") return toast("danger","Error","User ID not found");
 
   setBusy(true);
-  try {
-    const res = await fetch(`${API.baseUrl}/api/users/${id}`, {
-      method: "GET",
-      headers: {
-        "Authorization": `Bearer ${store.token}`,
-        "Accept": "application/json"
-      }
-    });
-
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-    const data = await res.json();
-    store.user = data;
-
-    toast("ok", "WhoAmI", "User data loaded");
-    render();
-  } catch (e) {
-    toast("danger", "WhoAmI Failed", e.message);
-  } finally {
+  try{
+    const data = await apiCall("whoami", null, { pathParams: { id } });
+    if(data && typeof data === "object") store.user = data;
+    toast("ok","WhoAmI","Fetched user info.");
+  }catch(e){
+    toast("danger","WhoAmI Failed", e.message || "Failed");
+  }finally{
     setBusy(false);
   }
 };
 
-
-    // store user if returned
-    if(data && typeof data === "object") store.user = data?.user || data;
-    toast("ok","WhoAmI","Fetched user info.");
-  }catch(e){
-    toast("danger","WhoAmI Failed", e.message || "Update whoami endpoint if not available.");
-  }finally{ setBusy(false); }
-};
-
+// Test Auth Call => نفس endpoint (لو token غلط هيديك 401/403)
 $("#btnTestAuth").onclick = async () => {
   if(!store.token) return toast("warn","Not Authenticated","Login first.");
 
-  const id = store.user?.id || store.user?.userId;
-  if(!id) return toast("danger","Error","User ID not found");
+  const id = store.user?.id ?? store.user?.userId;
+  if(id === null || id === undefined || id === "") return toast("danger","Error","User ID not found");
 
   setBusy(true);
   try{
-    const res = await fetch(`${API.baseUrl}/api/users/${id}`, {
-      headers: { "Authorization": `Bearer ${store.token}` }
-    });
-    if(!res.ok) throw new Error(`HTTP ${res.status}`);
-    await res.json();
+    await apiCall("whoami", null, { pathParams: { id } });
     toast("ok","Auth OK","Token accepted.");
   }catch(e){
     toast("danger","Auth Test Failed", e.message);
-  }finally{ setBusy(false); }
+  }finally{
+    setBusy(false);
+  }
 };
-
 
 /* =========================
    8) INIT
    ========================= */
 (function init(){
-  // default tab based on token
   state.tab = store.token ? "admin" : "login";
   render();
 })();
 </script>
 </body>
 </html>
+
+
 
 
 
