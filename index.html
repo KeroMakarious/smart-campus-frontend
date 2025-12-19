@@ -890,15 +890,23 @@ const data = await apiCall("whoami", null, {
 
 $("#btnTestAuth").onclick = async () => {
   if(!store.token) return toast("warn","Not Authenticated","Login first.");
+
+  const id = store.user?.id || store.user?.userId;
+  if(!id) return toast("danger","Error","User ID not found");
+
   setBusy(true);
   try{
-    // quick test: call addCourse with dummy? NO. safer: call whoami if exists.
-    const data = await apiCall("whoami");
+    const res = await fetch(`${API.baseUrl}/api/users/${id}`, {
+      headers: { "Authorization": `Bearer ${store.token}` }
+    });
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    await res.json();
     toast("ok","Auth OK","Token accepted.");
   }catch(e){
-    toast("danger","Auth Test Failed", e.message || "Token rejected or whoami endpoint not configured.");
+    toast("danger","Auth Test Failed", e.message);
   }finally{ setBusy(false); }
 };
+
 
 /* =========================
    8) INIT
@@ -911,6 +919,7 @@ $("#btnTestAuth").onclick = async () => {
 </script>
 </body>
 </html>
+
 
 
 
