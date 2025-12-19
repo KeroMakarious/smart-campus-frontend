@@ -1,0 +1,1626 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Smart Campus - Frontend (Demo)</title>
+  <style>
+    :root{
+      --bg:#0b1220;
+      --card:#0f1b33;
+      --card2:#0c1730;
+      --txt:#e7eefc;
+      --muted:#a9b7d6;
+      --line:#1e2b4e;
+      --accent:#7aa7ff;
+      --accent2:#9bffcf;
+      --danger:#ff6b6b;
+      --warn:#ffd166;
+      --ok:#4ade80;
+      --shadow: 0 18px 50px rgba(0,0,0,.35);
+      --radius: 18px;
+      --radius2: 14px;
+      --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:var(--font);
+      background: radial-gradient(1200px 700px at 20% -10%, rgba(122,167,255,.25), transparent 55%),
+                  radial-gradient(900px 600px at 90% 10%, rgba(155,255,207,.18), transparent 55%),
+                  linear-gradient(180deg, #070b14, #0b1220 55%, #070b14);
+      color:var(--txt);
+      min-height:100vh;
+    }
+    a{color:inherit}
+    .wrap{max-width:1200px;margin:0 auto;padding:22px}
+    .topbar{
+      display:flex;align-items:center;justify-content:space-between;
+      gap:14px;margin-bottom:18px;
+    }
+    .brand{
+      display:flex;align-items:center;gap:12px;
+      padding:10px 14px;border:1px solid var(--line);
+      background:rgba(15,27,51,.75);backdrop-filter: blur(8px);
+      border-radius:999px;box-shadow: var(--shadow);
+    }
+    .logo{
+      width:34px;height:34px;border-radius:12px;
+      background: linear-gradient(135deg, rgba(122,167,255,1), rgba(155,255,207,1));
+      box-shadow: 0 10px 25px rgba(122,167,255,.25);
+    }
+    .brand h1{font-size:14px;margin:0;line-height:1.1}
+    .brand p{margin:0;font-size:12px;color:var(--muted)}
+    .pill{
+      display:flex;gap:10px;align-items:center;
+      padding:10px 12px;border-radius:999px;
+      border:1px solid var(--line);background:rgba(15,27,51,.6);
+      box-shadow: var(--shadow);
+    }
+    .pill .dot{width:8px;height:8px;border-radius:50%;background:var(--ok)}
+    .pill span{font-size:12px;color:var(--muted)}
+    .btn{
+      cursor:pointer;border:1px solid var(--line);
+      background:linear-gradient(180deg, rgba(16,30,55,.9), rgba(10,18,33,.9));
+      color:var(--txt);
+      padding:10px 12px;border-radius:12px;
+      transition:.15s transform ease, .15s opacity ease, .15s border ease;
+      box-shadow: 0 12px 30px rgba(0,0,0,.25);
+      font-weight:600;font-size:13px;
+    }
+    .btn:hover{transform:translateY(-1px);border-color:rgba(122,167,255,.45)}
+    .btn:active{transform:translateY(0px);opacity:.9}
+    .btn.primary{
+      border-color: rgba(122,167,255,.55);
+      background: linear-gradient(135deg, rgba(122,167,255,.95), rgba(155,255,207,.65));
+      color:#061022;
+    }
+    .btn.danger{
+      border-color: rgba(255,107,107,.55);
+      background: linear-gradient(135deg, rgba(255,107,107,.9), rgba(255,209,102,.25));
+      color:#120608;
+    }
+    .grid{
+      display:grid;gap:16px;
+      grid-template-columns: 280px 1fr;
+      align-items:start;
+    }
+    @media (max-width: 980px){
+      .grid{grid-template-columns:1fr}
+    }
+
+    .card{
+      border:1px solid var(--line);
+      background:rgba(15,27,51,.75);
+      backdrop-filter: blur(10px);
+      border-radius:var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .card .hd{
+      padding:14px 16px;
+      border-bottom:1px solid rgba(30,43,78,.9);
+      display:flex;align-items:center;justify-content:space-between;gap:10px;
+      background: linear-gradient(180deg, rgba(12,23,48,.65), rgba(15,27,51,.4));
+    }
+    .card .hd h2{margin:0;font-size:13px;letter-spacing:.2px}
+    .card .bd{padding:14px 16px}
+    .muted{color:var(--muted)}
+    .small{font-size:12px}
+    .kpi{
+      display:grid;grid-template-columns:repeat(2,1fr);gap:12px;
+    }
+    .kpi .box{
+      border:1px solid rgba(30,43,78,.95);
+      background:rgba(11,18,32,.55);
+      border-radius:16px;padding:12px;
+    }
+    .kpi .n{font-size:18px;font-weight:800;margin:0}
+    .kpi .t{margin:2px 0 0 0;font-size:12px;color:var(--muted)}
+    .nav{
+      display:flex;flex-direction:column;gap:8px;
+    }
+    .nav button{
+      text-align:left;display:flex;align-items:center;gap:10px;
+      width:100%;
+      border:1px solid rgba(30,43,78,.85);
+      background:rgba(11,18,32,.35);
+      padding:10px 12px;border-radius:14px;
+      color:var(--txt);cursor:pointer;
+      transition:.14s transform ease,.14s border ease,.14s background ease;
+      font-weight:700;font-size:13px;
+    }
+    .nav button:hover{transform:translateY(-1px);border-color:rgba(122,167,255,.45)}
+    .nav button.active{
+      border-color:rgba(122,167,255,.7);
+      background: linear-gradient(135deg, rgba(122,167,255,.22), rgba(155,255,207,.10));
+    }
+    .ico{
+      width:34px;height:34px;border-radius:14px;
+      display:grid;place-items:center;
+      background:rgba(122,167,255,.12);
+      border:1px solid rgba(122,167,255,.25);
+      font-size:16px;
+    }
+    .row{display:flex;gap:10px;flex-wrap:wrap}
+    .input, select, textarea{
+      width:100%;
+      padding:10px 12px;border-radius:14px;
+      border:1px solid rgba(30,43,78,.95);
+      background:rgba(11,18,32,.55);
+      color:var(--txt);
+      outline:none;
+    }
+    textarea{min-height:90px;resize:vertical}
+    label{font-size:12px;color:var(--muted);display:block;margin:0 0 6px 2px}
+    .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media (max-width:720px){.two{grid-template-columns:1fr}}
+    .table{
+      width:100%;
+      border-collapse:collapse;
+      overflow:hidden;border-radius:14px;
+      border:1px solid rgba(30,43,78,.9);
+      background:rgba(11,18,32,.35);
+    }
+    .table th,.table td{
+      padding:10px 10px;border-bottom:1px solid rgba(30,43,78,.7);
+      font-size:13px;vertical-align:top;
+    }
+    .table th{color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-size:11px}
+    .badge{
+      display:inline-flex;align-items:center;gap:6px;
+      padding:6px 10px;border-radius:999px;
+      border:1px solid rgba(30,43,78,.9);
+      background:rgba(11,18,32,.45);
+      font-size:12px;font-weight:800;
+    }
+    .badge.ok{border-color:rgba(74,222,128,.45);background:rgba(74,222,128,.12)}
+    .badge.warn{border-color:rgba(255,209,102,.45);background:rgba(255,209,102,.12)}
+    .badge.danger{border-color:rgba(255,107,107,.45);background:rgba(255,107,107,.12)}
+    .split{
+      display:flex;gap:10px;align-items:center;justify-content:space-between;
+      flex-wrap:wrap;
+    }
+    .search{
+      flex:1;min-width:200px;
+      display:flex;gap:10px;align-items:center;
+    }
+    .search .input{max-width:520px}
+    .hr{height:1px;background:rgba(30,43,78,.8);margin:14px 0}
+    .center{
+      min-height:calc(100vh - 44px);
+      display:grid;place-items:center;
+    }
+    .auth{
+      max-width:980px;width:100%;
+      display:grid;grid-template-columns: 1.1fr .9fr;gap:16px;
+      align-items:stretch;
+    }
+    @media (max-width: 980px){.auth{grid-template-columns:1fr}}
+    .hero{
+      padding:20px;border-radius:var(--radius);
+      border:1px solid rgba(30,43,78,.9);
+      background: linear-gradient(135deg, rgba(122,167,255,.20), rgba(155,255,207,.08));
+      box-shadow: var(--shadow);
+    }
+    .hero h2{margin:0 0 8px 0;font-size:18px}
+    .hero p{margin:0;color:var(--muted);line-height:1.5}
+    .roles{
+      display:flex;gap:10px;flex-wrap:wrap;margin-top:14px
+    }
+    .chip{
+      padding:8px 10px;border-radius:999px;
+      border:1px solid rgba(30,43,78,.9);
+      background:rgba(11,18,32,.35);
+      color:var(--muted);font-size:12px;font-weight:800;
+    }
+    .toast{
+      position:fixed;right:18px;bottom:18px;
+      padding:12px 14px;border-radius:14px;
+      border:1px solid rgba(30,43,78,.9);
+      background:rgba(15,27,51,.85);
+      box-shadow: var(--shadow);
+      max-width:360px;
+      display:none;
+    }
+    .toast.show{display:block;animation:pop .18s ease}
+    @keyframes pop{from{transform:translateY(8px);opacity:.6}to{transform:translateY(0);opacity:1}}
+    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace}
+
+    /* FIX MODAL SAVE BUTTON VISIBILITY */
+#modal .card {
+  overflow: visible;
+}
+
+#modal .bd {
+  max-height: calc(100vh - 160px);
+  overflow-y: auto;
+  padding-bottom: 20px;
+}
+/* FORCE MODAL OVERLAY TO SCROLL */
+#modal{
+  overflow: auto;
+}
+
+/* LIMIT THE CARD HEIGHT INSIDE MODAL */
+#modal .card{
+  max-height: calc(100vh - 40px);
+  overflow: hidden; /* جوّه الكارد */
+}
+
+/* SCROLL INSIDE MODAL BODY */
+#modal .bd{
+  max-height: calc(100vh - 180px);
+  overflow-y: auto;
+  padding-bottom: 80px; /* مساحة مؤكدة لزر Save */
+}
+
+  </style>
+</head>
+<body>
+
+  <!-- AUTH VIEW -->
+  <div id="authView" class="center">
+    <div class="wrap">
+      <div class="auth">
+        <div class="hero">
+          <div class="brand" style="box-shadow:none;display:inline-flex;margin-bottom:14px">
+            <div class="logo"></div>
+            <div>
+              <h1>Smart Campus Management</h1>
+              <p>Frontend Web Demo (no backend)</p>
+            </div>
+          </div>
+
+          <h2>One dashboard for schedules, attendance, notices, fees, library, and canteen.</h2>
+         
+
+          <div class="roles">
+            <span class="chip">Students</span>
+            <span class="chip">Teachers</span>
+            <span class="chip">Admins</span>
+            <span class="chip">Staff (canteen / library / security)</span>
+          </div>
+
+          
+
+        <div class="card">
+          <div class="hd"><h2>Login</h2><span class="badge warn">Demo</span></div>
+          <div class="bd">
+            <div class="two">
+              <div>
+                <label>Username</label>
+                <input id="u" class="input" placeholder="admin | teacher | student | staff" autocomplete="username"/>
+              </div>
+              <div>
+                <label>Password</label>
+                <input id="p" class="input" type="password" placeholder="same as username" autocomplete="current-password"/>
+              </div>
+            </div>
+            <div style="height:12px"></div>
+            <div class="two">
+              <div>
+                <label>Role</label>
+                <select id="role">
+                  <option value="admin">Admin</option>
+                  <option value="teacher">Teacher</option>
+                  <option value="student">Student</option>
+                  <option value="staff">Staff</option>
+                </select>
+              </div>
+              <div>
+                <label>Campus</label>
+                <select id="campus">
+                  <option>Main Campus</option>
+                  <option>Engineering</option>
+                  <option>Medical</option>
+                  <option>Business</option>
+                </select>
+              </div>
+            </div>
+
+            <div style="height:14px"></div>
+            <button class="btn primary" style="width:100%" onclick="login()">Enter Dashboard</button>
+            <div style="height:10px"></div>
+            <button class="btn" style="width:100%" onclick="seedAll()">Reset & Seed Demo Data</button>
+
+            <div class="hr"></div>
+            
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- APP VIEW -->
+  <div id="appView" style="display:none">
+    <div class="wrap">
+      <div class="topbar">
+        <div class="brand">
+          <div class="logo"></div>
+          <div>
+            <h1>Smart Campus</h1>
+            <p id="who" class="small muted">—</p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="pill">
+            <div class="dot"></div>
+            <span>localStorage demo data</span>
+          </div>
+          <button class="btn" onclick="seedAll()">Reset Demo</button>
+          <button class="btn danger" onclick="logout()">Logout</button>
+        </div>
+      </div>
+
+      <div class="grid">
+        <!-- LEFT NAV -->
+        <div class="card">
+          <div class="hd"><h2>Modules</h2><span class="badge ok" id="roleBadge">—</span></div>
+          <div class="bd">
+            <div class="nav" id="nav"></div>
+            <div class="hr"></div>
+           
+          </div>
+        </div>
+       
+        <!-- MAIN -->
+        <div class="card">
+          <div class="hd">
+            <h2 id="pageTitle">Dashboard</h2>
+            <div class="row">
+              <button class="btn" onclick="exportJSON()">Export JSON</button>
+              <button class="btn" onclick="importJSON()">Import JSON</button>
+            </div>
+          </div>
+          <div class="bd" id="page"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+<script>
+  // ---------- UTIL ----------
+  const LS = {
+    user: "sc_user",
+    db: "sc_db_v1"
+  };
+
+  function toast(msg){
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(window.__toastT);
+    window.__toastT = setTimeout(()=>t.classList.remove("show"), 1800);
+  }
+
+  function nowISO(){
+    const d = new Date();
+    const pad = n => String(n).padStart(2,'0');
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+
+  function getUser(){ return JSON.parse(localStorage.getItem(LS.user) || "null"); }
+  function setUser(u){ localStorage.setItem(LS.user, JSON.stringify(u)); }
+  function getDB(){ return JSON.parse(localStorage.getItem(LS.db) || "null"); }
+  function setDB(db){ localStorage.setItem(LS.db, JSON.stringify(db)); }
+
+  function uid(prefix="id"){
+    return prefix + "_" + Math.random().toString(16).slice(2) + "_" + Date.now().toString(16);
+  }
+
+  // ---------- DEMO DATA ----------
+  function seedAll(){
+    const db = {
+      notices: [
+        {id:uid("n"), title:"Midterm schedule published", body:"Check your department page for exact time/room.", audience:["student","teacher"], createdAt:nowISO()},
+        {id:uid("n"), title:"Library new books arrived", body:"New CS & Business titles available this week.", audience:["student","teacher","staff"], createdAt:nowISO()},
+        {id:uid("n"), title:"Fees deadline", body:"Last date to pay semester fees is next Sunday.", audience:["student"], createdAt:nowISO()},
+      ],
+      schedule: [
+        {id:uid("c"), code:"CS201", name:"Data Structures", teacher:"Dr. Mona", day:"Sun", time:"10:00 - 12:00", room:"B12", group:"G1"},
+        {id:uid("c"), code:"CS305", name:"Databases", teacher:"Dr. Ali", day:"Tue", time:"12:00 - 14:00", room:"A07", group:"G1"},
+        {id:uid("c"), code:"BUS110", name:"Principles of Management", teacher:"Dr. Sara", day:"Thu", time:"09:00 - 11:00", room:"C03", group:"G2"},
+      ],
+      attendance: [
+        {id:uid("a"), student:"Ahmed Samy", course:"CS201", date:"2025-12-18", status:"Present"},
+        {id:uid("a"), student:"Nour Adel", course:"CS201", date:"2025-12-18", status:"Absent"},
+        {id:uid("a"), student:"Ahmed Samy", course:"CS305", date:"2025-12-17", status:"Late"},
+      ],
+      fees: [
+        {id:uid("f"), student:"Ahmed Samy", term:"Fall 2025", amount:12000, paid:6000, status:"Partial"},
+        {id:uid("f"), student:"Nour Adel", term:"Fall 2025", amount:12000, paid:12000, status:"Paid"},
+      ],
+      library: {
+        books: [
+          {id:uid("b"), isbn:"9780131101630", title:"C Programming Language", author:"Kernighan & Ritchie", copies:3, available:2},
+          {id:uid("b"), isbn:"9780132350884", title:"Clean Code", author:"Robert C. Martin", copies:4, available:1},
+          {id:uid("b"), isbn:"9781449373320", title:"Designing Data-Intensive Applications", author:"Martin Kleppmann", copies:2, available:2},
+        ],
+        loans: [
+          {id:uid("l"), student:"Ahmed Samy", isbn:"9780132350884", due:"2025-12-28", status:"On Loan"},
+        ]
+      },
+      canteen: {
+        menu: [
+          {id:uid("m"), item:"Chicken Sandwich", price:55, available:true},
+          {id:uid("m"), item:"Falafel Wrap", price:30, available:true},
+          {id:uid("m"), item:"Fresh Juice", price:25, available:true},
+          {id:uid("m"), item:"Coffee", price:20, available:true},
+        ],
+        orders: [
+          {id:uid("o"), by:"Ahmed Samy", item:"Coffee", qty:1, total:20, status:"Preparing", createdAt:nowISO()},
+        ]
+      }
+    };
+
+    setDB(db);
+    toast("Demo data seeded.");
+    if (getUser()) renderCurrentPage();
+  }
+
+  // Ensure data exists
+  if(!getDB()) seedAll();
+
+  function getUsers(){
+  return JSON.parse(localStorage.getItem("sc_users") || "[]");
+}
+
+function saveUser(user){
+  const users = getUsers();
+  users.push(user);
+  localStorage.setItem("sc_users", JSON.stringify(users));
+}
+
+  // ---------- AUTH ----------
+  function getUsers(){
+  return JSON.parse(localStorage.getItem("sc_users") || "[]");
+}
+
+function saveUser(user){
+  const users = getUsers();
+  users.push(user);
+  localStorage.setItem("sc_users", JSON.stringify(users));
+}
+
+function login(){
+  const u = document.getElementById("u").value.trim();
+  const p = document.getElementById("p").value.trim();
+  const role = document.getElementById("role").value;
+  const campus = document.getElementById("campus").value;
+
+  if(!u || !p){
+    toast("Enter username & password.");
+    return;
+  }
+
+  const users = getUsers();
+
+  // منع تكرار اليوزرنيم
+  const exists = users.find(x => x.username === u);
+  if(exists){
+    toast("Username already exists.");
+    return;
+  }
+
+  const user = { username: u, role, campus };
+  saveUser(user);
+  setUser(user);
+  bootApp();
+}
+
+
+  function logout(){
+    localStorage.removeItem(LS.user);
+    document.getElementById("appView").style.display = "none";
+    document.getElementById("authView").style.display = "grid";
+    toast("Logged out.");
+  }
+
+  // ---------- NAV + PAGES ----------
+  const pages = [
+    { key:"dashboard", title:"Dashboard", icon:"📊", roles:["admin","teacher","student","staff"] },
+    { key:"schedule",  title:"Class Schedule", icon:"🗓️", roles:["admin","teacher","student"] },
+    { key:"attendance",title:"Attendance", icon:"✅", roles:["admin","teacher"] },
+    { key:"notices",   title:"Notices", icon:"📣", roles:["admin","teacher","student","staff"] },
+    { key:"fees",      title:"Fees", icon:"💳", roles:["admin","student"] },
+    { key:"library",   title:"Library", icon:"📚", roles:["admin","student","staff","teacher"] },
+    { key:"canteen",   title:"Canteen", icon:"🍔", roles:["admin","student","staff","teacher"] },
+    { key:"settings",  title:"Settings", icon:"⚙️", roles:["admin","teacher","student","staff"] },
+  ];
+
+  function bootApp(){
+    document.getElementById("authView").style.display = "none";
+    document.getElementById("appView").style.display = "block";
+
+    const user = getUser();
+    document.getElementById("who").textContent = `${user.username} • ${user.role.toUpperCase()} • ${user.campus}`;
+    document.getElementById("roleBadge").textContent = user.role.toUpperCase();
+
+    buildNav();
+    // default page
+    const saved = localStorage.getItem("sc_page") || "dashboard";
+    openPage(saved);
+  }
+
+  function buildNav(){
+    const user = getUser();
+    const nav = document.getElementById("nav");
+    nav.innerHTML = "";
+    pages
+      .filter(p => p.roles.includes(user.role))
+      .forEach(p => {
+        const b = document.createElement("button");
+        b.dataset.key = p.key;
+        b.onclick = () => openPage(p.key);
+        b.innerHTML = `<span class="ico">${p.icon}</span><span>${p.title}</span>`;
+        nav.appendChild(b);
+      });
+  }
+
+  function openPage(key){
+    localStorage.setItem("sc_page", key);
+    // active state
+    document.querySelectorAll("#nav button").forEach(b=>{
+      b.classList.toggle("active", b.dataset.key === key);
+    });
+
+    const meta = pages.find(p=>p.key===key);
+    document.getElementById("pageTitle").textContent = meta ? meta.title : "Page";
+    renderPage(key);
+  }
+
+  function renderCurrentPage(){
+    const key = localStorage.getItem("sc_page") || "dashboard";
+    renderPage(key);
+  }
+
+  function renderPage(key){
+    const user = getUser();
+    const db = getDB();
+    const el = document.getElementById("page");
+
+    if(key === "dashboard"){
+      const noticeCount = db.notices.length;
+      const scheduleCount = db.schedule.length;
+      const ordersCount = db.canteen.orders.length;
+      const booksAvail = db.library.books.reduce((a,b)=>a + b.available, 0);
+
+      el.innerHTML = `
+        <div class="kpi">
+          <div class="box">
+            <p class="n">${noticeCount}</p>
+            <p class="t">Notices</p>
+          </div>
+          <div class="box">
+            <p class="n">${scheduleCount}</p>
+            <p class="t">Classes in Schedule</p>
+          </div>
+          <div class="box">
+            <p class="n">${ordersCount}</p>
+            <p class="t">Canteen Orders</p>
+          </div>
+          <div class="box">
+            <p class="n">${booksAvail}</p>
+            <p class="t">Available Books</p>
+          </div>
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="split">
+          <div>
+            <div class="badge ok">Quick View</div>
+            <div class="small muted" style="margin-top:6px">Latest notices + next classes</div>
+          </div>
+        </div>
+
+        <div class="two" style="margin-top:12px">
+          <div class="card" style="box-shadow:none">
+            <div class="hd"><h2>Latest Notices</h2><span class="badge">${user.role}</span></div>
+            <div class="bd">
+              ${db.notices.slice(0,3).map(n=>`
+                <div style="padding:10px;border:1px solid rgba(30,43,78,.7);border-radius:14px;background:rgba(11,18,32,.35);margin-bottom:10px">
+                  <div class="split">
+                    <b>${escapeHTML(n.title)}</b>
+                    <span class="small muted">${n.createdAt}</span>
+                  </div>
+                  <div class="small muted" style="margin-top:6px;line-height:1.5">${escapeHTML(n.body)}</div>
+                </div>
+              `).join("")}
+            </div>
+          </div>
+
+          <div class="card" style="box-shadow:none">
+            <div class="hd"><h2>Upcoming Classes</h2><span class="badge warn">Demo</span></div>
+            <div class="bd">
+              <table class="table">
+                <thead><tr><th>Course</th><th>Day</th><th>Time</th><th>Room</th></tr></thead>
+                <tbody>
+                  ${db.schedule.slice(0,4).map(c=>`
+                    <tr>
+                      <td><b>${escapeHTML(c.code)}</b><div class="small muted">${escapeHTML(c.name)}</div></td>
+                      <td>${escapeHTML(c.day)}</td>
+                      <td>${escapeHTML(c.time)}</td>
+                      <td>${escapeHTML(c.room)}</td>
+                    </tr>
+                  `).join("")}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      `;
+      return;
+    }
+
+    if(key === "schedule"){
+      const rows = db.schedule;
+      el.innerHTML = `
+        <div class="split">
+          <div class="search">
+            <input id="qSchedule" class="input" placeholder="Search by code / name / teacher / room" oninput="filterSchedule()" />
+          </div>
+          <button class="btn primary" onclick="openModalAddClass()">Add Class</button>
+        </div>
+        <div class="hr"></div>
+        <div id="scheduleTable"></div>
+        ${modalShell()}
+      `;
+      window.__scheduleRows = rows;
+      renderSchedule(rows);
+      return;
+    }
+
+    if(key === "attendance"){
+      el.innerHTML = `
+        <div class="split">
+          <div class="search">
+            <input id="qAtt" class="input" placeholder="Search by student / course / date" oninput="filterAttendance()" />
+          </div>
+          <button class="btn primary" onclick="openModalMarkAttendance()">Mark Attendance</button>
+        </div>
+        <div class="hr"></div>
+        <div id="attTable"></div>
+        ${modalShell()}
+      `;
+      window.__attRows = db.attendance;
+      renderAttendance(db.attendance);
+      return;
+    }
+
+    if(key === "notices"){
+      el.innerHTML = `
+        <div class="split">
+          <div class="search">
+            <input id="qNotices" class="input" placeholder="Search notices" oninput="filterNotices()" />
+          </div>
+          <button class="btn primary" onclick="openModalAddNotice()">New Notice</button>
+        </div>
+        <div class="hr"></div>
+        <div id="noticeList"></div>
+        ${modalShell()}
+      `;
+      window.__noticeRows = db.notices;
+      renderNotices(db.notices);
+      return;
+    }
+
+    if(key === "fees"){
+      el.innerHTML = `
+        <div class="split">
+          <div class="search">
+            <input id="qFees" class="input" placeholder="Search by student / term / status" oninput="filterFees()" />
+          </div>
+          <button class="btn primary" onclick="openModalAddFee()">Add / Update Fee</button>
+        </div>
+        <div class="hr"></div>
+        <div id="feesTable"></div>
+        ${modalShell()}
+      `;
+      window.__feeRows = db.fees;
+      renderFees(db.fees);
+      return;
+    }
+
+    if(key === "library"){
+      el.innerHTML = `
+        <div class="two">
+          <div>
+            <div class="split">
+              <div><b>Books</b><div class="small muted">Manage inventory</div></div>
+              <button class="btn primary" onclick="openModalAddBook()">Add Book</button>
+            </div>
+            <div style="height:10px"></div>
+            <input id="qBooks" class="input" placeholder="Search books by title / author / ISBN" oninput="filterBooks()" />
+            <div class="hr"></div>
+            <div id="booksTable"></div>
+          </div>
+
+          <div>
+            <div class="split">
+              <div><b>Loans</b><div class="small muted">Track borrowed books</div></div>
+              <button class="btn primary" onclick="openModalNewLoan()">New Loan</button>
+            </div>
+            <div style="height:10px"></div>
+            <input id="qLoans" class="input" placeholder="Search loans by student / ISBN / status" oninput="filterLoans()" />
+            <div class="hr"></div>
+            <div id="loansTable"></div>
+          </div>
+        </div>
+        ${modalShell()}
+      `;
+      window.__bookRows = db.library.books;
+      window.__loanRows = db.library.loans;
+      renderBooks(db.library.books);
+      renderLoans(db.library.loans);
+      return;
+    }
+
+    if(key === "canteen"){
+      el.innerHTML = `
+        <div class="two">
+          <div>
+            <div class="split">
+              <div><b>Menu</b><div class="small muted">Items & prices</div></div>
+              <button class="btn primary" onclick="openModalAddMenuItem()">Add Menu Item</button>
+            </div>
+            <div style="height:10px"></div>
+            <input id="qMenu" class="input" placeholder="Search menu" oninput="filterMenu()" />
+            <div class="hr"></div>
+            <div id="menuTable"></div>
+          </div>
+
+          <div>
+            <div class="split">
+              <div><b>Orders</b><div class="small muted">Status tracking</div></div>
+              <button class="btn primary" onclick="openModalNewOrder()">New Order</button>
+            </div>
+            <div style="height:10px"></div>
+            <input id="qOrders" class="input" placeholder="Search orders" oninput="filterOrders()" />
+            <div class="hr"></div>
+            <div id="ordersTable"></div>
+          </div>
+        </div>
+        ${modalShell()}
+      `;
+      window.__menuRows = db.canteen.menu;
+      window.__orderRows = db.canteen.orders;
+      renderMenu(db.canteen.menu);
+      renderOrders(db.canteen.orders);
+      return;
+    }
+
+    if(key === "settings"){
+      el.innerHTML = `
+        <div class="two">
+          <div>
+            <b>Demo Controls</b>
+            <div class="small muted" style="margin-top:6px">Export/Import JSON for quick sharing.</div>
+            <div class="hr"></div>
+            <button class="btn" style="width:100%" onclick="exportJSON()">Export JSON</button>
+            <div style="height:10px"></div>
+            <button class="btn" style="width:100%" onclick="importJSON()">Import JSON</button>
+            <div style="height:10px"></div>
+            <button class="btn danger" style="width:100%" onclick="seedAll()">Reset & Seed</button>
+          </div>
+          <div>
+            <b>User</b>
+            <div class="small muted" style="margin-top:6px">Current session details.</div>
+            <div class="hr"></div>
+            <div style="padding:12px;border:1px solid rgba(30,43,78,.9);border-radius:16px;background:rgba(11,18,32,.35)">
+              <div class="small muted">Username</div>
+              <div style="font-weight:900;margin-top:4px">${escapeHTML(getUser().username)}</div>
+              <div class="hr"></div>
+              <div class="small muted">Role</div>
+              <div style="font-weight:900;margin-top:4px">${escapeHTML(getUser().role)}</div>
+              <div class="hr"></div>
+              <div class="small muted">Campus</div>
+              <div style="font-weight:900;margin-top:4px">${escapeHTML(getUser().campus)}</div>
+            </div>
+          </div>
+        </div>
+      `;
+      return;
+    }
+
+    el.innerHTML = `<div class="muted">Page not found.</div>`;
+  }
+
+  // ---------- RENDERERS ----------
+  function escapeHTML(s){ return String(s).replace(/[&<>"']/g, m=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[m])); }
+
+  function renderSchedule(rows){
+    const target = document.getElementById("scheduleTable");
+    target.innerHTML = `
+      <table class="table">
+        <thead><tr><th>Course</th><th>Teacher</th><th>Day</th><th>Time</th><th>Room</th><th>Actions</th></tr></thead>
+        <tbody>
+          ${rows.map(c=>`
+            <tr>
+              <td><b>${escapeHTML(c.code)}</b><div class="small muted">${escapeHTML(c.name)}</div></td>
+              <td>${escapeHTML(c.teacher)}</td>
+              <td>${escapeHTML(c.day)}</td>
+              <td>${escapeHTML(c.time)}</td>
+              <td>${escapeHTML(c.room)}</td>
+              <td>
+                <button class="btn" onclick="editClass('${c.id}')">Edit</button>
+                <button class="btn danger" onclick="delClass('${c.id}')">Delete</button>
+              </td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    `;
+  }
+
+  function renderAttendance(rows){
+    const t = document.getElementById("attTable");
+    t.innerHTML = `
+      <table class="table">
+        <thead><tr><th>Student</th><th>Course</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>
+          ${rows.map(a=>`
+            <tr>
+              <td><b>${escapeHTML(a.student)}</b></td>
+              <td>${escapeHTML(a.course)}</td>
+              <td>${escapeHTML(a.date)}</td>
+              <td>${badgeStatus(a.status)}</td>
+              <td>
+                <button class="btn" onclick="editAttendance('${a.id}')">Edit</button>
+                <button class="btn danger" onclick="delAttendance('${a.id}')">Delete</button>
+              </td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    `;
+  }
+
+  function renderNotices(rows){
+    const t = document.getElementById("noticeList");
+    t.innerHTML = rows.map(n=>`
+      <div style="padding:12px;border:1px solid rgba(30,43,78,.85);border-radius:16px;background:rgba(11,18,32,.35);margin-bottom:12px">
+        <div class="split">
+          <div>
+            <b>${escapeHTML(n.title)}</b>
+            <div class="small muted" style="margin-top:4px">${escapeHTML(n.body)}</div>
+          </div>
+          <div style="text-align:right">
+            <div class="small muted">${escapeHTML(n.createdAt)}</div>
+            <div style="height:8px"></div>
+            <button class="btn" onclick="editNotice('${n.id}')">Edit</button>
+            <button class="btn danger" onclick="delNotice('${n.id}')">Delete</button>
+          </div>
+        </div>
+        <div style="margin-top:10px" class="small muted">
+          Audience:
+          ${n.audience.map(r=>`<span class="badge">${escapeHTML(r)}</span>`).join(" ")}
+        </div>
+      </div>
+    `).join("");
+  }
+
+  function renderFees(rows){
+    const t = document.getElementById("feesTable");
+    t.innerHTML = `
+      <table class="table">
+        <thead><tr><th>Student</th><th>Term</th><th>Amount</th><th>Paid</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>
+          ${rows.map(f=>{
+            const status = f.status || computeFeeStatus(f);
+            return `
+            <tr>
+              <td><b>${escapeHTML(f.student)}</b></td>
+              <td>${escapeHTML(f.term)}</td>
+              <td>${money(f.amount)}</td>
+              <td>${money(f.paid)}</td>
+              <td>${badgeFee(status)}</td>
+              <td>
+                <button class="btn" onclick="editFee('${f.id}')">Edit</button>
+                <button class="btn danger" onclick="delFee('${f.id}')">Delete</button>
+              </td>
+            </tr>`;
+          }).join("")}
+        </tbody>
+      </table>
+    `;
+  }
+
+  function renderBooks(rows){
+    const t = document.getElementById("booksTable");
+    t.innerHTML = `
+      <table class="table">
+        <thead><tr><th>Book</th><th>ISBN</th><th>Copies</th><th>Available</th><th>Actions</th></tr></thead>
+        <tbody>
+          ${rows.map(b=>`
+            <tr>
+              <td><b>${escapeHTML(b.title)}</b><div class="small muted">${escapeHTML(b.author)}</div></td>
+              <td class="mono">${escapeHTML(b.isbn)}</td>
+              <td>${b.copies}</td>
+              <td>${b.available}</td>
+              <td>
+                <button class="btn" onclick="editBook('${b.id}')">Edit</button>
+                <button class="btn danger" onclick="delBook('${b.id}')">Delete</button>
+              </td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    `;
+  }
+
+  function renderLoans(rows){
+    const t = document.getElementById("loansTable");
+    t.innerHTML = `
+      <table class="table">
+        <thead><tr><th>Student</th><th>ISBN</th><th>Due</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>
+          ${rows.map(l=>`
+            <tr>
+              <td><b>${escapeHTML(l.student)}</b></td>
+              <td class="mono">${escapeHTML(l.isbn)}</td>
+              <td>${escapeHTML(l.due)}</td>
+              <td>${badgeLoan(l.status)}</td>
+              <td>
+                <button class="btn" onclick="editLoan('${l.id}')">Edit</button>
+                <button class="btn danger" onclick="delLoan('${l.id}')">Delete</button>
+              </td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    `;
+  }
+
+  function renderMenu(rows){
+    const t = document.getElementById("menuTable");
+    t.innerHTML = `
+      <table class="table">
+        <thead><tr><th>Item</th><th>Price</th><th>Available</th><th>Actions</th></tr></thead>
+        <tbody>
+          ${rows.map(m=>`
+            <tr>
+              <td><b>${escapeHTML(m.item)}</b></td>
+              <td>${money(m.price)}</td>
+              <td>${m.available ? `<span class="badge ok">Yes</span>` : `<span class="badge danger">No</span>`}</td>
+              <td>
+                <button class="btn" onclick="editMenu('${m.id}')">Edit</button>
+                <button class="btn danger" onclick="delMenu('${m.id}')">Delete</button>
+              </td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    `;
+  }
+
+  function renderOrders(rows){
+    const t = document.getElementById("ordersTable");
+    t.innerHTML = `
+      <table class="table">
+        <thead><tr><th>By</th><th>Item</th><th>Qty</th><th>Total</th><th>Status</th><th>Time</th><th>Actions</th></tr></thead>
+        <tbody>
+          ${rows.map(o=>`
+            <tr>
+              <td><b>${escapeHTML(o.by)}</b></td>
+              <td>${escapeHTML(o.item)}</td>
+              <td>${o.qty}</td>
+              <td>${money(o.total)}</td>
+              <td>${badgeOrder(o.status)}</td>
+              <td class="small muted">${escapeHTML(o.createdAt || "")}</td>
+              <td>
+                <button class="btn" onclick="editOrder('${o.id}')">Edit</button>
+                <button class="btn danger" onclick="delOrder('${o.id}')">Delete</button>
+              </td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    `;
+  }
+
+  function money(n){ return `${Number(n||0).toLocaleString()} EGP`; }
+
+  function badgeStatus(s){
+    const v = (s||"").toLowerCase();
+    if(v==="present") return `<span class="badge ok">Present</span>`;
+    if(v==="late") return `<span class="badge warn">Late</span>`;
+    return `<span class="badge danger">Absent</span>`;
+  }
+  function badgeFee(s){
+    const v=(s||"").toLowerCase();
+    if(v==="paid") return `<span class="badge ok">Paid</span>`;
+    if(v==="partial") return `<span class="badge warn">Partial</span>`;
+    return `<span class="badge danger">Unpaid</span>`;
+  }
+  function badgeLoan(s){
+    const v=(s||"").toLowerCase();
+    if(v.includes("returned")) return `<span class="badge ok">Returned</span>`;
+    return `<span class="badge warn">On Loan</span>`;
+  }
+  function badgeOrder(s){
+    const v=(s||"").toLowerCase();
+    if(v.includes("ready")) return `<span class="badge ok">Ready</span>`;
+    if(v.includes("prepar")) return `<span class="badge warn">Preparing</span>`;
+    return `<span class="badge">Placed</span>`;
+  }
+  function computeFeeStatus(f){
+    const a=Number(f.amount||0), p=Number(f.paid||0);
+    if(p>=a && a>0) return "Paid";
+    if(p>0) return "Partial";
+    return "Unpaid";
+  }
+
+  // ---------- FILTERS ----------
+  function filterSchedule(){
+    const q = document.getElementById("qSchedule").value.toLowerCase();
+    const rows = window.__scheduleRows.filter(c =>
+      [c.code,c.name,c.teacher,c.room,c.day,c.time].some(x => String(x).toLowerCase().includes(q))
+    );
+    renderSchedule(rows);
+  }
+  function filterAttendance(){
+    const q = document.getElementById("qAtt").value.toLowerCase();
+    const rows = window.__attRows.filter(a =>
+      [a.student,a.course,a.date,a.status].some(x => String(x).toLowerCase().includes(q))
+    );
+    renderAttendance(rows);
+  }
+  function filterNotices(){
+    const q = document.getElementById("qNotices").value.toLowerCase();
+    const rows = window.__noticeRows.filter(n =>
+      [n.title,n.body,n.createdAt].some(x => String(x).toLowerCase().includes(q))
+    );
+    renderNotices(rows);
+  }
+  function filterFees(){
+    const q = document.getElementById("qFees").value.toLowerCase();
+    const rows = window.__feeRows.filter(f =>
+      [f.student,f.term,f.status,computeFeeStatus(f)].some(x => String(x).toLowerCase().includes(q))
+    );
+    renderFees(rows);
+  }
+  function filterBooks(){
+    const q = document.getElementById("qBooks").value.toLowerCase();
+    const db = getDB();
+    const rows = db.library.books.filter(b =>
+      [b.title,b.author,b.isbn].some(x => String(x).toLowerCase().includes(q))
+    );
+    renderBooks(rows);
+  }
+  function filterLoans(){
+    const q = document.getElementById("qLoans").value.toLowerCase();
+    const db = getDB();
+    const rows = db.library.loans.filter(l =>
+      [l.student,l.isbn,l.status,l.due].some(x => String(x).toLowerCase().includes(q))
+    );
+    renderLoans(rows);
+  }
+  function filterMenu(){
+    const q = document.getElementById("qMenu").value.toLowerCase();
+    const db = getDB();
+    const rows = db.canteen.menu.filter(m =>
+      [m.item,String(m.price)].some(x => String(x).toLowerCase().includes(q))
+    );
+    renderMenu(rows);
+  }
+  function filterOrders(){
+    const q = document.getElementById("qOrders").value.toLowerCase();
+    const db = getDB();
+    const rows = db.canteen.orders.filter(o =>
+      [o.by,o.item,o.status,o.createdAt].some(x => String(x).toLowerCase().includes(q))
+    );
+    renderOrders(rows);
+  }
+
+  // ---------- MODALS ----------
+  function modalShell(){
+    return `
+      <div id="modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);padding:18px;z-index:50">
+        <div class="wrap" style="max-width:820px">
+          <div class="card">
+            <div class="hd">
+              <h2 id="modalTitle">Modal</h2>
+              <button class="btn" onclick="closeModal()">Close</button>
+            </div>
+            <div class="bd" id="modalBody"></div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  function openModal(title, bodyHTML){
+    const m = document.getElementById("modal");
+    if(!m) { renderCurrentPage(); } // ensure modal exists
+    document.getElementById("modalTitle").textContent = title;
+    document.getElementById("modalBody").innerHTML = bodyHTML;
+    document.getElementById("modal").style.display = "block";
+  }
+  function closeModal(){ document.getElementById("modal").style.display = "none"; }
+
+  // --- Schedule CRUD ---
+  function openModalAddClass(existingId=null){
+    const db = getDB();
+    const cur = existingId ? db.schedule.find(x=>x.id===existingId) : null;
+    openModal(cur ? "Edit Class" : "Add Class", `
+      <div class="two">
+        <div><label>Course Code</label><input id="c_code" class="input" value="${cur?escapeHTML(cur.code):""}"></div>
+        <div><label>Course Name</label><input id="c_name" class="input" value="${cur?escapeHTML(cur.name):""}"></div>
+      </div>
+      <div style="height:10px"></div>
+      <div class="two">
+        <div><label>Teacher</label><input id="c_teacher" class="input" value="${cur?escapeHTML(cur.teacher):""}"></div>
+        <div><label>Room</label><input id="c_room" class="input" value="${cur?escapeHTML(cur.room):""}"></div>
+      </div>
+      <div style="height:10px"></div>
+      <div class="two">
+        <div><label>Day</label>
+          <select id="c_day">
+            ${["Sun","Mon","Tue","Wed","Thu"].map(d=>`<option ${cur&&cur.day===d?"selected":""}>${d}</option>`).join("")}
+          </select>
+        </div>
+        <div><label>Time</label><input id="c_time" class="input" placeholder="10:00 - 12:00" value="${cur?escapeHTML(cur.time):""}"></div>
+      </div>
+      <div style="height:12px"></div>
+      <button class="btn primary" style="width:100%" onclick="saveClass('${existingId||""}')">Save</button>
+    `);
+  }
+  function saveClass(id){
+    const db = getDB();
+    const item = {
+      id: id || uid("c"),
+      code: document.getElementById("c_code").value.trim(),
+      name: document.getElementById("c_name").value.trim(),
+      teacher: document.getElementById("c_teacher").value.trim(),
+      room: document.getElementById("c_room").value.trim(),
+      day: document.getElementById("c_day").value,
+      time: document.getElementById("c_time").value.trim(),
+      group: "G1"
+    };
+    if(!item.code || !item.name){ toast("Code & Name required."); return; }
+
+    const i = db.schedule.findIndex(x=>x.id===item.id);
+    if(i>=0) db.schedule[i]=item; else db.schedule.unshift(item);
+    setDB(db);
+
+    window.__scheduleRows = db.schedule;
+    renderSchedule(db.schedule);
+    closeModal();
+    toast("Saved.");
+  }
+  function editClass(id){ openModalAddClass(id); }
+  function delClass(id){
+    const db = getDB();
+    db.schedule = db.schedule.filter(x=>x.id!==id);
+    setDB(db);
+    window.__scheduleRows = db.schedule;
+    renderSchedule(db.schedule);
+    toast("Deleted.");
+  }
+
+  // --- Attendance CRUD ---
+  function openModalMarkAttendance(existingId=null){
+    const db = getDB();
+    const cur = existingId ? db.attendance.find(x=>x.id===existingId) : null;
+    openModal(cur ? "Edit Attendance" : "Mark Attendance", `
+      <div class="two">
+        <div><label>Student</label><input id="a_student" class="input" value="${cur?escapeHTML(cur.student):""}" placeholder="Ahmed Samy"></div>
+        <div><label>Course</label><input id="a_course" class="input" value="${cur?escapeHTML(cur.course):""}" placeholder="CS201"></div>
+      </div>
+      <div style="height:10px"></div>
+      <div class="two">
+        <div><label>Date</label><input id="a_date" class="input" value="${cur?escapeHTML(cur.date):new Date().toISOString().slice(0,10)}"></div>
+        <div><label>Status</label>
+          <select id="a_status">
+            ${["Present","Late","Absent"].map(s=>`<option ${cur&&cur.status===s?"selected":""}>${s}</option>`).join("")}
+          </select>
+        </div>
+      </div>
+      <div style="height:12px"></div>
+      <button class="btn primary" style="width:100%" onclick="saveAttendance('${existingId||""}')">Save</button>
+    `);
+  }
+  function saveAttendance(id){
+    const db = getDB();
+    const item = {
+      id: id || uid("a"),
+      student: document.getElementById("a_student").value.trim(),
+      course: document.getElementById("a_course").value.trim(),
+      date: document.getElementById("a_date").value.trim(),
+      status: document.getElementById("a_status").value
+    };
+    if(!item.student || !item.course){ toast("Student & Course required."); return; }
+    const i = db.attendance.findIndex(x=>x.id===item.id);
+    if(i>=0) db.attendance[i]=item; else db.attendance.unshift(item);
+    setDB(db);
+    window.__attRows = db.attendance;
+    renderAttendance(db.attendance);
+    closeModal();
+    toast("Saved.");
+  }
+  function editAttendance(id){ openModalMarkAttendance(id); }
+  function delAttendance(id){
+    const db=getDB();
+    db.attendance = db.attendance.filter(x=>x.id!==id);
+    setDB(db);
+    window.__attRows = db.attendance;
+    renderAttendance(db.attendance);
+    toast("Deleted.");
+  }
+
+  // --- Notices CRUD ---
+  function openModalAddNotice(existingId=null){
+    const db=getDB();
+    const cur = existingId ? db.notices.find(x=>x.id===existingId) : null;
+    openModal(cur ? "Edit Notice" : "New Notice", `
+      <div>
+        <label>Title</label>
+        <input id="n_title" class="input" value="${cur?escapeHTML(cur.title):""}">
+      </div>
+      <div style="height:10px"></div>
+      <div>
+        <label>Body</label>
+        <textarea id="n_body" class="input">${cur?escapeHTML(cur.body):""}</textarea>
+      </div>
+      <div style="height:10px"></div>
+      <div>
+        <label>Audience</label>
+        <div class="row">
+          ${["student","teacher","admin","staff"].map(r=>`
+            <label class="chip" style="cursor:pointer">
+              <input type="checkbox" class="aud" value="${r}" ${cur ? (cur.audience.includes(r)?"checked":"") : (r!=="admin"?"checked":"")}>
+              ${r}
+            </label>
+          `).join("")}
+        </div>
+      </div>
+      <div style="height:12px"></div>
+      <button class="btn primary" style="width:100%" onclick="saveNotice('${existingId||""}')">Save</button>
+    `);
+  }
+  function saveNotice(id){
+    const db=getDB();
+    const aud = Array.from(document.querySelectorAll(".aud")).filter(x=>x.checked).map(x=>x.value);
+    const item = {
+      id: id || uid("n"),
+      title: document.getElementById("n_title").value.trim(),
+      body: document.getElementById("n_body").value.trim(),
+      audience: aud.length ? aud : ["student","teacher","staff"],
+      createdAt: nowISO()
+    };
+    if(!item.title){ toast("Title required."); return; }
+    const i = db.notices.findIndex(x=>x.id===item.id);
+    if(i>=0){
+      item.createdAt = db.notices[i].createdAt;
+      db.notices[i]=item;
+    } else db.notices.unshift(item);
+    setDB(db);
+    window.__noticeRows=db.notices;
+    renderNotices(db.notices);
+    closeModal();
+    toast("Saved.");
+  }
+  function editNotice(id){ openModalAddNotice(id); }
+  function delNotice(id){
+    const db=getDB();
+    db.notices = db.notices.filter(x=>x.id!==id);
+    setDB(db);
+    window.__noticeRows=db.notices;
+    renderNotices(db.notices);
+    toast("Deleted.");
+  }
+
+  // --- Fees CRUD ---
+  function openModalAddFee(existingId=null){
+    const db=getDB();
+    const cur = existingId ? db.fees.find(x=>x.id===existingId) : null;
+    openModal(cur ? "Edit Fee" : "Add Fee", `
+      <div class="two">
+        <div><label>Student</label><input id="f_student" class="input" value="${cur?escapeHTML(cur.student):""}" placeholder="Ahmed Samy"></div>
+        <div><label>Term</label><input id="f_term" class="input" value="${cur?escapeHTML(cur.term):"Fall 2025"}"></div>
+      </div>
+      <div style="height:10px"></div>
+      <div class="two">
+        <div><label>Amount</label><input id="f_amount" class="input" type="number" value="${cur?cur.amount:12000}"></div>
+        <div><label>Paid</label><input id="f_paid" class="input" type="number" value="${cur?cur.paid:0}"></div>
+      </div>
+      <div style="height:12px"></div>
+      <button class="btn primary" style="width:100%" onclick="saveFee('${existingId||""}')">Save</button>
+    `);
+  }
+  function saveFee(id){
+    const db=getDB();
+    const item = {
+      id: id || uid("f"),
+      student: document.getElementById("f_student").value.trim(),
+      term: document.getElementById("f_term").value.trim(),
+      amount: Number(document.getElementById("f_amount").value||0),
+      paid: Number(document.getElementById("f_paid").value||0)
+    };
+    item.status = computeFeeStatus(item);
+    if(!item.student || !item.term){ toast("Student & Term required."); return; }
+    const i=db.fees.findIndex(x=>x.id===item.id);
+    if(i>=0) db.fees[i]=item; else db.fees.unshift(item);
+    setDB(db);
+    window.__feeRows=db.fees;
+    renderFees(db.fees);
+    closeModal();
+    toast("Saved.");
+  }
+  function editFee(id){ openModalAddFee(id); }
+  function delFee(id){
+    const db=getDB();
+    db.fees = db.fees.filter(x=>x.id!==id);
+    setDB(db);
+    window.__feeRows=db.fees;
+    renderFees(db.fees);
+    toast("Deleted.");
+  }
+
+  // --- Library CRUD ---
+  function openModalAddBook(existingId=null){
+    const db=getDB();
+    const cur = existingId ? db.library.books.find(x=>x.id===existingId) : null;
+    openModal(cur ? "Edit Book" : "Add Book", `
+      <div class="two">
+        <div><label>Title</label><input id="b_title" class="input" value="${cur?escapeHTML(cur.title):""}"></div>
+        <div><label>Author</label><input id="b_author" class="input" value="${cur?escapeHTML(cur.author):""}"></div>
+      </div>
+      <div style="height:10px"></div>
+      <div class="two">
+        <div><label>ISBN</label><input id="b_isbn" class="input" value="${cur?escapeHTML(cur.isbn):""}"></div>
+        <div><label>Copies</label><input id="b_copies" class="input" type="number" value="${cur?cur.copies:1}"></div>
+      </div>
+      <div style="height:12px"></div>
+      <button class="btn primary" style="width:100%" onclick="saveBook('${existingId||""}')">Save</button>
+    `);
+  }
+  function saveBook(id){
+    const db=getDB();
+    const copies = Number(document.getElementById("b_copies").value||0);
+    const item = {
+      id: id || uid("b"),
+      title: document.getElementById("b_title").value.trim(),
+      author: document.getElementById("b_author").value.trim(),
+      isbn: document.getElementById("b_isbn").value.trim(),
+      copies: copies,
+      available: Math.max(0, copies - countLoansByISBN(document.getElementById("b_isbn").value.trim()))
+    };
+    if(!item.title || !item.isbn){ toast("Title & ISBN required."); return; }
+    const i=db.library.books.findIndex(x=>x.id===item.id);
+    if(i>=0) db.library.books[i]=item; else db.library.books.unshift(item);
+    setDB(db);
+    window.__bookRows=db.library.books;
+    renderBooks(db.library.books);
+    closeModal();
+    toast("Saved.");
+  }
+  function editBook(id){ openModalAddBook(id); }
+  function delBook(id){
+    const db=getDB();
+    db.library.books = db.library.books.filter(x=>x.id!==id);
+    setDB(db);
+    renderBooks(db.library.books);
+    toast("Deleted.");
+  }
+
+  function countLoansByISBN(isbn){
+    const db=getDB();
+    return db.library.loans.filter(l=>l.isbn===isbn && !String(l.status).toLowerCase().includes("returned")).length;
+  }
+
+  function openModalNewLoan(existingId=null){
+    const db=getDB();
+    const cur = existingId ? db.library.loans.find(x=>x.id===existingId) : null;
+    openModal(cur ? "Edit Loan" : "New Loan", `
+      <div class="two">
+        <div><label>Student</label><input id="l_student" class="input" value="${cur?escapeHTML(cur.student):""}" placeholder="Ahmed Samy"></div>
+        <div><label>ISBN</label><input id="l_isbn" class="input" value="${cur?escapeHTML(cur.isbn):""}" placeholder="9780132350884"></div>
+      </div>
+      <div style="height:10px"></div>
+      <div class="two">
+        <div><label>Due Date</label><input id="l_due" class="input" value="${cur?escapeHTML(cur.due):new Date(Date.now()+10*864e5).toISOString().slice(0,10)}"></div>
+        <div><label>Status</label>
+          <select id="l_status">
+            ${["On Loan","Returned"].map(s=>`<option ${cur&&cur.status===s?"selected":""}>${s}</option>`).join("")}
+          </select>
+        </div>
+      </div>
+      <div style="height:12px"></div>
+      <button class="btn primary" style="width:100%" onclick="saveLoan('${existingId||""}')">Save</button>
+    `);
+  }
+  function saveLoan(id){
+    const db=getDB();
+    const item = {
+      id: id || uid("l"),
+      student: document.getElementById("l_student").value.trim(),
+      isbn: document.getElementById("l_isbn").value.trim(),
+      due: document.getElementById("l_due").value.trim(),
+      status: document.getElementById("l_status").value
+    };
+    if(!item.student || !item.isbn){ toast("Student & ISBN required."); return; }
+    const i=db.library.loans.findIndex(x=>x.id===item.id);
+    if(i>=0) db.library.loans[i]=item; else db.library.loans.unshift(item);
+
+    // update book availability
+    db.library.books = db.library.books.map(b=>{
+      if(b.isbn===item.isbn){
+        const onLoan = countLoansByISBN(item.isbn);
+        return {...b, available: Math.max(0, b.copies - onLoan)};
+      }
+      return b;
+    });
+
+    setDB(db);
+    renderLoans(db.library.loans);
+    renderBooks(db.library.books);
+    closeModal();
+    toast("Saved.");
+  }
+  function editLoan(id){ openModalNewLoan(id); }
+  function delLoan(id){
+    const db=getDB();
+    db.library.loans = db.library.loans.filter(x=>x.id!==id);
+    setDB(db);
+    renderLoans(db.library.loans);
+    renderBooks(db.library.books);
+    toast("Deleted.");
+  }
+
+  // --- Canteen CRUD ---
+  function openModalAddMenuItem(existingId=null){
+    const db=getDB();
+    const cur = existingId ? db.canteen.menu.find(x=>x.id===existingId) : null;
+    openModal(cur ? "Edit Menu Item" : "Add Menu Item", `
+      <div class="two">
+        <div><label>Item</label><input id="m_item" class="input" value="${cur?escapeHTML(cur.item):""}"></div>
+        <div><label>Price</label><input id="m_price" class="input" type="number" value="${cur?cur.price:0}"></div>
+      </div>
+      <div style="height:10px"></div>
+      <div>
+        <label>Available</label>
+        <select id="m_av">
+          <option value="true" ${cur&&cur.available?"selected":""}>Yes</option>
+          <option value="false" ${cur&&!cur.available?"selected":""}>No</option>
+        </select>
+      </div>
+      <div style="height:12px"></div>
+      <button class="btn primary" style="width:100%" onclick="saveMenu('${existingId||""}')">Save</button>
+    `);
+  }
+  function saveMenu(id){
+    const db=getDB();
+    const item = {
+      id: id || uid("m"),
+      item: document.getElementById("m_item").value.trim(),
+      price: Number(document.getElementById("m_price").value||0),
+      available: document.getElementById("m_av").value === "true"
+    };
+    if(!item.item){ toast("Item name required."); return; }
+    const i=db.canteen.menu.findIndex(x=>x.id===item.id);
+    if(i>=0) db.canteen.menu[i]=item; else db.canteen.menu.unshift(item);
+    setDB(db);
+    renderMenu(db.canteen.menu);
+    closeModal();
+    toast("Saved.");
+  }
+  function editMenu(id){ openModalAddMenuItem(id); }
+  function delMenu(id){
+    const db=getDB();
+    db.canteen.menu = db.canteen.menu.filter(x=>x.id!==id);
+    setDB(db);
+    renderMenu(db.canteen.menu);
+    toast("Deleted.");
+  }
+
+  function openModalNewOrder(existingId=null){
+    const db=getDB();
+    const cur = existingId ? db.canteen.orders.find(x=>x.id===existingId) : null;
+    openModal(cur ? "Edit Order" : "New Order", `
+      <div class="two">
+        <div><label>By</label><input id="o_by" class="input" value="${cur?escapeHTML(cur.by):getUser().username}"></div>
+        <div><label>Item</label>
+          <select id="o_item">
+            ${db.canteen.menu.map(m=>`<option ${cur&&cur.item===m.item?"selected":""}>${escapeHTML(m.item)}</option>`).join("")}
+          </select>
+        </div>
+      </div>
+      <div style="height:10px"></div>
+      <div class="two">
+        <div><label>Qty</label><input id="o_qty" class="input" type="number" value="${cur?cur.qty:1}"></div>
+        <div><label>Status</label>
+          <select id="o_status">
+            ${["Placed","Preparing","Ready"].map(s=>`<option ${cur&&cur.status===s?"selected":""}>${s}</option>`).join("")}
+          </select>
+        </div>
+      </div>
+      <div style="height:12px"></div>
+      <button class="btn primary" style="width:100%" onclick="saveOrder('${existingId||""}')">Save</button>
+    `);
+  }
+  function saveOrder(id){
+    const db=getDB();
+    const by = document.getElementById("o_by").value.trim();
+    const itemName = document.getElementById("o_item").value;
+    const qty = Number(document.getElementById("o_qty").value||1);
+    const menuItem = db.canteen.menu.find(m=>m.item===itemName);
+    const item = {
+      id: id || uid("o"),
+      by,
+      item: itemName,
+      qty,
+      total: (menuItem ? Number(menuItem.price||0) : 0) * qty,
+      status: document.getElementById("o_status").value,
+      createdAt: nowISO()
+    };
+    const i=db.canteen.orders.findIndex(x=>x.id===item.id);
+    if(i>=0){
+      item.createdAt = db.canteen.orders[i].createdAt;
+      db.canteen.orders[i]=item;
+    } else db.canteen.orders.unshift(item);
+
+    setDB(db);
+    renderOrders(db.canteen.orders);
+    closeModal();
+    toast("Saved.");
+  }
+  function editOrder(id){ openModalNewOrder(id); }
+  function delOrder(id){
+    const db=getDB();
+    db.canteen.orders = db.canteen.orders.filter(x=>x.id!==id);
+    setDB(db);
+    renderOrders(db.canteen.orders);
+    toast("Deleted.");
+  }
+
+  // ---------- EXPORT/IMPORT ----------
+  function exportJSON(){
+    const data = { user: getUser(), db: getDB() };
+    const txt = JSON.stringify(data, null, 2);
+    navigator.clipboard?.writeText(txt);
+    openModal("Export JSON (copied to clipboard)", `
+      <label>JSON</label>
+      <textarea class="input mono" readonly>${escapeHTML(txt)}</textarea>
+      <div style="height:10px"></div>
+      <button class="btn" style="width:100%" onclick="closeModal()">Close</button>
+    `);
+    toast("Exported.");
+  }
+  function importJSON(){
+    openModal("Import JSON", `
+      <label>Paste JSON</label>
+      <textarea id="importTxt" class="input mono" placeholder='{"user":{...},"db":{...}}'></textarea>
+      <div style="height:10px"></div>
+      <button class="btn primary" style="width:100%" onclick="doImport()">Import</button>
+    `);
+  }
+  function doImport(){
+    try{
+      const txt = document.getElementById("importTxt").value.trim();
+      const obj = JSON.parse(txt);
+      if(obj.db) setDB(obj.db);
+      if(obj.user) setUser(obj.user);
+      closeModal();
+      toast("Imported.");
+      bootApp();
+    }catch(e){
+      toast("Invalid JSON.");
+    }
+  }
+
+  // ---------- MODAL OPENERS (aliases) ----------
+  function openModalMarkAttendance(id){ openModalMarkAttendance(id); } // no-op safety
+
+  // ---------- START ----------
+  (function init(){
+    const user = getUser();
+    if(user) bootApp();
+  })();
+</script>
+</body>
+</html>
