@@ -147,7 +147,7 @@ const CONFIG = {
     "/openapi.json"
   ],
   validation: {
-    password: { min: 8, max: 72 },
+  password: { min: 1, max: 9999 },
     email: { pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/i },
     phone: { pattern: /^[0-9+\-\s()]{6,}$/ }
   }
@@ -554,10 +554,10 @@ function buildFormFromSchema(schema, { mode="create" } = {}){
         if(!CONFIG.validation.email.pattern.test(String(v))) errors.push(`Invalid email: ${n}`);
       }
       if(lname.includes("password") || fld.def.format==="password"){
-        const s = String(v);
-        if(s.length < CONFIG.validation.password.min) errors.push(`Password too short (${CONFIG.validation.password.min}+): ${n}`);
-        if(s.length > CONFIG.validation.password.max) errors.push(`Password too long (${CONFIG.validation.password.max} max): ${n}`);
-      }
+  // no length restriction
+  if(String(v).length === 0) errors.push(`Password is required: ${n}`);
+}
+
       if(lname.includes("phone") || lname.includes("mobile")){
         if(!CONFIG.validation.phone.pattern.test(String(v))) errors.push(`Invalid phone: ${n}`);
       }
@@ -1188,6 +1188,7 @@ el("btnWhoAmI").onclick = whoAmI;
 </script>
 </body>
 </html>
+
 
 
 
