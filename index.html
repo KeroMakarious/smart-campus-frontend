@@ -73,7 +73,9 @@
     <div class="topbar">
       <div class="brand">
         <div class="title">Just Presence — Frontend</div>
-        <div class="sub">Auto-mapped from Swagger/OpenAPI. Base: <span class="mono" id="baseTxt"></span></div>
+        <div class="sub">
+          Auto-mapped from Swagger/OpenAPI. Base: <span class="mono" id="baseTxt"></span>
+        </div>
       </div>
       <div class="right">
         <span id="authPill" class="pill warn">Not Authenticated</span>
@@ -88,6 +90,7 @@
         <div class="bd grid">
           <div class="nav" id="nav"></div>
           <div class="sep"></div>
+
           <div class="grid">
             <div class="kv">
               <div>
@@ -96,6 +99,7 @@
               </div>
               <button class="btn" id="btnOpenSwagger">Open</button>
             </div>
+
             <div class="kv">
               <div>
                 <div class="small"><b>Token</b></div>
@@ -103,7 +107,16 @@
               </div>
               <button class="btn" id="btnCopyToken">Copy</button>
             </div>
+
+            <div class="kv">
+              <div>
+                <div class="small"><b>WhoAmI</b></div>
+                <div class="muted">Calls /me OR /users/{id} depending on spec</div>
+              </div>
+              <button class="btn" id="btnWhoAmI">WhoAmI</button>
+            </div>
           </div>
+
         </div>
       </div>
 
@@ -126,7 +139,6 @@
 const CONFIG = {
   baseUrl: "https://just-presence-production-79e0.up.railway.app",
   swaggerUi: "https://just-presence-production-79e0.up.railway.app/swagger-ui/index.html#/",
-  // Tries these in order (Springdoc + common variants).
   openApiCandidates: [
     "/v3/api-docs",
     "/v3/api-docs?group=default",
@@ -134,7 +146,6 @@ const CONFIG = {
     "/swagger/v1/swagger.json",
     "/openapi.json"
   ],
-  // field-level validation rules
   validation: {
     password: { min: 8, max: 72 },
     email: { pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/i },
@@ -150,11 +161,12 @@ const store = {
   user: safeJson(localStorage.getItem("jp_user")) || null,
   spec: null,
   specUrl: null,
-  // derived operations (best-effort mapping)
   ops: {
     login: null,
     register: null,
     me: null,
+    // optional: /users/{id} or similar
+    getUserById: null,
     createCourse: null,
     listCourses: null,
     updateCourse: null,
@@ -186,13 +198,6 @@ function toast(kind, title, detail){
   host.appendChild(item);
   setTimeout(()=>{ item.style.opacity="0"; item.style.transform="translateY(8px)"; }, 4200);
   setTimeout(()=>{ item.remove(); }, 4800);
-}
-function setBusy(isBusy){
-  document.querySelectorAll("button, input, select, textarea").forEach(n=>{
-    if(n.id==="btnOpenSwagger") return;
-    if(n.id==="btnCopyToken") return;
-    n.disabled = !!isBusy && (n.tagName==="BUTTON" ? true : n.disabled);
-  });
 }
 function escapeHtml(s){
   return s.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
@@ -236,6 +241,69 @@ async function apiFetch(path, { method="GET", headers={}, body=null, query=null 
 }
 
 /* =========================
+   AUTH FIX: USER-ID NOT FOUND
+   ========================= */
+function setAuthUI(){
+  el("baseTxt").textContent = CONFIG.baseUrl;
+  el("swaggerUrl").textContent = CONFIG.swaggerUi;
+
+  const pill = el("authPill");
+  const btnLogout = el("btnLogout");
+
+  if(store.token){
+    pill.className = "pill ok";
+    pill.textContent = "Authenticated";
+    btnLogout.disabled = false;
+  }else{
+    pill.className = "pill warn";
+    pill.textContent = "Not Authenticated";
+    btnLogout.disabled = true;
+  }
+}
+
+function saveUser(u){
+  if(!u) return;
+  store.user = u;
+  localStorage.setItem("jp_user", JSON.stringify(u));
+}
+
+function extractAnyUserId(u){
+  if(!u || typeof u !== "object") return null;
+  return (
+    u.id ??
+    u.userId ??
+    u.studentId ??
+    u.teacherId ??
+    u.accountId ??
+    u.data?.id ??
+    u.data?.userId ??
+    null
+  );
+}
+
+async function ensureUserLoaded(){
+  // 1) from memory
+  if(store.user && extractAnyUserId(store.user)) return store.user;
+
+  // 2) from localStorage (again)
+  const cached = safeJson(localStorage.getItem("jp_user"));
+  if(cached && extractAnyUserId(cached)){
+    store.user = cached;
+    return cached;
+  }
+
+  // 3) call /me if exists
+  if(store.ops.me && store.token){
+    const me = await apiFetch(store.ops.me.path, { method: store.ops.me.method });
+    saveUser(me);
+    return me;
+  }
+
+  // 4) no way
+  return null;
+}
+
+/* =========================
    OPENAPI LOADING + MAPPING
    ========================= */
 async function loadSpec(){
@@ -246,7 +314,7 @@ async function loadSpec(){
   let lastErr = null;
   for(const p of CONFIG.openApiCandidates){
     try{
-      const data = await apiFetch(p, { method:"GET", headers:{}, body:null });
+      const data = await apiFetch(p, { method:"GET" });
       if(data && (data.openapi || data.swagger) && data.paths){
         store.spec = data;
         store.specUrl = CONFIG.baseUrl + p;
@@ -261,39 +329,34 @@ async function loadSpec(){
 
   el("specBadge").textContent = "spec: not found";
   toast("danger","OpenAPI spec not reachable",
-        "Backend must expose JSON (ex: /v3/api-docs). Swagger UI alone is not enough for auto-linking.\n\nLast error:\n" + (lastErr ? (lastErr.message || String(lastErr)) : "unknown"));
+        "لازم الباك يطلع OpenAPI JSON (زي /v3/api-docs). Swagger UI لوحده مش كفاية.\n\nLast error:\n" + (lastErr ? (lastErr.message || String(lastErr)) : "unknown"));
 }
 
 function deriveOps(){
-  // Reset
   Object.keys(store.ops).forEach(k=>store.ops[k]=null);
 
   const spec = store.spec;
   if(!spec || !spec.paths) return;
 
-  const paths = spec.paths;
-
   const candidates = [];
-  for(const [path, methods] of Object.entries(paths)){
+  for(const [path, methods] of Object.entries(spec.paths)){
     for(const [m, op] of Object.entries(methods)){
       if(!op || typeof op !== "object") continue;
-      const method = m.toUpperCase();
-      candidates.push({ path, method, op });
+      candidates.push({ path, method: m.toUpperCase(), op });
     }
   }
 
+  const has = (s, ...parts) => {
+    const t = String(s||"").toLowerCase();
+    return parts.every(p => t.includes(String(p).toLowerCase()));
+  };
+
   const pick = (preds) => {
-    // preds: array of predicate functions, each tries to find best match
     for(const pred of preds){
       const found = candidates.find(pred);
       if(found) return found;
     }
     return null;
-  };
-
-  const has = (s, ...parts) => {
-    const t = String(s||"").toLowerCase();
-    return parts.every(p => t.includes(String(p).toLowerCase()));
   };
 
   // Auth
@@ -303,14 +366,19 @@ function deriveOps(){
   ]);
   store.ops.register = pick([
     x => x.method==="POST" && (has(x.path,"/auth","register") || has(x.op.operationId,"register") || has(x.path,"/register")),
-    x => x.method==="POST" && (has(x.op.summary,"register") || has(x.op.description,"register") || has(x.op.summary,"sign") && has(x.op.summary,"up"))
+    x => x.method==="POST" && (has(x.op.summary,"register") || has(x.op.description,"register") || (has(x.op.summary,"sign") && has(x.op.summary,"up")))
   ]);
   store.ops.me = pick([
     x => x.method==="GET" && (has(x.path,"/auth","me") || has(x.op.operationId,"me") || has(x.path,"/me")),
     x => x.method==="GET" && (has(x.op.summary,"profile") || has(x.op.summary,"current user"))
   ]);
 
-  // Entity helpers: best effort for typical CRUD naming
+  // user by id (fallback for whoami style)
+  store.ops.getUserById = pick([
+    x => x.method==="GET" && (has(x.path,"/users/{") || has(x.path,"/user/{")) && (has(x.op.summary,"get") || has(x.op.operationId,"get")),
+    x => x.method==="GET" && (has(x.path,"/users/") || has(x.path,"/user/")) && has(x.path,"{")
+  ]);
+
   const crud = (entity) => {
     const e = entity.toLowerCase();
     const create = pick([
@@ -335,19 +403,17 @@ function deriveOps(){
   store.ops.listCourses = course.list;
   store.ops.updateCourse = course.update;
 
-  const canteen = crud("canteen");
-  // some APIs use "canteen-item" or "item"
   store.ops.createCanteenItem = pick([
-    x => x.method==="POST" && (has(x.path,"canteen") && (has(x.path,"item") || has(x.path,"items"))),
-    x => canteen.create
+    x => x.method==="POST" && has(x.path,"canteen") && (has(x.path,"item") || has(x.path,"items")),
+    x => crud("canteen").create
   ]);
   store.ops.listCanteenItems = pick([
-    x => x.method==="GET" && (has(x.path,"canteen") && (has(x.path,"item") || has(x.path,"items"))) && !has(x.path,"/{"),
-    x => canteen.list
+    x => x.method==="GET" && has(x.path,"canteen") && (has(x.path,"item") || has(x.path,"items")) && !has(x.path,"/{"),
+    x => crud("canteen").list
   ]);
   store.ops.updateCanteenItem = pick([
-    x => (x.method==="PUT" || x.method==="PATCH") && (has(x.path,"canteen") && (has(x.path,"item") || has(x.path,"items"))) && has(x.path,"/{"),
-    x => canteen.update
+    x => (x.method==="PUT" || x.method==="PATCH") && has(x.path,"canteen") && (has(x.path,"item") || has(x.path,"items")) && has(x.path,"/{"),
+    x => crud("canteen").update
   ]);
 
   const student = crud("student");
@@ -366,40 +432,35 @@ function opToText(op){
   return `${op.method} ${op.path}`;
 }
 
-function getRequestSchema(op){
-  if(!op || !op.op) return null;
-  const rb = op.op.requestBody;
-  if(!rb || !rb.content) return null;
-
-  // prefer JSON
-  const json = rb.content["application/json"] || rb.content["application/*+json"];
-  if(json && json.schema) return derefSchema(json.schema);
-
-  // fallback: first content type
-  const first = Object.values(rb.content)[0];
-  if(first && first.schema) return derefSchema(first.schema);
-
-  return null;
-}
-
 function derefSchema(schema){
   const spec = store.spec;
   if(!schema || !spec) return schema;
-
   if(schema.$ref){
-    const ref = schema.$ref;
-    const key = ref.split("/").pop();
+    const key = schema.$ref.split("/").pop();
     const comps = (spec.components && spec.components.schemas) ? spec.components.schemas : {};
     return comps[key] ? comps[key] : schema;
   }
   return schema;
 }
 
+function getRequestSchema(op){
+  if(!op || !op.op) return null;
+  const rb = op.op.requestBody;
+  if(!rb || !rb.content) return null;
+
+  const json = rb.content["application/json"] || rb.content["application/*+json"];
+  if(json && json.schema) return derefSchema(json.schema);
+
+  const first = Object.values(rb.content)[0];
+  if(first && first.schema) return derefSchema(first.schema);
+
+  return null;
+}
+
 /* =========================
    FORM GENERATION + VALIDATION
    ========================= */
 function buildFormFromSchema(schema, { mode="create" } = {}){
-  // Returns { htmlEl, getValue(), validate() }
   const wrap = document.createElement("div");
   wrap.className = "grid";
 
@@ -425,7 +486,6 @@ function buildFormFromSchema(schema, { mode="create" } = {}){
 
   const props = schema.properties || {};
   const required = new Set(schema.required || []);
-
   const fields = [];
 
   for(const [name, def] of Object.entries(props)){
@@ -521,21 +581,21 @@ function buildFormFromSchema(schema, { mode="create" } = {}){
 }
 
 function getFieldValue(fld){
-  const el = fld.inputEl;
+  const elx = fld.inputEl;
   const def = fld.def;
 
-  if(el.tagName === "TEXTAREA"){
-    const t = el.value.trim();
+  if(elx.tagName === "TEXTAREA"){
+    const t = elx.value.trim();
     if(!t) return fld.required ? "" : undefined;
     try { return JSON.parse(t); } catch { return t; }
   }
-  if(el.tagName === "SELECT"){
-    const v = el.value;
+  if(elx.tagName === "SELECT"){
+    const v = elx.value;
     if(v==="") return fld.required ? "" : undefined;
     if(def.type==="boolean") return v === "true";
     return v;
   }
-  const raw = el.value;
+  const raw = elx.value;
   if(raw === "") return fld.required ? "" : undefined;
   if(def.type==="integer") return parseInt(raw,10);
   if(def.type==="number") return Number(raw);
@@ -546,7 +606,7 @@ function getFieldValue(fld){
    PAGES
    ========================= */
 const pages = [
-  { key:"login", title:"Login", hint:"Authenticate and store JWT", render: renderLogin },
+  { key:"login", title:"Login", hint:"Authenticate and store JWT + load user (/me)", render: renderLogin },
   { key:"register", title:"Register", hint:"Create an account (if backend supports it)", render: renderRegister },
   { key:"courses", title:"Courses", hint:"Add / list / update courses", render: ()=>renderCrud("Course", store.ops.createCourse, store.ops.listCourses, store.ops.updateCourse) },
   { key:"canteen", title:"Canteen Items", hint:"Add / list / update canteen items", render: ()=>renderCrud("Canteen Item", store.ops.createCanteenItem, store.ops.listCanteenItems, store.ops.updateCanteenItem) },
@@ -580,29 +640,15 @@ function goto(key){
   (p ? p.render : renderDebug)();
 }
 
-function setAuthUI(){
-  el("baseTxt").textContent = CONFIG.baseUrl;
-  el("swaggerUrl").textContent = CONFIG.swaggerUi;
-  const pill = el("authPill");
-  const btnLogout = el("btnLogout");
-  if(store.token){
-    pill.className = "pill ok";
-    pill.textContent = "Authenticated";
-    btnLogout.disabled = false;
-  }else{
-    pill.className = "pill warn";
-    pill.textContent = "Not Authenticated";
-    btnLogout.disabled = true;
-  }
-}
-
+/* =========================
+   PAGES IMPLEMENTATION
+   ========================= */
 function renderLogin(){
   const host = el("page");
-
   const op = store.ops.login;
   const schema = getRequestSchema(op);
-
   const form = buildFormFromSchema(schema, { mode:"login" });
+
   const box = document.createElement("div");
   box.className = "grid";
 
@@ -610,7 +656,7 @@ function renderLogin(){
   info.className = "muted";
   info.innerHTML = `
     Detected login endpoint: <span class="mono">${escapeHtml(opToText(op))}</span>
-    <div class="hint">If login mapping is wrong, open Debug and use raw call.</div>
+    <div class="hint">بعد اللوجين بيتم تحميل /me وتخزين user عشان مشكلة "User ID not found" تختفي.</div>
   `;
   box.appendChild(info);
   box.appendChild(form.el);
@@ -622,10 +668,10 @@ function renderLogin(){
     <button class="btn" id="goRegister">Go to Register</button>
   `;
   box.appendChild(actions);
-
   host.appendChild(box);
 
   host.querySelector("#goRegister").onclick = ()=>goto("register");
+
   host.querySelector("#doLogin").onclick = async ()=>{
     try{
       if(!op) throw new Error("Login operation not found in spec.");
@@ -635,31 +681,38 @@ function renderLogin(){
       const payload = form.getValue();
       const data = await apiFetch(op.path, { method: op.method, body: payload });
 
-      // token heuristics
-      const token = (data && (data.token || data.accessToken || data.jwt || data.id_token)) ? (data.token || data.accessToken || data.jwt || data.id_token) : null;
-      if(!token) {
-        // some APIs return {data:{token:...}}
-        const t2 = data && data.data && (data.data.token || data.data.accessToken || data.data.jwt);
-        if(!t2) throw new Error("Login succeeded but token not found in response. Check response in Debug.");
-        store.token = t2;
-      } else {
-        store.token = token;
-      }
+      const token =
+        data?.token ??
+        data?.accessToken ??
+        data?.jwt ??
+        data?.id_token ??
+        data?.data?.token ??
+        data?.data?.accessToken ??
+        data?.data?.jwt ??
+        null;
 
+      if(!token) throw new Error("Login succeeded but token not found in response. Use Debug to inspect response.");
+
+      store.token = token;
       localStorage.setItem("jp_token", store.token);
 
-      toast("ok","Login success","Token stored.");
+      // FIX: خزّن user من نفس ردّ اللوجين لو موجود، وإلا هات /me
+      const userFromLogin =
+        data?.user ??
+        data?.data?.user ??
+        data?.account ??
+        data?.data?.account ??
+        data?.profile ??
+        data?.data?.profile ??
+        null;
+
+      if(userFromLogin) saveUser(userFromLogin);
+
+      // ضمان تحميل اليوزر حتى لو ردّ اللوجين مفيهوش user
+      await ensureUserLoaded();
+
+      toast("ok","Login success","Token + user saved.");
       setAuthUI();
-
-      // Load /me if exists
-      if(store.ops.me){
-        try{
-          const me = await apiFetch(store.ops.me.path, { method: store.ops.me.method });
-          store.user = me;
-          localStorage.setItem("jp_user", JSON.stringify(me));
-        }catch{}
-      }
-
       goto("courses");
     }catch(e){
       toast("danger","Login failed", `${e.message}\n\n${e.data ? JSON.stringify(e.data,null,2) : ""}`.trim());
@@ -669,7 +722,6 @@ function renderLogin(){
 
 function renderRegister(){
   const host = el("page");
-
   const op = store.ops.register;
   const schema = getRequestSchema(op);
   const form = buildFormFromSchema(schema, { mode:"register" });
@@ -681,7 +733,7 @@ function renderRegister(){
   info.className = "muted";
   info.innerHTML = `
     Detected register endpoint: <span class="mono">${escapeHtml(opToText(op))}</span>
-    <div class="hint">Email/password validation enforced client-side.</div>
+    <div class="hint">Email/password validation شغال.</div>
   `;
   box.appendChild(info);
   box.appendChild(form.el);
@@ -693,10 +745,10 @@ function renderRegister(){
     <button class="btn" id="goLogin">Go to Login</button>
   `;
   box.appendChild(actions);
-
   host.appendChild(box);
 
   host.querySelector("#goLogin").onclick = ()=>goto("login");
+
   host.querySelector("#doRegister").onclick = async ()=>{
     try{
       if(!op) throw new Error("Register operation not found in spec.");
@@ -733,7 +785,7 @@ function renderCrud(label, opCreate, opList, opUpdate, { adminOnly=false } = {})
   authNote.className = "muted";
   authNote.innerHTML = adminOnly
     ? `Admin-only screen. Backend enforces role; frontend blocks if not logged in.`
-    : `Token is required for protected endpoints.`;
+    : `Token required for protected endpoints.`;
   box.appendChild(authNote);
 
   const createCard = document.createElement("div");
@@ -748,8 +800,8 @@ function renderCrud(label, opCreate, opList, opUpdate, { adminOnly=false } = {})
 
   host.appendChild(box);
 
-  // Create form
   const createHost = createCard.querySelector("#createBox");
+
   if(!opCreate){
     createHost.innerHTML = `<div class="muted">Create endpoint not detected. Use Debug.</div>`;
   }else{
@@ -773,11 +825,11 @@ function renderCrud(label, opCreate, opList, opUpdate, { adminOnly=false } = {})
         toast("danger", `Create ${label} failed`, `${e.message}\n\n${e.data ? JSON.stringify(e.data,null,2) : ""}`.trim());
       }
     };
+
     createHost.appendChild(document.createElement("div")).style.height="8px";
     createHost.appendChild(btn);
   }
 
-  // List + Update inline
   const listHost = listCard.querySelector("#listBox");
   listCard.querySelector("#btnRefresh").onclick = refreshList;
 
@@ -788,7 +840,6 @@ function renderCrud(label, opCreate, opList, opUpdate, { adminOnly=false } = {})
         return;
       }
       if(!store.token) throw new Error("Not authenticated.");
-
       const data = await apiFetch(opList.path, { method: opList.method });
       const rows = normalizeList(data);
 
@@ -812,16 +863,13 @@ function renderCrud(label, opCreate, opList, opUpdate, { adminOnly=false } = {})
           ${rows.map((r,i)=>`
             <tr>
               ${keys.map(k=>`<td class="mono">${escapeHtml(toCell(r[k]))}</td>`).join("")}
-              <td>
-                <button class="btn" data-i="${i}" data-act="edit">Edit</button>
-              </td>
+              <td><button class="btn" data-i="${i}" data-act="edit">Edit</button></td>
             </tr>
           `).join("")}
         </tbody>
       `;
       listHost.appendChild(table);
 
-      // edit handlers
       table.querySelectorAll("button[data-act='edit']").forEach(b=>{
         b.onclick = ()=>openEdit(rows[Number(b.dataset.i)]);
       });
@@ -838,7 +886,6 @@ function renderCrud(label, opCreate, opList, opUpdate, { adminOnly=false } = {})
     if(Array.isArray(data.items)) return data.items;
     if(Array.isArray(data.content)) return data.content;
     if(Array.isArray(data.data)) return data.data;
-    // sometimes wrapped as {result:[...]}
     for(const v of Object.values(data)){
       if(Array.isArray(v)) return v;
     }
@@ -863,6 +910,35 @@ function renderCrud(label, opCreate, opList, opUpdate, { adminOnly=false } = {})
   function pickId(obj){
     if(!obj || typeof obj!=="object") return null;
     return obj.id ?? obj._id ?? obj.userId ?? obj.studentId ?? obj.teacherId ?? obj.courseId ?? obj.itemId ?? null;
+  }
+
+  function extractPathParams(path){
+    const out = [];
+    const re = /\{([^}]+)\}/g;
+    let m;
+    while((m=re.exec(path))) out.push(m[1]);
+    return out;
+  }
+
+  function prefill(root, obj){
+    root.querySelectorAll("input, select, textarea").forEach(inp=>{
+      const id = inp.id || "";
+      const m = id.match(/^f_(.+?)_/);
+      if(!m) return;
+      const key = m[1];
+      const val = obj[key];
+      if(val===undefined) return;
+
+      if(inp.tagName==="TEXTAREA"){
+        inp.value = (typeof val === "object") ? JSON.stringify(val,null,2) : String(val);
+        return;
+      }
+      if(inp.tagName==="SELECT"){
+        inp.value = String(val);
+        return;
+      }
+      inp.value = String(val);
+    });
   }
 
   function openEdit(row){
@@ -891,16 +967,12 @@ function renderCrud(label, opCreate, opList, opUpdate, { adminOnly=false } = {})
 
     const schema = getRequestSchema(opUpdate);
     const form = buildFormFromSchema(schema, { mode:"update" });
-
-    // prefill best-effort
     prefill(form.el, row);
 
     panel.innerHTML = `
       <div class="hd">
         <h3>Edit ${escapeHtml(label)} <span class="muted mono">id=${escapeHtml(String(id))}</span></h3>
-        <div class="right">
-          <button class="btn" id="close">Close</button>
-        </div>
+        <div class="right"><button class="btn" id="close">Close</button></div>
       </div>
       <div class="bd" id="body"></div>
     `;
@@ -928,14 +1000,10 @@ function renderCrud(label, opCreate, opList, opUpdate, { adminOnly=false } = {})
 
         const payload = form.getValue();
 
-        // inject id into path params: replace {id} or similar
         let path = opUpdate.path;
-        const pathParams = extractPathParams(path);
-
-        // map first param to detected id if not in payload
-        if(pathParams.length){
-          const key = pathParams[0];
-          path = path.replace(`{${key}}`, encodeURIComponent(String(id)));
+        const params = extractPathParams(path);
+        if(params.length){
+          path = path.replace(`{${params[0]}}`, encodeURIComponent(String(id)));
         }
 
         const data = await apiFetch(path, { method: opUpdate.method, body: payload });
@@ -951,36 +1019,6 @@ function renderCrud(label, opCreate, opList, opUpdate, { adminOnly=false } = {})
     document.body.appendChild(modal);
   }
 
-  function prefill(root, obj){
-    root.querySelectorAll("input, select, textarea").forEach(inp=>{
-      const id = inp.id || "";
-      const m = id.match(/^f_(.+?)_/);
-      if(!m) return;
-      const key = m[1];
-      const val = obj[key];
-      if(val===undefined) return;
-
-      if(inp.tagName==="TEXTAREA"){
-        inp.value = (typeof val === "object") ? JSON.stringify(val,null,2) : String(val);
-        return;
-      }
-      if(inp.tagName==="SELECT"){
-        inp.value = String(val);
-        return;
-      }
-      inp.value = String(val);
-    });
-  }
-
-  function extractPathParams(path){
-    const out = [];
-    const re = /\{([^}]+)\}/g;
-    let m;
-    while((m=re.exec(path))) out.push(m[1]);
-    return out;
-  }
-
-  // first auto load
   refreshList();
 }
 
@@ -1003,7 +1041,7 @@ function renderDebug(){
           `).join("")}
         </tbody>
       </table>
-      <div class="hint">If an operation is "-", mapping failed because OpenAPI is missing or paths are named differently.</div>
+      <div class="hint">لو أي حاجة طالعة "-" يبقى الـ mapping فشل أو الـ OpenAPI مش متاح.</div>
     </div>
   `;
   box.appendChild(ops);
@@ -1011,7 +1049,7 @@ function renderDebug(){
   const raw = document.createElement("div");
   raw.className = "card";
   raw.innerHTML = `
-    <div class="hd"><h3>Raw Call</h3><span class="muted">Manual request to any path</span></div>
+    <div class="hd"><h3>Raw Call</h3><span class="muted">Manual request</span></div>
     <div class="bd grid">
       <div class="split">
         <div>
@@ -1067,16 +1105,46 @@ function renderDebug(){
 }
 
 /* =========================
+   WHOAMI BUTTON (FIXED)
+   ========================= */
+async function whoAmI(){
+  try{
+    if(!store.token) throw new Error("Not authenticated.");
+
+    // This guarantees store.user gets loaded if /me exists
+    const u = await ensureUserLoaded();
+
+    // If /me exists, use it مباشرة (أفضل حل ومافيهوش id)
+    if(store.ops.me){
+      const me = await apiFetch(store.ops.me.path, { method: store.ops.me.method });
+      saveUser(me);
+      toast("ok","WhoAmI (/me)", JSON.stringify(me,null,2));
+      return;
+    }
+
+    // Fallback: /users/{id}
+    const id = extractAnyUserId(u);
+    if(!id) throw new Error("User ID not found (login/me did not return an id).");
+
+    if(!store.ops.getUserById) throw new Error("No /users/{id} endpoint detected in spec.");
+
+    const paramName = (store.ops.getUserById.path.match(/\{([^}]+)\}/) || [])[1] || "id";
+    const path = store.ops.getUserById.path.replace(`{${paramName}}`, encodeURIComponent(String(id)));
+
+    const data = await apiFetch(path, { method: store.ops.getUserById.method });
+    toast("ok","WhoAmI (/users/{id})", JSON.stringify(data,null,2));
+  }catch(e){
+    toast("danger","WhoAmI failed", `${e.message}\n\n${e.data ? JSON.stringify(e.data,null,2) : ""}`.trim());
+  }
+}
+
+/* =========================
    TOPBAR ACTIONS
    ========================= */
 el("btnReloadSpec").onclick = async ()=>{
-  try{
-    await loadSpec();
-    toast("ok","Spec reloaded", store.specUrl || "not found");
-    goto(currentPage);
-  }catch(e){
-    toast("danger","Reload failed", e.message);
-  }
+  await loadSpec();
+  toast("ok","Spec reloaded", store.specUrl || "not found");
+  goto(currentPage);
 };
 
 el("btnLogout").onclick = ()=>{
@@ -1089,18 +1157,18 @@ el("btnLogout").onclick = ()=>{
   goto("login");
 };
 
-el("btnOpenSwagger").onclick = ()=>{
-  window.open(CONFIG.swaggerUi, "_blank");
-};
+el("btnOpenSwagger").onclick = ()=>window.open(CONFIG.swaggerUi, "_blank");
 
 el("btnCopyToken").onclick = async ()=>{
   try{
     await navigator.clipboard.writeText(store.token || "");
-    toast("ok","Copied","Token copied to clipboard.");
+    toast("ok","Copied","Token copied.");
   }catch{
     toast("danger","Copy failed","Browser blocked clipboard.");
   }
 };
+
+el("btnWhoAmI").onclick = whoAmI;
 
 /* =========================
    BOOT
@@ -1109,11 +1177,19 @@ el("btnCopyToken").onclick = async ()=>{
   setAuthUI();
   renderNav();
   await loadSpec();
+
+  // لو عندك توكن، حمّل اليوزر تلقائيًا (بيحل مشكلة User ID not found)
+  if(store.token){
+    try{ await ensureUserLoaded(); }catch{}
+  }
+
   goto(store.token ? "courses" : "login");
 })();
 </script>
 </body>
 </html>
+
+
 
 
 
