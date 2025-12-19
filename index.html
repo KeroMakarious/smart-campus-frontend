@@ -247,7 +247,7 @@ const API = {
  endpoints: {
   login: { method:"POST", path:"/api/auth/login" },
   register: { method:"POST", path:"/api/auth/register" }, 
- whoami: { method:"GET", path:"/api/users/{id}" },
+  whoami: { method:"GET", path:"/api/users" }, 
   addCourse: { method:"POST", path:"/api/courses" },
   addCanteen: { method:"POST", path:"/api/canteen/items" },
   addStudent: { method:"POST", path:"/api/users" },
@@ -871,14 +871,41 @@ $("#btnLogout").onclick = () => {
 };
 
 $("#btnWhoAmI").onclick = async () => {
-  if(!store.token) return toast("warn","Not Authenticated","Login first.");
+  if (!store.token) {
+    toast("warn", "Not Authenticated", "Login first.");
+    return;
+  }
+
+  const id = store.user?.id || store.user?.userId;
+  if (!id) {
+    toast("danger", "Error", "User ID not found");
+    return;
+  }
+
   setBusy(true);
-  try{
-   const id = store.user?.id || store.user?.userId;
-if(!id) throw new Error("User ID not found");
-const data = await apiCall("whoami", null, {
-  pathParams: { id }
-});
+  try {
+    const res = await fetch(`${API.baseUrl}/api/users/${id}`, {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${store.token}`,
+        "Accept": "application/json"
+      }
+    });
+
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    const data = await res.json();
+    store.user = data;
+
+    toast("ok", "WhoAmI", "User data loaded");
+    render();
+  } catch (e) {
+    toast("danger", "WhoAmI Failed", e.message);
+  } finally {
+    setBusy(false);
+  }
+};
+
 
     // store user if returned
     if(data && typeof data === "object") store.user = data?.user || data;
@@ -919,6 +946,7 @@ $("#btnTestAuth").onclick = async () => {
 </script>
 </body>
 </html>
+
 
 
 
