@@ -262,11 +262,14 @@ const API = {
       password: v.password
     }),
     register: (v) => ({
-      fullName: v.fullName,        // maybe "name"
-      email: v.email,
-      password: v.password,
-      role: v.role                 // maybe backend assigns role automatically
-    }),
+  id: 0,
+  username: v.username,
+  email: v.email,
+  password: v.password,
+  role: v.role
+}),
+
+
     addCourse: (v) => ({
       name: v.courseName,          // maybe "courseName"
       code: v.courseCode,          // maybe "code"
@@ -280,24 +283,28 @@ const API = {
       category: v.category || null
     }),
     addStudent: (v) => ({
-      fullName: v.fullName,
-      email: v.email,
-      password: v.password,
-      level: v.level ? Number(v.level) : null,
-      department: v.department || null
-    }),
-    addTeacher: (v) => ({
-      fullName: v.fullName,
-      email: v.email,
-      password: v.password,
-      department: v.department || null,
-      title: v.title || null
-    }),
+  id: 0,
+  username: v.username,
+  email: v.email,
+  password: v.password,
+  role: "STUDENT"
+}),
+
+
+   addTeacher: (v) => ({
+  id: 0,
+  username: v.username,
+  email: v.email,
+  password: v.password,
+  role: "TEACHER"
+}),
+
+
   },
 
   // Validation rules
   validation: {
-    passwordMin: 8
+    passwordMin: 3
   }
 };
 
@@ -895,3 +902,4 @@ $("#btnTestAuth").onclick = async () => {
 </script>
 </body>
 </html>
+
