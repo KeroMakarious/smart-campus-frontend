@@ -245,8 +245,7 @@ const API = {
   // - courses: /courses
   // - canteen items: /canteen/items
   endpoints: {
-  login: { method:"POST", path:"/api/auth/login" }
-
+  login: { method:"POST", path:"/api/auth/login" },
     register:     { method: "POST", path: "/auth/register" },
     whoami:       { method: "GET",  path: "/auth/me" },          // optional
     addCourse:    { method: "POST", path: "/courses" },
@@ -896,6 +895,7 @@ $("#btnTestAuth").onclick = async () => {
 </script>
 </body>
 </html>
+
 
 
 
