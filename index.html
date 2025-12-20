@@ -248,11 +248,11 @@ const API = {
   login: { method:"POST", path:"/api/auth/login" },
     
     register:     { method: "POST", path: "/api/auth/register" },
-    whoami:       { method: "GET",  path: "/api/auth/me" },          // optional
+    whoami:       { method: "GET",  path: "/api/auth/login" },          // optional
     addCourse:    { method: "POST", path: "/api/courses" },
     addCanteen:   { method: "POST", path: "/api/canteen/items" },
-    addStudent:   { method: "POST", path: "/api/admin/students" },
-    addTeacher:   { method: "POST", path: "/api/admin/teachers" },
+    addStudent:   { method: "POST", path: "/api/students" },
+    addTeacher:   { method: "POST", path: "/api/teachers" },
   },
 
   // Payload fields mapping: CHANGE field names to match backend DTOs.
@@ -896,6 +896,7 @@ $("#btnTestAuth").onclick = async () => {
 </script>
 </body>
 </html>
+
 
 
 
