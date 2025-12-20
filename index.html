@@ -199,8 +199,7 @@
         </div>
         <div class="bd">
           <div class="note" style="margin-bottom:12px">
-            Edit the config at the top of the JS to match your Swagger.<br/>
-            Token stored in <code class="inline">localStorage</code> as <code class="inline">Bearer</code>.
+            This frontend stores token in <code class="inline">localStorage</code> and sends it as <code class="inline">Authorization: Bearer &lt;token&gt;</code>.
           </div>
 
           <div class="kvs">
@@ -213,7 +212,11 @@
 
           <div class="actions" style="margin-top:14px">
             <button class="btn" id="btnWhoAmI">WhoAmI</button>
-            <button class="btn ghost" id="btnTestAuth">Refresh State</button>
+            <button class="btn ghost" id="btnTestAuth">Test Auth Call</button>
+          </div>
+
+          <div class="note" style="margin-top:12px">
+            If requests fail from hosting: fix CORS in backend and ensure frontend uses HTTPS.
           </div>
         </div>
       </div>
@@ -224,25 +227,43 @@
 
 <script>
 /* =========================
-   1) CONFIG
+   1) CONFIG (EDIT THIS)
    ========================= */
 const API = {
   baseUrl: "https://just-presence-production-79e0.up.railway.app",
   swaggerUrl: "https://just-presence-production-79e0.up.railway.app/swagger-ui/index.html#/",
 
   endpoints: {
-    login:       { method: "POST", path: "/api/auth/login" },
-    register:    { method: "POST", path: "/api/auth/register" },
-    whoami:      { method: "GET",  path: "/api/auth/me" }, // Changed from login to me
-    addCourse:   { method: "POST", path: "/api/courses" },
-    addCanteen:  { method: "POST", path: "/api/canteen/items" },
-    addStudent:  { method: "POST", path: "/api/students" },
-    addTeacher:  { method: "POST", path: "/api/teachers" },
+    login:      { method:"POST", path:"/api/auth/login" },
+    register:   { method:"POST", path:"/api/auth/register" },
+    whoami:     { method:"GET",  path:"/api/auth/me" },     // FIXED
+    addCourse:  { method:"POST", path:"/api/courses" },
+    addCanteen: { method:"POST", path:"/api/canteen/items" },
+    addStudent: { method:"POST", path:"/api/students" },
+    addTeacher: { method:"POST", path:"/api/teachers" },
   },
 
   payloadMaps: {
-    login: (v) => ({ email: v.email, password: v.password }),
-    register: (v) => ({ fullName: v.fullName, email: v.email, password: v.password, role: v.role }),
+    login: (v) => ({
+      email: v.email,
+      password: v.password
+    }),
+    register: (v) => ({
+      fullName: v.fullName,
+      email: v.email,
+      password: v.password,
+      role: v.role
+    }),
+
+    // BACKEND SHAPE:
+    // {
+    //  "courseName": "Advanced Java",
+    //  "courseCode": "CS102",
+    //  "description": "...",
+    //  "credits": "3",
+    //  "department": "CS",
+    //  "teacherId": 1
+    // }
     addCourse: (v) => ({
       courseName: v.courseName,
       courseCode: v.courseCode,
@@ -251,6 +272,7 @@ const API = {
       department: v.department,
       teacherId: Number(v.teacherId)
     }),
+
     addCanteen: (v) => ({
       name: v.itemName,
       price: Number(v.price),
@@ -258,15 +280,21 @@ const API = {
       category: v.category || null
     }),
     addStudent: (v) => ({
-      fullName: v.fullName, email: v.email, password: v.password,
+      fullName: v.fullName,
+      email: v.email,
+      password: v.password,
       level: v.level ? Number(v.level) : null,
       department: v.department || null
     }),
     addTeacher: (v) => ({
-      fullName: v.fullName, email: v.email, password: v.password,
-      department: v.department || null, title: v.title || null
+      fullName: v.fullName,
+      email: v.email,
+      password: v.password,
+      department: v.department || null,
+      title: v.title || null
     }),
   },
+
   validation: { passwordMin: 8 }
 };
 
@@ -276,6 +304,7 @@ const API = {
 const store = {
   get token(){ return localStorage.getItem("sc_token") || ""; },
   set token(v){ v ? localStorage.setItem("sc_token", v) : localStorage.removeItem("sc_token"); },
+
   get user(){ try { return JSON.parse(localStorage.getItem("sc_user") || "null"); } catch { return null; } },
   set user(v){ v ? localStorage.setItem("sc_user", JSON.stringify(v)) : localStorage.removeItem("sc_user"); },
 };
@@ -304,20 +333,36 @@ function toast(type, title, msg){
 }
 
 function escapeHtml(s){
-  return String(s ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
+  return String(s ?? "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
 }
 
-function isEmail(email){ return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i.test(String(email||"").trim()); }
+function isEmail(email){
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i.test(String(email||"").trim());
+}
 
 function validatePassword(pw){
-  if(String(pw||"").length < API.validation.passwordMin) return `Min ${API.validation.passwordMin} characters required.`;
+  const p = String(pw||"");
+  if(p.length < API.validation.passwordMin) return `Password must be at least ${API.validation.passwordMin} characters`;
+  if(/\s/.test(p)) return "Password must not contain spaces";
   return "";
+}
+
+function safeJsonParse(text){
+  try { return JSON.parse(text); } catch { return null; }
 }
 
 function decodeJwt(token){
   try{
-    const payload = token.split(".")[1].replace(/-/g,'+').replace(/_/g,'/');
-    return JSON.parse(atob(payload));
+    const parts = token.split(".");
+    if(parts.length !== 3) return null;
+    const payload = parts[1].replace(/-/g,'+').replace(/_/g,'/');
+    const json = atob(payload);
+    return JSON.parse(json);
   }catch{ return null; }
 }
 
@@ -328,58 +373,95 @@ function currentRole(){
   return p?.role || p?.roles?.[0] || p?.authorities?.[0] || "-";
 }
 
-function setBusy(b){ state.busy = b; render(); }
+function setBusy(b){
+  state.busy = b;
+  render();
+}
 
 /* =========================
    4) API CLIENT
    ========================= */
 async function apiCall(key, body=null, extraOpts={}){
   const ep = API.endpoints[key];
+  if(!ep) throw new Error(`Endpoint not configured: ${key}`);
+
   const url = API.baseUrl + ep.path;
-  const headers = Object.assign({ "Accept":"application/json" }, (body ? { "Content-Type":"application/json" } : {}), extraOpts.headers || {});
-  if(store.token) headers["Authorization"] = `Bearer ${store.token}`;
+  const headers = Object.assign(
+    { "Accept":"application/json" },
+    (body ? { "Content-Type":"application/json" } : {}),
+    extraOpts.headers || {}
+  );
 
-  const res = await fetch(url, { method: ep.method, headers, body: body ? JSON.stringify(body) : undefined });
+  if(store.token){
+    headers["Authorization"] = `Bearer ${store.token}`;
+  }
+
+  const res = await fetch(url, {
+    method: ep.method,
+    headers,
+    body: body ? JSON.stringify(body) : undefined,
+  });
+
   const text = await res.text();
-  let data; try { data = JSON.parse(text); } catch { data = text; }
+  const data = safeJsonParse(text) ?? text;
 
-  if(!res.ok) throw new Error(typeof data === 'object' ? JSON.stringify(data) : data);
+  if(!res.ok){
+    console.error("API ERROR", { url, status: res.status, response: data });
+    const msg = typeof data === "string" ? data : JSON.stringify(data);
+    throw new Error(msg || `HTTP ${res.status}`);
+  }
   return data;
 }
 
 /* =========================
    5) UI RENDER
    ========================= */
-function render(){
+function renderTabs(){
   const isAuthed = !!store.token;
   const role = currentRole();
+  const tabs = [];
+
+  if(!isAuthed){
+    tabs.push({id:"login", label:"Login"});
+    tabs.push({id:"register", label:"Register"});
+  }else{
+    tabs.push({id:"admin", label:"Dashboard"});
+  }
+
   const wrap = $("#tabs");
   wrap.innerHTML = "";
-  
-  const tabs = !isAuthed ? [{id:"login", label:"Login"}, {id:"register", label:"Register"}] : [{id:"admin", label:"Dashboard"}];
-  if(isAuthed && state.tab !== "admin") state.tab = "admin";
-
-  tabs.forEach(t => {
+  for(const t of tabs){
     const b = document.createElement("div");
     b.className = "tab" + (state.tab === t.id ? " active" : "");
     b.textContent = t.label;
     b.onclick = () => { state.tab = t.id; render(); };
     wrap.appendChild(b);
-  });
+  }
 
-  $("#pageTitle").textContent = state.tab.toUpperCase();
+  const titleMap = {login:"Login", register:"Register", admin:"Dashboard"};
+  $("#pageTitle").textContent = titleMap[state.tab] || "Smart Campus";
+
   $("#authBadge").textContent = isAuthed ? "AUTH" : "GUEST";
   $("#authBadge").className = "badge " + (isAuthed ? "ok" : "warn");
   $("#btnLogout").style.display = isAuthed ? "inline-block" : "none";
+
   $("#roleBadge").textContent = "ROLE: " + role;
+  $("#roleBadge").className = "badge " + (String(role).toUpperCase().includes("ADMIN") ? "ok" : (role === "-" ? "warn" : ""));
+
   $("#envTxt").textContent = "API: " + API.baseUrl;
   $("#kvBase").textContent = API.baseUrl;
-  $("#kvToken").textContent = store.token ? (store.token.slice(0,10) + "...") : "-";
-  $("#kvEmail").textContent = store.user?.email || "-";
-  $("#kvRole").textContent = role;
+  $("#kvToken").textContent = store.token ? (store.token.slice(0,18) + "…") : "-";
+  $("#kvUserId").textContent = store.user?.id ?? store.user?.userId ?? "-";
+  $("#kvEmail").textContent = store.user?.email ?? "-";
+  $("#kvRole").textContent = role ?? "-";
+}
+
+function render(){
+  renderTabs();
 
   const page = $("#page");
   page.innerHTML = "";
+
   if(state.tab === "login") page.appendChild(viewLogin());
   else if(state.tab === "register") page.appendChild(viewRegister());
   else page.appendChild(viewDashboard());
@@ -391,112 +473,389 @@ function render(){
 function viewLogin(){
   const root = document.createElement("div");
   root.innerHTML = `
-    <div class="row">
-      <div><label>Email</label><input id="loginEmail" placeholder="email@example.com" /></div>
-      <div><label>Password</label><input id="loginPassword" type="password" placeholder="••••••••" /></div>
+    <div class="note" style="margin-bottom:12px">
+      Uses <code class="inline">${escapeHtml(API.endpoints.login.method)} ${escapeHtml(API.endpoints.login.path)}</code>
     </div>
-    <div class="actions"><button class="btn" id="btnLogin">${state.busy ? "..." : "Login"}</button></div>
+
+    <div class="row">
+      <div>
+        <label>Email</label>
+        <input id="loginEmail" placeholder="name@example.com" autocomplete="email" />
+      </div>
+      <div>
+        <label>Password</label>
+        <input id="loginPassword" type="password" placeholder="••••••••" autocomplete="current-password" />
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn" id="btnLogin">${state.busy ? "Logging in..." : "Login"}</button>
+      <button class="btn ghost" id="btnGoRegister">Go to Register</button>
+    </div>
   `;
+
+  root.querySelector("#btnGoRegister").onclick = () => { state.tab = "register"; render(); };
   root.querySelector("#btnLogin").onclick = async () => {
+    if(state.busy) return;
+
+    const email = root.querySelector("#loginEmail").value.trim();
+    const password = root.querySelector("#loginPassword").value;
+
+    if(!isEmail(email)) return toast("warn","Invalid Email","Enter a valid email address.");
+    const pwErr = validatePassword(password);
+    if(pwErr) return toast("warn","Invalid Password", pwErr);
+
     setBusy(true);
-    try {
-      const payload = API.payloadMaps.login({email: $("#loginEmail").value, password: $("#loginPassword").value});
+    try{
+      const payload = API.payloadMaps.login({email, password});
       const data = await apiCall("login", payload);
-      store.token = data.token || data.accessToken || data.jwt;
-      store.user = data.user || decodeJwt(store.token);
-      toast("ok", "Success", "Logged in successfully");
+
+      const token = data?.token || data?.accessToken || data?.jwt || data?.data?.token;
+      if(!token) throw new Error("Login success but token not found in response.");
+
+      store.token = token;
+
+      const user = data?.user || data?.data?.user || data?.profile || null;
+      if(user) store.user = user;
+      else{
+        const p = decodeJwt(token);
+        store.user = p ? { email: p.email || email, role: p.role || p.roles?.[0] || "-" } : { email };
+      }
+
+      toast("ok","Logged in","Token saved. Opening dashboard.");
       state.tab = "admin";
-    } catch(e) { toast("danger", "Error", e.message); }
-    finally { setBusy(false); }
+    }catch(e){
+      toast("danger","Login Failed", e.message || "Unknown error");
+    }finally{
+      setBusy(false);
+    }
   };
+
   return root;
 }
 
 function viewRegister(){
   const root = document.createElement("div");
   root.innerHTML = `
+    <div class="note" style="margin-bottom:12px">
+      Uses <code class="inline">${escapeHtml(API.endpoints.register.method)} ${escapeHtml(API.endpoints.register.path)}</code>
+    </div>
+
     <div class="row">
-      <div><label>Full Name</label><input id="regName" /></div>
-      <div><label>Role</label><select id="regRole"><option>STUDENT</option><option>TEACHER</option></select></div>
+      <div>
+        <label>Full Name</label>
+        <input id="regName" placeholder="Full Name" autocomplete="name" />
+      </div>
+      <div>
+        <label>Role</label>
+        <select id="regRole">
+          <option value="STUDENT">STUDENT</option>
+          <option value="TEACHER">TEACHER</option>
+          <option value="ADMIN">ADMIN</option>
+        </select>
+      </div>
     </div>
+
     <div class="row" style="margin-top:12px">
-      <div><label>Email</label><input id="regEmail" /></div>
-      <div><label>Password</label><input id="regPassword" type="password" /></div>
+      <div>
+        <label>Email</label>
+        <input id="regEmail" placeholder="name@example.com" autocomplete="email" />
+      </div>
+      <div>
+        <label>Password</label>
+        <input id="regPassword" type="password" placeholder="At least ${API.validation.passwordMin} chars" autocomplete="new-password" />
+      </div>
     </div>
-    <div class="actions"><button class="btn" id="btnReg">Register</button></div>
+
+    <div class="actions">
+      <button class="btn" id="btnRegister">${state.busy ? "Creating..." : "Register"}</button>
+      <button class="btn ghost" id="btnGoLogin">Go to Login</button>
+    </div>
   `;
-  root.querySelector("#btnReg").onclick = async () => {
+
+  root.querySelector("#btnGoLogin").onclick = () => { state.tab="login"; render(); };
+
+  root.querySelector("#btnRegister").onclick = async () => {
+    if(state.busy) return;
+
+    const fullName = root.querySelector("#regName").value.trim();
+    const email = root.querySelector("#regEmail").value.trim();
+    const password = root.querySelector("#regPassword").value;
+    const role = root.querySelector("#regRole").value;
+
+    if(fullName.length < 2) return toast("warn","Invalid Name","Enter a valid full name.");
+    if(!isEmail(email)) return toast("warn","Invalid Email","Enter a valid email address.");
+    const pwErr = validatePassword(password);
+    if(pwErr) return toast("warn","Invalid Password", pwErr);
+
     setBusy(true);
-    try {
-      const v = { fullName: $("#regName").value, email: $("#regEmail").value, password: $("#regPassword").value, role: $("#regRole").value };
-      await apiCall("register", API.payloadMaps.register(v));
-      toast("ok", "Success", "Account created");
+    try{
+      const payload = API.payloadMaps.register({fullName, email, password, role});
+      await apiCall("register", payload);
+
+      toast("ok","Registered","Account created. Now login.");
       state.tab = "login";
-    } catch(e) { toast("danger", "Error", e.message); }
-    finally { setBusy(false); }
+    }catch(e){
+      toast("danger","Register Failed", e.message || "Unknown error");
+    }finally{
+      setBusy(false);
+    }
   };
+
   return root;
 }
 
 function viewDashboard(){
   const role = currentRole();
-  const isAdmin = role === "ADMIN";
+  const isAdmin = String(role).toUpperCase().includes("ADMIN");
+
   const root = document.createElement("div");
   root.innerHTML = `
+    <div class="note" style="margin-bottom:12px">
+      Dashboard calls:
+      <br/>• <code class="inline">${escapeHtml(API.endpoints.addCourse.method)} ${escapeHtml(API.endpoints.addCourse.path)}</code>
+      <br/>• <code class="inline">${escapeHtml(API.endpoints.addCanteen.method)} ${escapeHtml(API.endpoints.addCanteen.path)}</code>
+      <br/>• <code class="inline">${escapeHtml(API.endpoints.addStudent.method)} ${escapeHtml(API.endpoints.addStudent.path)}</code> (Admin)
+      <br/>• <code class="inline">${escapeHtml(API.endpoints.addTeacher.method)} ${escapeHtml(API.endpoints.addTeacher.path)}</code> (Admin)
+    </div>
+
     <div class="card" style="margin-bottom:14px">
-      <div class="hd"><h2>Add Course</h2></div>
+      <div class="hd"><h2>Add Course</h2><span class="badge">COURSE</span></div>
       <div class="bd">
         <div class="row">
-          <div><label>Course Name</label><input id="cName" /></div>
-          <div><label>Course Code</label><input id="cCode" /></div>
+          <div><label>Course Name</label><input id="cName" placeholder="e.g. Advanced Java" /></div>
+          <div><label>Course Code</label><input id="cCode" placeholder="e.g. CS102" /></div>
         </div>
+
         <div class="row" style="margin-top:12px">
-          <div><label>Credits</label><input id="cCredits" type="number" /></div>
-          <div><label>Teacher ID</label><input id="cTeacherId" type="number" /></div>
+          <div><label>Description</label><input id="cDesc" placeholder="e.g. Learning Spring Boot and Hibernate" /></div>
+          <div><label>Department</label><input id="cDept" placeholder="e.g. CS" /></div>
         </div>
+
         <div class="row" style="margin-top:12px">
-          <div><label>Department</label><input id="cDept" /></div>
-          <div><label>Description</label><input id="cDesc" /></div>
+          <div><label>Credits</label><input id="cCredits" type="number" min="0" step="1" placeholder="3" /></div>
+          <div><label>Teacher ID</label><input id="cTeacherId" type="number" min="1" step="1" placeholder="1" /></div>
         </div>
-        <div class="actions"><button class="btn" id="btnAddCourse">Save Course</button></div>
+
+        <div class="actions">
+          <button class="btn" id="btnAddCourse">Add Course</button>
+        </div>
       </div>
     </div>
 
     <div class="card" style="margin-bottom:14px">
-      <div class="hd"><h2>Add Canteen Item</h2></div>
+      <div class="hd"><h2>Add Canteen Item</h2><span class="badge">CANTEEN</span></div>
       <div class="bd">
         <div class="row">
-          <div><label>Item Name</label><input id="iName" /></div>
-          <div><label>Price</label><input id="iPrice" type="number" /></div>
+          <div><label>Item Name</label><input id="iName" placeholder="e.g. Sandwich" /></div>
+          <div><label>Category (optional)</label><input id="iCat" placeholder="e.g. Food" /></div>
         </div>
-        <div class="actions"><button class="btn" id="btnAddItem">Save Item</button></div>
+        <div class="row" style="margin-top:12px">
+          <div><label>Price</label><input id="iPrice" type="number" min="0" step="0.01" placeholder="25.00" /></div>
+          <div><label>Quantity</label><input id="iQty" type="number" min="0" step="1" placeholder="50" /></div>
+        </div>
+        <div class="actions">
+          <button class="btn" id="btnAddItem">Add Item</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:14px; ${isAdmin ? "" : "opacity:.55"}">
+      <div class="hd">
+        <h2>Add Student (Admin)</h2>
+        <span class="badge ${isAdmin ? "ok" : "warn"}">${isAdmin ? "ADMIN" : "LOCKED"}</span>
+      </div>
+      <div class="bd">
+        <div class="row">
+          <div><label>Full Name</label><input id="sName" placeholder="Student Name" ${isAdmin ? "" : "disabled"} /></div>
+          <div><label>Email</label><input id="sEmail" placeholder="student@example.com" ${isAdmin ? "" : "disabled"} /></div>
+        </div>
+        <div class="row" style="margin-top:12px">
+          <div><label>Password</label><input id="sPass" type="password" placeholder="••••••••" ${isAdmin ? "" : "disabled"} /></div>
+          <div><label>Level (optional)</label><input id="sLevel" type="number" min="1" step="1" placeholder="1" ${isAdmin ? "" : "disabled"} /></div>
+        </div>
+        <div class="row" style="margin-top:12px">
+          <div><label>Department (optional)</label><input id="sDept" placeholder="CS" ${isAdmin ? "" : "disabled"} /></div>
+          <div></div>
+        </div>
+        <div class="actions">
+          <button class="btn" id="btnAddStudent" ${isAdmin ? "" : "disabled"}>Add Student</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:6px; ${isAdmin ? "" : "opacity:.55"}">
+      <div class="hd">
+        <h2>Add Teacher (Admin)</h2>
+        <span class="badge ${isAdmin ? "ok" : "warn"}">${isAdmin ? "ADMIN" : "LOCKED"}</span>
+      </div>
+      <div class="bd">
+        <div class="row">
+          <div><label>Full Name</label><input id="tName" placeholder="Teacher Name" ${isAdmin ? "" : "disabled"} /></div>
+          <div><label>Email</label><input id="tEmail" placeholder="teacher@example.com" ${isAdmin ? "" : "disabled"} /></div>
+        </div>
+        <div class="row" style="margin-top:12px">
+          <div><label>Password</label><input id="tPass" type="password" placeholder="••••••••" ${isAdmin ? "" : "disabled"} /></div>
+          <div><label>Title (optional)</label><input id="tTitle" placeholder="Dr / Mr / Ms" ${isAdmin ? "" : "disabled"} /></div>
+        </div>
+        <div class="row" style="margin-top:12px">
+          <div><label>Department (optional)</label><input id="tDept" placeholder="CS" ${isAdmin ? "" : "disabled"} /></div>
+          <div></div>
+        </div>
+        <div class="actions">
+          <button class="btn" id="btnAddTeacher" ${isAdmin ? "" : "disabled"}>Add Teacher</button>
+        </div>
       </div>
     </div>
   `;
 
+  // Add Course
   root.querySelector("#btnAddCourse").onclick = async () => {
+    if(state.busy) return;
+
+    const v = {
+      courseName:  root.querySelector("#cName").value.trim(),
+      courseCode:  root.querySelector("#cCode").value.trim(),
+      description: root.querySelector("#cDesc").value.trim(),
+      credits:     root.querySelector("#cCredits").value,
+      department:  root.querySelector("#cDept").value.trim(),
+      teacherId:   root.querySelector("#cTeacherId").value
+    };
+
+    if(v.courseName.length < 2) return toast("warn","Invalid","Course name required.");
+    if(v.courseCode.length < 2) return toast("warn","Invalid","Course code required.");
+    if(v.department.length < 2) return toast("warn","Invalid","Department required.");
+    if(String(v.credits||"").trim()==="") return toast("warn","Invalid","Credits required.");
+    if(String(v.teacherId||"").trim()==="") return toast("warn","Invalid","Teacher ID required.");
+
     setBusy(true);
-    try {
-      const v = { 
-        courseName: $("#cName").value, courseCode: $("#cCode").value, 
-        credits: $("#cCredits").value, teacherId: $("#cTeacherId").value,
-        department: $("#cDept").value, description: $("#cDesc").value
-      };
-      await apiCall("addCourse", API.payloadMaps.addCourse(v));
-      toast("ok", "Success", "Course added");
-    } catch(e) { toast("danger", "Error", e.message); }
-    finally { setBusy(false); }
+    try{
+      const payload = API.payloadMaps.addCourse(v);
+      await apiCall("addCourse", payload);
+
+      toast("ok","Course Added","Saved in backend.");
+
+      root.querySelector("#cName").value="";
+      root.querySelector("#cCode").value="";
+      root.querySelector("#cDesc").value="";
+      root.querySelector("#cDept").value="";
+      root.querySelector("#cCredits").value="";
+      root.querySelector("#cTeacherId").value="";
+    }catch(e){
+      toast("danger","Add Course Failed", e.message || "Unknown error");
+    }finally{
+      setBusy(false);
+    }
   };
 
+  // Add Canteen Item
   root.querySelector("#btnAddItem").onclick = async () => {
+    if(state.busy) return;
+
+    const v = {
+      itemName: root.querySelector("#iName").value.trim(),
+      category: root.querySelector("#iCat").value.trim(),
+      price: root.querySelector("#iPrice").value,
+      quantity: root.querySelector("#iQty").value
+    };
+
+    if(v.itemName.length < 2) return toast("warn","Invalid","Item name required.");
+    if(String(v.price||"").trim()==="") return toast("warn","Invalid","Price required.");
+    if(String(v.quantity||"").trim()==="") return toast("warn","Invalid","Quantity required.");
+
     setBusy(true);
-    try {
-      const v = { itemName: $("#iName").value, price: $("#iPrice").value, quantity: 10 };
-      await apiCall("addCanteen", API.payloadMaps.addCanteen(v));
-      toast("ok", "Success", "Item added");
-    } catch(e) { toast("danger", "Error", e.message); }
-    finally { setBusy(false); }
+    try{
+      const payload = API.payloadMaps.addCanteen(v);
+      await apiCall("addCanteen", payload);
+
+      toast("ok","Item Added","Saved in backend.");
+      root.querySelector("#iName").value="";
+      root.querySelector("#iCat").value="";
+      root.querySelector("#iPrice").value="";
+      root.querySelector("#iQty").value="";
+    }catch(e){
+      toast("danger","Add Item Failed", e.message || "Unknown error");
+    }finally{
+      setBusy(false);
+    }
   };
+
+  // Student/Teacher handlers (unchanged)
+  const btnAddStudent = root.querySelector("#btnAddStudent");
+  if(btnAddStudent){
+    btnAddStudent.onclick = async () => {
+      if(!isAdmin) return toast("warn","Forbidden","Admin only.");
+      if(state.busy) return;
+
+      const v = {
+        fullName: root.querySelector("#sName").value.trim(),
+        email: root.querySelector("#sEmail").value.trim(),
+        password: root.querySelector("#sPass").value,
+        level: root.querySelector("#sLevel").value,
+        department: root.querySelector("#sDept").value.trim(),
+      };
+
+      if(v.fullName.length < 2) return toast("warn","Invalid","Name required.");
+      if(!isEmail(v.email)) return toast("warn","Invalid","Valid email required.");
+      const pwErr = validatePassword(v.password);
+      if(pwErr) return toast("warn","Invalid Password", pwErr);
+
+      setBusy(true);
+      try{
+        const payload = API.payloadMaps.addStudent(v);
+        await apiCall("addStudent", payload);
+
+        toast("ok","Student Added","Saved in backend.");
+        root.querySelector("#sName").value="";
+        root.querySelector("#sEmail").value="";
+        root.querySelector("#sPass").value="";
+        root.querySelector("#sLevel").value="";
+        root.querySelector("#sDept").value="";
+      }catch(e){
+        toast("danger","Add Student Failed", e.message || "Unknown error");
+      }finally{
+        setBusy(false);
+      }
+    };
+  }
+
+  const btnAddTeacher = root.querySelector("#btnAddTeacher");
+  if(btnAddTeacher){
+    btnAddTeacher.onclick = async () => {
+      if(!isAdmin) return toast("warn","Forbidden","Admin only.");
+      if(state.busy) return;
+
+      const v = {
+        fullName: root.querySelector("#tName").value.trim(),
+        email: root.querySelector("#tEmail").value.trim(),
+        password: root.querySelector("#tPass").value,
+        title: root.querySelector("#tTitle").value.trim(),
+        department: root.querySelector("#tDept").value.trim(),
+      };
+
+      if(v.fullName.length < 2) return toast("warn","Invalid","Name required.");
+      if(!isEmail(v.email)) return toast("warn","Invalid","Valid email required.");
+      const pwErr = validatePassword(v.password);
+      if(pwErr) return toast("warn","Invalid Password", pwErr);
+
+      setBusy(true);
+      try{
+        const payload = API.payloadMaps.addTeacher(v);
+        await apiCall("addTeacher", payload);
+
+        toast("ok","Teacher Added","Saved in backend.");
+        root.querySelector("#tName").value="";
+        root.querySelector("#tEmail").value="";
+        root.querySelector("#tPass").value="";
+        root.querySelector("#tTitle").value="";
+        root.querySelector("#tDept").value="";
+      }catch(e){
+        toast("danger","Add Teacher Failed", e.message || "Unknown error");
+      }finally{
+        setBusy(false);
+      }
+    };
+  }
 
   return root;
 }
@@ -504,25 +863,53 @@ function viewDashboard(){
 /* =========================
    7) TOPBAR ACTIONS
    ========================= */
-$("#btnSwagger").onclick = () => window.open(API.swaggerUrl, "_blank");
-$("#btnLogout").onclick = () => { store.token = ""; store.user = null; state.tab = "login"; render(); };
-$("#btnWhoAmI").onclick = async () => {
-  if(!store.token) return toast("warn","Auth","Login first");
-  setBusy(true);
-  try {
-    const data = await apiCall("whoami");
-    store.user = data;
-    toast("ok", "WhoAmI", "User data updated");
-  } catch(e) { toast("danger", "Failed", e.message); }
-  finally { setBusy(false); }
+$("#btnSwagger").onclick = () => window.open(API.swaggerUrl, "_blank", "noopener,noreferrer");
+
+$("#btnLogout").onclick = () => {
+  store.token = "";
+  store.user = null;
+  state.tab = "login";
+  toast("ok","Logged out","Local session cleared.");
+  render();
 };
 
-// Initial Render
-render();
+$("#btnWhoAmI").onclick = async () => {
+  if(!store.token) return toast("warn","Not Authenticated","Login first.");
+  setBusy(true);
+  try{
+    const data = await apiCall("whoami");
+    if(data && typeof data === "object") store.user = data?.user || data;
+    toast("ok","WhoAmI","Fetched user info.");
+  }catch(e){
+    toast("danger","WhoAmI Failed", e.message || "Update whoami endpoint if not available.");
+  }finally{
+    setBusy(false);
+  }
+};
+
+$("#btnTestAuth").onclick = async () => {
+  if(!store.token) return toast("warn","Not Authenticated","Login first.");
+  setBusy(true);
+  try{
+    await apiCall("whoami");
+    toast("ok","Auth OK","Token accepted.");
+  }catch(e){
+    toast("danger","Auth Test Failed", e.message || "Token rejected or whoami endpoint not configured.");
+  }finally{
+    setBusy(false);
+  }
+};
+
+/* =========================
+   8) INIT
+   ========================= */
+(function init(){
+  state.tab = store.token ? "admin" : "login";
+  render();
+})();
 </script>
 </body>
 </html>
-
 
 
 
