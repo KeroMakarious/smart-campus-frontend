@@ -863,6 +863,25 @@ function renderCrud(label, opCreate, opList, opUpdate, { adminOnly=false } = {})
         if(!v.ok) throw new Error(v.errors.join("\n"));
 
         const payload = form.getValue();
+        let payload = form.getValue();
+
+// شيل أي قيم فاضية
+payload = Object.fromEntries(
+  Object.entries(payload).filter(([_,v]) => !(v===undefined || v===null || v===""))
+);
+
+// userId (رقم) → user:{id}
+if(payload.userId !== undefined && payload.user === undefined){
+  const uid = payload.userId;
+  delete payload.userId;
+  payload.user = { id: uid };
+}
+
+// شيل studentId لو موجود (الـ DB بيولّده)
+if(payload.studentId !== undefined){
+  delete payload.studentId;
+}
+
         const data = await apiFetch(opCreate.path, { method: opCreate.method, body: payload });
         toast("ok", `${label} created`, JSON.stringify(data,null,2));
         await refreshList();
@@ -1219,6 +1238,7 @@ el("btnCopyToken").onclick = async ()=>{
 </script>
 </body>
 </html>
+
 
 
 
