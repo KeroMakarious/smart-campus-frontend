@@ -1205,16 +1205,18 @@ async function saveUser(){
 
   setBusy(true);
   try{
-    const body = {
-      name, fullName:name, username:name,
-      email,
-      role:type, type,
-      department: dept || undefined,
-      dept: dept || undefined,
-      externalId: externalId || undefined,
-      studentId: type==="STUDENT" ? (externalId || undefined) : undefined,
-      staffId: type==="TEACHER" ? (externalId || undefined) : undefined,
-    };
+  const body = {
+  name,
+  fullName: name,
+  username: name,
+  email,
+  role: type,
+  type,
+  department: dept || undefined,
+  dept: dept || undefined,
+  externalId: externalId || undefined
+};
+
     if(password) body.password = password;
 
     Object.keys(body).forEach(k=> body[k]===undefined && delete body[k]);
@@ -1430,4 +1432,5 @@ init();
 </script>
 </body>
 </html>
+
 
