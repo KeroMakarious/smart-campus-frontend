@@ -269,11 +269,24 @@ const API = {
       role: v.role                 // maybe backend assigns role automatically
     }),
     addCourse: (v) => ({
-      name: v.courseName,          // maybe "courseName"
-      code: v.courseCode,          // maybe "code"
-      credits: Number(v.credits),  // maybe "creditHours"
-      teacherId: v.teacherId ? Number(v.teacherId) : null
-    }),
+  courseName: v.courseName,
+  courseCode: v.courseCode,
+  department: v.department,         
+  credits: Number(v.credits),        
+  teacherId: v.teacherId ? Number(v.teacherId) : null
+      <div class="row" style="margin-top:12px">
+  <div><label>Credits</label><input id="cCredits" type="number" min="0" step="1" placeholder="3" /></div>
+  <div><label>Teacher ID (optional)</label><input id="cTeacherId" type="number" min="1" step="1" placeholder="12" /></div>
+</div>
+<div class="row" style="margin-top:12px">
+  <div>
+    <label>Department</label>
+    <input id="cDept" placeholder="e.g. CS" />
+  </div>
+</div>
+
+}),
+
     addCanteen: (v) => ({
       name: v.itemName,
       price: Number(v.price),
@@ -903,6 +916,7 @@ $("#btnTestAuth").onclick = async () => {
 </script>
 </body>
 </html>
+
 
 
 
