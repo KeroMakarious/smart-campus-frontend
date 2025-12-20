@@ -417,13 +417,20 @@ async function apiCall(key, body=null, extraOpts={}){
   const text = await res.text();
   const data = safeJsonParse(text) ?? text;
 
-  if(!res.ok){
-    const msg = typeof data === "string" ? data : (data?.message || data?.error || JSON.stringify(data));
-    const err = new Error(msg || `HTTP ${res.status}`);
-    err.status = res.status;
-    err.data = data;
-    throw err;
-  }
+if(!res.ok){
+  console.error("API ERROR", {
+    url,
+    status: res.status,
+    response: data
+  });
+
+  const msg = typeof data === "string"
+    ? data
+    : JSON.stringify(data);
+
+  throw new Error(msg);
+}
+
   return data;
 }
 
@@ -896,6 +903,7 @@ $("#btnTestAuth").onclick = async () => {
 </script>
 </body>
 </html>
+
 
 
 
