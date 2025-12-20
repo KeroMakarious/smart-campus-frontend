@@ -1,877 +1,154 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Smart Campus - Frontend</title>
-  <style>
-    :root{
-      --bg:#0b1220; --card:#0f1b33; --card2:#0c1730; --txt:#e7eefc; --muted:#a9b7d6;
-      --line:#1e2b4e; --accent:#7aa7ff; --accent2:#9bffcf; --danger:#ff6b6b; --warn:#ffd166; --ok:#4ade80;
-      --shadow:0 18px 50px rgba(0,0,0,.35); --radius:18px; --radius2:14px;
-      --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial;
-    }
-    *{box-sizing:border-box}
-    body{
-      margin:0;
-      background: radial-gradient(1200px 800px at 15% 10%, rgba(122,167,255,.15), transparent 55%),
-                  radial-gradient(900px 600px at 85% 20%, rgba(155,255,207,.10), transparent 55%),
-                  var(--bg);
-      color:var(--txt);
-      font-family:var(--font);
-      min-height:100vh;
-    }
-    a{color:var(--accent); text-decoration:none}
-    .wrap{max-width:1100px; margin:0 auto; padding:24px}
-    .topbar{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px;}
-    .brand{
-      display:flex; align-items:center; gap:10px;
-      padding:12px 14px; border:1px solid var(--line);
-      background:linear-gradient(180deg, rgba(15,27,51,.9), rgba(12,23,48,.85));
-      border-radius:999px; box-shadow:var(--shadow);
-    }
-    .dot{width:10px; height:10px; border-radius:50%; background:var(--accent2); box-shadow:0 0 18px rgba(155,255,207,.45)}
-    .brand b{letter-spacing:.3px}
-    .pill{display:flex; align-items:center; gap:10px; border:1px solid var(--line); background:rgba(15,27,51,.65); border-radius:999px; padding:8px 10px;}
-    .pill small{color:var(--muted)}
-    .btn{
-      border:1px solid var(--line);
-      background:rgba(122,167,255,.12);
-      color:var(--txt);
-      padding:10px 12px;
-      border-radius:12px;
-      cursor:pointer;
-      transition:.15s transform, .15s opacity, .15s background;
-      font-weight:600;
-    }
-    .btn:hover{transform:translateY(-1px); background:rgba(122,167,255,.18)}
-    .btn:disabled{opacity:.55; cursor:not-allowed; transform:none}
-    .btn.ghost{background:transparent}
-    .btn.danger{background:rgba(255,107,107,.12)}
-    .btn.danger:hover{background:rgba(255,107,107,.18)}
-    .grid{display:grid; grid-template-columns: 1.2fr .8fr; gap:16px}
-    @media (max-width: 940px){ .grid{grid-template-columns:1fr} }
-    .card{
-      border:1px solid var(--line);
-      background:linear-gradient(180deg, rgba(15,27,51,.88), rgba(12,23,48,.84));
-      border-radius:var(--radius);
-      box-shadow:var(--shadow);
-      overflow:hidden;
-    }
-    .card .hd{padding:16px 16px 12px; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between; gap:10px;}
-    .card .hd h2{margin:0; font-size:16px}
-    .card .bd{padding:16px}
-    .muted{color:var(--muted)}
-    .tabs{display:flex; gap:8px; flex-wrap:wrap}
-    .tab{
-      padding:10px 12px;
-      border-radius:999px;
-      border:1px solid var(--line);
-      background:rgba(12,23,48,.55);
-      cursor:pointer;
-      font-weight:700;
-      color:var(--muted);
-      user-select:none;
-    }
-    .tab.active{color:var(--txt); background:rgba(122,167,255,.18); border-color:rgba(122,167,255,.4);}
-    .row{display:grid; grid-template-columns:1fr 1fr; gap:12px}
-    @media (max-width:700px){ .row{grid-template-columns:1fr} }
-    label{display:block; font-size:12px; color:var(--muted); margin:0 0 6px}
-    input, select, textarea{
-      width:100%;
-      padding:12px 12px;
-      border-radius:14px;
-      border:1px solid var(--line);
-      background:rgba(11,18,32,.55);
-      color:var(--txt);
-      outline:none;
-    }
-    textarea{min-height:92px; resize:vertical}
-    input:focus, select:focus, textarea:focus{border-color:rgba(122,167,255,.55); box-shadow:0 0 0 3px rgba(122,167,255,.10)}
-    .actions{display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:12px}
-    .note{
-      padding:10px 12px;
-      border-radius:14px;
-      border:1px dashed rgba(169,183,214,.35);
-      color:var(--muted);
-      background:rgba(12,23,48,.35);
-      font-size:12px;
-      line-height:1.35;
-    }
-    .toast{position:fixed; right:18px; bottom:18px; display:flex; flex-direction:column; gap:10px; z-index:9999;}
-    .toast .t{
-      min-width:280px; max-width:420px;
-      border:1px solid var(--line);
-      background:rgba(15,27,51,.92);
-      border-radius:16px;
-      box-shadow:var(--shadow);
-      padding:12px 12px;
-      display:flex; gap:10px;
-      align-items:flex-start;
-      animation: pop .18s ease-out;
-      word-break:break-word;
-      white-space:pre-wrap;
-    }
-    @keyframes pop{from{transform:translateY(8px); opacity:.5}to{transform:none; opacity:1}}
-    .badge{
-      font-size:11px;
-      padding:5px 8px;
-      border-radius:999px;
-      border:1px solid rgba(169,183,214,.25);
-      background:rgba(169,183,214,.08);
-      color:var(--muted);
-      font-weight:800;
-      letter-spacing:.2px;
-      white-space:nowrap;
-    }
-    .badge.ok{border-color:rgba(74,222,128,.28); background:rgba(74,222,128,.10); color:rgba(74,222,128,.95)}
-    .badge.warn{border-color:rgba(255,209,102,.28); background:rgba(255,209,102,.10); color:rgba(255,209,102,.95)}
-    .badge.danger{border-color:rgba(255,107,107,.28); background:rgba(255,107,107,.10); color:rgba(255,107,107,.95)}
-    .kvs{display:grid; grid-template-columns: 120px 1fr; gap:8px 12px; font-size:12px; color:var(--muted)}
-    .kvs b{color:var(--txt); font-weight:800}
-    code.inline{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono"; font-size:12px; color:rgba(155,255,207,.95)}
-  </style>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Smart Campus - Frontend</title>
+<style>
+:root{
+--bg:#0b1220;--card:#0f1b33;--txt:#e7eefc;--muted:#a9b7d6;--line:#1e2b4e;
+--accent:#7aa7ff;--ok:#4ade80;--warn:#ffd166;--danger:#ff6b6b;
+--radius:16px;--shadow:0 18px 50px rgba(0,0,0,.35);
+--font:system-ui,-apple-system,Segoe UI,Roboto,Arial
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);font-family:var(--font)}
+.wrap{max-width:1100px;margin:auto;padding:20px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:16px}
+.hd{padding:14px;border-bottom:1px solid var(--line);font-weight:800}
+.bd{padding:14px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+label{font-size:12px;color:var(--muted)}
+input,select{width:100%;padding:10px;border-radius:10px;border:1px solid var(--line);background:#0b1220;color:var(--txt)}
+.btn{padding:10px 14px;border-radius:10px;border:1px solid var(--line);background:rgba(122,167,255,.2);color:#fff;font-weight:700;cursor:pointer}
+.btn:disabled{opacity:.5}
+.badge{padding:4px 8px;border-radius:999px;font-size:11px}
+.ok{background:rgba(74,222,128,.2)}
+.warn{background:rgba(255,209,102,.2)}
+.danger{background:rgba(255,107,107,.2)}
+</style>
 </head>
 
 <body>
-  <div class="wrap">
-    <div class="topbar">
-      <div class="brand">
-        <span class="dot"></span>
-        <div>
-          <b>Smart Campus</b>
-          <div class="muted" style="font-size:12px">Frontend Demo (API-Linked)</div>
-        </div>
-      </div>
+<div class="wrap">
 
-      <div class="pill">
-        <small id="envTxt">API: …</small>
-        <span id="authBadge" class="badge warn">GUEST</span>
-        <button class="btn ghost" id="btnSwagger">Swagger</button>
-        <button class="btn danger" id="btnLogout" style="display:none">Logout</button>
-      </div>
-    </div>
+<div class="card">
+<div class="hd">Login</div>
+<div class="bd">
+<div class="row">
+<div>
+<label>Email</label>
+<input id="loginEmail"/>
+</div>
+<div>
+<label>Password</label>
+<input id="loginPass" type="password"/>
+</div>
+</div>
+<br>
+<button class="btn" onclick="login()">Login</button>
+</div>
+</div>
 
-    <div class="grid">
-      <div class="card">
-        <div class="hd">
-          <h2 id="pageTitle">Login</h2>
-          <div class="tabs" id="tabs"></div>
-        </div>
-        <div class="bd" id="page"></div>
-      </div>
+<div class="card">
+<div class="hd">Add Student (ADMIN)</div>
+<div class="bd">
+<div class="row">
+<div><label>First Name</label><input id="sFirst"/></div>
+<div><label>Last Name</label><input id="sLast"/></div>
+</div>
+<div class="row">
+<div><label>Department</label><input id="sDept"/></div>
+<div><label>Batch</label><input id="sBatch"/></div>
+</div>
+<div class="row">
+<div><label>Roll No</label><input id="sRoll" placeholder="SE-009"/></div>
+<div><label>User ID</label><input id="sUserId" type="number"/></div>
+</div>
+<br>
+<button class="btn" onclick="addStudent()">Add Student</button>
+</div>
+</div>
 
-      <div class="card">
-        <div class="hd">
-          <h2>Runtime Info</h2>
-          <span class="badge" id="roleBadge">ROLE: -</span>
-        </div>
-        <div class="bd">
-          <div class="note" style="margin-bottom:12px">
-            DevTools &gt; Console هتلاقي <code class="inline">API ERROR</code> فيها URL/Status/Response.
-          </div>
+<div class="card">
+<div class="hd">Add Teacher (ADMIN)</div>
+<div class="bd">
+<div class="row">
+<div><label>First Name</label><input id="tFirst"/></div>
+<div><label>Last Name</label><input id="tLast"/></div>
+</div>
+<div class="row">
+<div><label>Department</label><input id="tDept"/></div>
+<div><label>Qualification</label><input id="tQual" placeholder="PH"/></div>
+</div>
+<div class="row">
+<div><label>Phone</label><input id="tPhone"/></div>
+<div><label>User ID</label><input id="tUserId" type="number"/></div>
+</div>
+<br>
+<button class="btn" onclick="addTeacher()">Add Teacher</button>
+</div>
+</div>
 
-          <div class="kvs">
-            <div>Base URL</div><b id="kvBase">-</b>
-            <div>Token</div><b id="kvToken">-</b>
-            <div>User ID</div><b id="kvUserId">-</b>
-            <div>Email</div><b id="kvEmail">-</b>
-            <div>Role</div><b id="kvRole">-</b>
-          </div>
-
-          <div class="actions" style="margin-top:14px">
-            <button class="btn" id="btnWhoAmI">WhoAmI</button>
-            <button class="btn ghost" id="btnTestAuth">Test Auth Call</button>
-          </div>
-
-          <div class="note" style="margin-top:12px">
-            لو 403: التوكن غلط/منتهي أو الـ Endpoint محتاج Admin.
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="toast" id="toast"></div>
+</div>
 
 <script>
-/* =========================
-   1) CONFIG (EDIT THIS)
-   ========================= */
-const API = {
-  baseUrl: "https://just-presence-production-79e0.up.railway.app",
-  swaggerUrl: "https://just-presence-production-79e0.up.railway.app/swagger-ui/index.html#/",
+const API_BASE="https://just-presence-production-79e0.up.railway.app";
+let TOKEN="";
 
-  endpoints: {
-    login:      { method:"POST", path:"/api/auth/login" },
-    register:   { method:"POST", path:"/api/auth/register" },
+async function api(path,method,body){
+const res=await fetch(API_BASE+path,{
+method,
+headers:{
+"Content-Type":"application/json",
+...(TOKEN?{"Authorization":"Bearer "+TOKEN}:{})
+},
+body:body?JSON.stringify(body):undefined
+});
+if(!res.ok) throw await res.text();
+return res.json();
+}
 
-    // عدّل لو عندك endpoint حقيقي
-    whoami:     { method:"GET",  path:"/api/auth/me" },
+async function login(){
+const email=loginEmail.value.trim();
+const password=loginPass.value;
+const data=await api("/api/auth/login","POST",{email,password});
+TOKEN=data.token;
+alert("LOGIN OK");
+}
 
-    addCourse:  { method:"POST", path:"/api/courses" },
-    addCanteen: { method:"POST", path:"/api/canteen/items" },
-
-    addStudent: { method:"POST", path:"/api/students" },
-    addTeacher: { method:"POST", path:"/api/teachers" },
-  },
-
-  validation: { passwordMin: 8 },
-
-  payloadMaps: {
-    login: (v) => ({ email: v.email, password: v.password }),
-    register: (v) => ({ fullName: v.fullName, email: v.email, password: v.password, role: v.role }),
-
-    // Course: description + department
-    addCourse: (v) => ({
-      courseName: v.courseName,
-      courseCode: v.courseCode,
-      description: v.description,
-      credits: String(v.credits),
-      department: v.department,
-      teacherId: Number(v.teacherId)
-    }),
-
-    // Canteen
-    addCanteen: (v) => ({
-      name: v.name,
-      price: Number(v.price),
-      quantity: Number(v.quantity),
-      category: v.category || null
-    }),
-
-    // Student EXACT schema
-    addStudent: (v) => ({
-      studentId: 0,
-      firstName: v.firstName,
-      lastName: v.lastName,
-      department: v.department,
-      batch: v.batch,
-      rollNo: v.rollNo,
-      userId: Number(v.userId)
-    }),
-
-    // Teacher EXACT schema
-    addTeacher: (v) => ({
-      teacherId: 0,
-      userId: Number(v.userId),
-      firstName: v.firstName,
-      lastName: v.lastName,
-      department: v.department,
-      qualification: v.qualification,
-      phone: v.phone
-    }),
-  }
+async function addStudent(){
+const payload={
+studentId:0,
+firstName:sFirst.value.trim(),
+lastName:sLast.value.trim(),
+department:sDept.value.trim(),
+batch:sBatch.value.trim(),
+rollNo:sRoll.value.trim(),
+userId:Number(sUserId.value)
 };
+await api("/api/students","POST",payload);
+alert("STUDENT ADDED");
+}
 
-/* =========================
-   2) STATE
-   ========================= */
-const store = {
-  get token(){ return localStorage.getItem("sc_token") || ""; },
-  set token(v){ v ? localStorage.setItem("sc_token", v) : localStorage.removeItem("sc_token"); },
-
-  get user(){ try { return JSON.parse(localStorage.getItem("sc_user") || "null"); } catch { return null; } },
-  set user(v){ v ? localStorage.setItem("sc_user", JSON.stringify(v)) : localStorage.removeItem("sc_user"); },
+async function addTeacher(){
+const payload={
+teacherId:0,
+userId:Number(tUserId.value),
+firstName:tFirst.value.trim(),
+lastName:tLast.value.trim(),
+department:tDept.value.trim(),
+qualification:tQual.value.trim(),
+phone:tPhone.value.trim()
 };
-
-const state = { tab:"login", busy:false };
-
-/* =========================
-   3) HELPERS
-   ========================= */
-const $ = (sel) => document.querySelector(sel);
-
-function toast(type, title, msg){
-  const el = document.createElement("div");
-  const badgeClass = type === "ok" ? "ok" : type === "warn" ? "warn" : "danger";
-  el.className = "t";
-  el.innerHTML = `
-    <span class="badge ${badgeClass}">${type.toUpperCase()}</span>
-    <div>
-      <div style="font-weight:900; margin-bottom:2px">${escapeHtml(title)}</div>
-      <div style="color:var(--muted); font-size:12px; line-height:1.35">${escapeHtml(msg)}</div>
-    </div>
-  `;
-  $("#toast").appendChild(el);
-  setTimeout(()=>{ el.style.opacity="0"; el.style.transform="translateY(8px)"; el.style.transition="200ms"; }, 3200);
-  setTimeout(()=>{ el.remove(); }, 3600);
+await api("/api/teachers","POST",payload);
+alert("TEACHER ADDED");
 }
-
-function escapeHtml(s){
-  return String(s ?? "")
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
-}
-
-function isEmail(email){
-  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i.test(String(email||"").trim());
-}
-
-function validatePassword(pw){
-  const p = String(pw||"");
-  if(p.length < API.validation.passwordMin) return `Password must be at least ${API.validation.passwordMin} characters`;
-  if(/\s/.test(p)) return "Password must not contain spaces";
-  return "";
-}
-
-function safeJsonParse(text){
-  try { return JSON.parse(text); } catch { return null; }
-}
-
-function decodeJwt(token){
-  try{
-    const parts = token.split(".");
-    if(parts.length !== 3) return null;
-    const payload = parts[1].replace(/-/g,'+').replace(/_/g,'/');
-    const json = atob(payload);
-    return JSON.parse(json);
-  }catch{ return null; }
-}
-
-function currentRole(){
-  const u = store.user;
-  if(u?.role) return u.role;
-  const p = decodeJwt(store.token);
-  return p?.role || p?.roles?.[0] || p?.authorities?.[0] || "-";
-}
-
-function setBusy(b){ state.busy = b; render(); }
-
-/* =========================
-   4) API CLIENT
-   ========================= */
-async function apiCall(key, body=null, extraOpts={}){
-  const ep = API.endpoints[key];
-  if(!ep) throw new Error(`Endpoint not configured: ${key}`);
-
-  const url = API.baseUrl + ep.path;
-  const headers = Object.assign(
-    { "Accept":"application/json" },
-    (body ? { "Content-Type":"application/json" } : {}),
-    extraOpts.headers || {}
-  );
-
-  if(store.token){
-    headers["Authorization"] = `Bearer ${store.token}`;
-  }
-
-  const res = await fetch(url, {
-    method: ep.method,
-    headers,
-    body: body ? JSON.stringify(body) : undefined,
-  });
-
-  const text = await res.text();
-  const data = safeJsonParse(text) ?? text;
-
-  if(!res.ok){
-    console.error("API ERROR", { url, status: res.status, response: data });
-    const msg =
-      typeof data === "string" ? data :
-      (data?.message ? JSON.stringify(data.message) : JSON.stringify(data));
-    const err = new Error(msg || `HTTP ${res.status}`);
-    err.status = res.status;
-    err.data = data;
-    throw err;
-  }
-
-  return data;
-}
-
-/* =========================
-   5) UI RENDER
-   ========================= */
-function renderTabs(){
-  const isAuthed = !!store.token;
-  const role = currentRole();
-  const tabs = [];
-
-  if(!isAuthed){
-    tabs.push({id:"login", label:"Login"});
-    tabs.push({id:"register", label:"Register"});
-  }else{
-    tabs.push({id:"admin", label:"Dashboard"});
-  }
-
-  const wrap = $("#tabs");
-  wrap.innerHTML = "";
-  for(const t of tabs){
-    const b = document.createElement("div");
-    b.className = "tab" + (state.tab === t.id ? " active" : "");
-    b.textContent = t.label;
-    b.onclick = () => { state.tab = t.id; render(); };
-    wrap.appendChild(b);
-  }
-
-  const titleMap = {login:"Login", register:"Register", admin:"Dashboard"};
-  $("#pageTitle").textContent = titleMap[state.tab] || "Smart Campus";
-
-  $("#authBadge").textContent = isAuthed ? "AUTH" : "GUEST";
-  $("#authBadge").className = "badge " + (isAuthed ? "ok" : "warn");
-  $("#btnLogout").style.display = isAuthed ? "inline-block" : "none";
-
-  $("#roleBadge").textContent = "ROLE: " + role;
-  $("#roleBadge").className = "badge " + (String(role).toUpperCase().includes("ADMIN") ? "ok" : role === "-" ? "warn" : "");
-
-  $("#envTxt").textContent = "API: " + API.baseUrl;
-  $("#kvBase").textContent = API.baseUrl;
-  $("#kvToken").textContent = store.token ? (store.token.slice(0,18) + "…") : "-";
-  $("#kvUserId").textContent = store.user?.id ?? store.user?.userId ?? "-";
-  $("#kvEmail").textContent = store.user?.email ?? "-";
-  $("#kvRole").textContent = role ?? "-";
-}
-
-function render(){
-  renderTabs();
-  const page = $("#page");
-  page.innerHTML = "";
-
-  if(state.tab === "login") page.appendChild(viewLogin());
-  else if(state.tab === "register") page.appendChild(viewRegister());
-  else page.appendChild(viewDashboard());
-}
-
-/* =========================
-   6) VIEWS
-   ========================= */
-function viewLogin(){
-  const root = document.createElement("div");
-  root.innerHTML = `
-    <div class="note" style="margin-bottom:12px">
-      Uses <code class="inline">${escapeHtml(API.endpoints.login.method)} ${escapeHtml(API.endpoints.login.path)}</code>
-    </div>
-
-    <div class="row">
-      <div>
-        <label>Email</label>
-        <input id="loginEmail" placeholder="name@example.com" autocomplete="email" />
-      </div>
-      <div>
-        <label>Password</label>
-        <input id="loginPassword" type="password" placeholder="••••••••" autocomplete="current-password" />
-      </div>
-    </div>
-
-    <div class="actions">
-      <button class="btn" id="btnLogin">${state.busy ? "Logging in..." : "Login"}</button>
-      <button class="btn ghost" id="btnGoRegister">Go to Register</button>
-    </div>
-  `;
-
-  root.querySelector("#btnGoRegister").onclick = () => { state.tab = "register"; render(); };
-  root.querySelector("#btnLogin").onclick = async () => {
-    if(state.busy) return;
-
-    const email = root.querySelector("#loginEmail").value.trim();
-    const password = root.querySelector("#loginPassword").value;
-
-    if(!isEmail(email)) return toast("warn","Invalid Email","Enter a valid email address.");
-    const pwErr = validatePassword(password);
-    if(pwErr) return toast("warn","Invalid Password", pwErr);
-
-    setBusy(true);
-    try{
-      const payload = API.payloadMaps.login({email, password});
-      const data = await apiCall("login", payload);
-
-      const token = data?.token || data?.accessToken || data?.jwt || data?.data?.token;
-      if(!token) throw new Error("Login success but token not found in response.");
-
-      store.token = token;
-
-      const user = data?.user || data?.data?.user || data?.profile || null;
-      if(user) store.user = user;
-      else{
-        const p = decodeJwt(token);
-        store.user = p ? { email: p.email || email, role: p.role || p.roles?.[0] || "-" } : { email };
-      }
-
-      toast("ok","Logged in","Token saved.");
-      state.tab = "admin";
-    }catch(e){
-      toast("danger","Login Failed", e.message || "Unknown error");
-    }finally{
-      setBusy(false);
-    }
-  };
-
-  return root;
-}
-
-function viewRegister(){
-  const root = document.createElement("div");
-  root.innerHTML = `
-    <div class="note" style="margin-bottom:12px">
-      Uses <code class="inline">${escapeHtml(API.endpoints.register.method)} ${escapeHtml(API.endpoints.register.path)}</code>
-    </div>
-
-    <div class="row">
-      <div>
-        <label>Full Name</label>
-        <input id="regName" placeholder="Full Name" autocomplete="name" />
-      </div>
-      <div>
-        <label>Role</label>
-        <select id="regRole">
-          <option value="STUDENT">STUDENT</option>
-          <option value="TEACHER">TEACHER</option>
-          <option value="ADMIN">ADMIN</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="row" style="margin-top:12px">
-      <div>
-        <label>Email</label>
-        <input id="regEmail" placeholder="name@example.com" autocomplete="email" />
-      </div>
-      <div>
-        <label>Password</label>
-        <input id="regPassword" type="password" placeholder="At least ${API.validation.passwordMin} chars" autocomplete="new-password" />
-      </div>
-    </div>
-
-    <div class="actions">
-      <button class="btn" id="btnRegister">${state.busy ? "Creating..." : "Register"}</button>
-      <button class="btn ghost" id="btnGoLogin">Go to Login</button>
-    </div>
-  `;
-
-  root.querySelector("#btnGoLogin").onclick = () => { state.tab="login"; render(); };
-
-  root.querySelector("#btnRegister").onclick = async () => {
-    if(state.busy) return;
-
-    const fullName = root.querySelector("#regName").value.trim();
-    const email = root.querySelector("#regEmail").value.trim();
-    const password = root.querySelector("#regPassword").value;
-    const role = root.querySelector("#regRole").value;
-
-    if(fullName.length < 2) return toast("warn","Invalid Name","Enter a valid full name.");
-    if(!isEmail(email)) return toast("warn","Invalid Email","Enter a valid email address.");
-    const pwErr = validatePassword(password);
-    if(pwErr) return toast("warn","Invalid Password", pwErr);
-
-    setBusy(true);
-    try{
-      const payload = API.payloadMaps.register({fullName, email, password, role});
-      await apiCall("register", payload);
-      toast("ok","Registered","Now login.");
-      state.tab = "login";
-    }catch(e){
-      toast("danger","Register Failed", e.message || "Unknown error");
-    }finally{
-      setBusy(false);
-    }
-  };
-
-  return root;
-}
-
-function viewDashboard(){
-  const role = currentRole();
-  const isAdmin = String(role).toUpperCase().includes("ADMIN");
-
-  const root = document.createElement("div");
-  root.innerHTML = `
-    <div class="note" style="margin-bottom:12px">
-      Student: <code class="inline">{studentId,firstName,lastName,department,batch,rollNo,userId}</code><br/>
-      Teacher: <code class="inline">{teacherId,userId,firstName,lastName,department,qualification,phone}</code><br/>
-      Course: <code class="inline">{courseName,courseCode,description,credits,department,teacherId}</code>
-    </div>
-
-    <!-- Add Course -->
-    <div class="card" style="margin-bottom:14px">
-      <div class="hd"><h2>Add Course</h2><span class="badge">COURSE</span></div>
-      <div class="bd">
-        <div class="row">
-          <div><label>Course Name</label><input id="cName" placeholder="Advanced Java" /></div>
-          <div><label>Course Code</label><input id="cCode" placeholder="CS102" /></div>
-        </div>
-        <div class="row" style="margin-top:12px">
-          <div><label>Description</label><input id="cDesc" placeholder="Learning Spring Boot and Hibernate" /></div>
-          <div><label>Department</label><input id="cDept" placeholder="CS" /></div>
-        </div>
-        <div class="row" style="margin-top:12px">
-          <div><label>Credits</label><input id="cCredits" type="number" min="0" step="1" placeholder="3" /></div>
-          <div><label>Teacher ID</label><input id="cTeacherId" type="number" min="1" step="1" placeholder="1" /></div>
-        </div>
-        <div class="actions">
-          <button class="btn" id="btnAddCourse">Add Course</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Add Canteen -->
-    <div class="card" style="margin-bottom:14px">
-      <div class="hd"><h2>Add Canteen Item</h2><span class="badge">CANTEEN</span></div>
-      <div class="bd">
-        <div class="row">
-          <div><label>Name</label><input id="iName" placeholder="Chicken Sandwich" /></div>
-          <div><label>Category</label><input id="iCat" placeholder="Food" /></div>
-        </div>
-        <div class="row" style="margin-top:12px">
-          <div><label>Price</label><input id="iPrice" type="number" min="0" step="0.01" placeholder="25" /></div>
-          <div><label>Quantity</label><input id="iQty" type="number" min="0" step="1" placeholder="50" /></div>
-        </div>
-        <div class="actions">
-          <button class="btn" id="btnAddItem">Add Item</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Add Student (Admin) -->
-    <div class="card" style="margin-bottom:14px; ${isAdmin ? "" : "opacity:.55"}">
-      <div class="hd">
-        <h2>Add Student (Admin)</h2>
-        <span class="badge ${isAdmin ? "ok" : "warn"}">${isAdmin ? "ADMIN" : "LOCKED"}</span>
-      </div>
-      <div class="bd">
-        <div class="row">
-          <div><label>First Name</label><input id="sFirst" placeholder="Ahmed" ${isAdmin ? "" : "disabled"} /></div>
-          <div><label>Last Name</label><input id="sLast" placeholder="Mohamed" ${isAdmin ? "" : "disabled"} /></div>
-        </div>
-        <div class="row" style="margin-top:12px">
-          <div><label>Department</label><input id="sDept" placeholder="CS" ${isAdmin ? "" : "disabled"} /></div>
-          <div><label>Batch</label><input id="sBatch" placeholder="2024" ${isAdmin ? "" : "disabled"} /></div>
-        </div>
-        <div class="row" style="margin-top:12px">
-          <div><label>Roll No</label><input id="sRoll" placeholder="CS-2024-001" ${isAdmin ? "" : "disabled"} /></div>
-          <div><label>User ID</label><input id="sUserId" type="number" min="1" step="1" placeholder="5" ${isAdmin ? "" : "disabled"} /></div>
-        </div>
-        <div class="actions">
-          <button class="btn" id="btnAddStudent" ${isAdmin ? "" : "disabled"}>Add Student</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Add Teacher (Admin) -->
-    <div class="card" style="margin-bottom:6px; ${isAdmin ? "" : "opacity:.55"}">
-      <div class="hd">
-        <h2>Add Teacher (Admin)</h2>
-        <span class="badge ${isAdmin ? "ok" : "warn"}">${isAdmin ? "ADMIN" : "LOCKED"}</span>
-      </div>
-      <div class="bd">
-        <div class="row">
-          <div><label>First Name</label><input id="tFirst" placeholder="Ashraf" ${isAdmin ? "" : "disabled"} /></div>
-          <div><label>Last Name</label><input id="tLast" placeholder="Deraz" ${isAdmin ? "" : "disabled"} /></div>
-        </div>
-        <div class="row" style="margin-top:12px">
-          <div><label>Department</label><input id="tDept" placeholder="CS" ${isAdmin ? "" : "disabled"} /></div>
-          <div><label>Qualification</label><input id="tQual" placeholder="PH" ${isAdmin ? "" : "disabled"} /></div>
-        </div>
-        <div class="row" style="margin-top:12px">
-          <div><label>Phone</label><input id="tPhone" placeholder="10239203293" ${isAdmin ? "" : "disabled"} /></div>
-          <div><label>User ID</label><input id="tUserId" type="number" min="1" step="1" placeholder="6" ${isAdmin ? "" : "disabled"} /></div>
-        </div>
-        <div class="actions">
-          <button class="btn" id="btnAddTeacher" ${isAdmin ? "" : "disabled"}>Add Teacher</button>
-        </div>
-      </div>
-    </div>
-  `;
-
-  // Add Course
-  root.querySelector("#btnAddCourse").onclick = async () => {
-    if(state.busy) return;
-
-    const v = {
-      courseName: root.querySelector("#cName").value.trim(),
-      courseCode: root.querySelector("#cCode").value.trim(),
-      description: root.querySelector("#cDesc").value.trim(),
-      credits: root.querySelector("#cCredits").value,
-      department: root.querySelector("#cDept").value.trim(),
-      teacherId: root.querySelector("#cTeacherId").value
-    };
-
-    if(v.courseName.length < 1) return toast("warn","Invalid","courseName required");
-    if(v.courseCode.length < 1) return toast("warn","Invalid","courseCode required");
-    if(v.department.length < 1) return toast("warn","Invalid","department required");
-    if(String(v.credits||"").trim()==="") return toast("warn","Invalid","credits required");
-    if(String(v.teacherId||"").trim()==="") return toast("warn","Invalid","teacherId required");
-
-    setBusy(true);
-    try{
-      const payload = API.payloadMaps.addCourse(v);
-      await apiCall("addCourse", payload);
-      toast("ok","Course Added","Saved.");
-
-      root.querySelector("#cName").value="";
-      root.querySelector("#cCode").value="";
-      root.querySelector("#cDesc").value="";
-      root.querySelector("#cDept").value="";
-      root.querySelector("#cCredits").value="";
-      root.querySelector("#cTeacherId").value="";
-    }catch(e){
-      toast("danger","Add Course Failed", e.message || "Unknown error");
-    }finally{ setBusy(false); }
-  };
-
-  // Add Canteen
-  root.querySelector("#btnAddItem").onclick = async () => {
-    if(state.busy) return;
-
-    const v = {
-      name: root.querySelector("#iName").value.trim(),
-      category: root.querySelector("#iCat").value.trim(),
-      price: root.querySelector("#iPrice").value,
-      quantity: root.querySelector("#iQty").value
-    };
-
-    if(v.name.length < 2) return toast("warn","Invalid","name required");
-    if(String(v.price||"").trim()==="") return toast("warn","Invalid","price required");
-    if(String(v.quantity||"").trim()==="") return toast("warn","Invalid","quantity required");
-
-    setBusy(true);
-    try{
-      const payload = API.payloadMaps.addCanteen(v);
-      await apiCall("addCanteen", payload);
-      toast("ok","Item Added","Saved.");
-
-      root.querySelector("#iName").value="";
-      root.querySelector("#iCat").value="";
-      root.querySelector("#iPrice").value="";
-      root.querySelector("#iQty").value="";
-    }catch(e){
-      toast("danger","Add Item Failed", e.message || "Unknown error");
-    }finally{ setBusy(false); }
-  };
-
-  // Add Student
-  const btnAddStudent = root.querySelector("#btnAddStudent");
-  if(btnAddStudent){
-    btnAddStudent.onclick = async () => {
-      if(!isAdmin) return toast("warn","Forbidden","Admin only.");
-      if(state.busy) return;
-
-      const v = {
-        firstName: root.querySelector("#sFirst").value.trim(),
-        lastName: root.querySelector("#sLast").value.trim(),
-        department: root.querySelector("#sDept").value.trim(),
-        batch: root.querySelector("#sBatch").value.trim(),
-        rollNo: root.querySelector("#sRoll").value.trim(),
-        userId: root.querySelector("#sUserId").value
-      };
-
-      if(v.firstName.length < 1) return toast("warn","Invalid","firstName required");
-      if(v.lastName.length < 1) return toast("warn","Invalid","lastName required");
-      if(v.department.length < 1) return toast("warn","Invalid","department required");
-      if(v.batch.length < 1) return toast("warn","Invalid","batch required");
-      if(v.rollNo.length < 1) return toast("warn","Invalid","rollNo required");
-      if(String(v.userId||"").trim()==="") return toast("warn","Invalid","userId required");
-
-      setBusy(true);
-      try{
-        const payload = API.payloadMaps.addStudent(v);
-        await apiCall("addStudent", payload);
-        toast("ok","Student Added","Saved.");
-
-        root.querySelector("#sFirst").value="";
-        root.querySelector("#sLast").value="";
-        root.querySelector("#sDept").value="";
-        root.querySelector("#sBatch").value="";
-        root.querySelector("#sRoll").value="";
-        root.querySelector("#sUserId").value="";
-      }catch(e){
-        toast("danger","Add Student Failed", e.message || "Unknown error");
-      }finally{ setBusy(false); }
-    };
-  }
-
-  // Add Teacher
-  const btnAddTeacher = root.querySelector("#btnAddTeacher");
-  if(btnAddTeacher){
-    btnAddTeacher.onclick = async () => {
-      if(!isAdmin) return toast("warn","Forbidden","Admin only.");
-      if(state.busy) return;
-
-      const v = {
-        firstName: root.querySelector("#tFirst").value.trim(),
-        lastName: root.querySelector("#tLast").value.trim(),
-        department: root.querySelector("#tDept").value.trim(),
-        qualification: root.querySelector("#tQual").value.trim(),
-        phone: root.querySelector("#tPhone").value.trim(),
-        userId: root.querySelector("#tUserId").value
-      };
-
-      if(v.firstName.length < 1) return toast("warn","Invalid","firstName required");
-      if(v.lastName.length < 1) return toast("warn","Invalid","lastName required");
-      if(v.department.length < 1) return toast("warn","Invalid","department required");
-      if(v.qualification.length < 1) return toast("warn","Invalid","qualification required");
-      if(v.phone.length < 6) return toast("warn","Invalid","phone required");
-      if(String(v.userId||"").trim()==="") return toast("warn","Invalid","userId required");
-
-      setBusy(true);
-      try{
-        const payload = API.payloadMaps.addTeacher(v);
-        await apiCall("addTeacher", payload);
-        toast("ok","Teacher Added","Saved.");
-
-        root.querySelector("#tFirst").value="";
-        root.querySelector("#tLast").value="";
-        root.querySelector("#tDept").value="";
-        root.querySelector("#tQual").value="";
-        root.querySelector("#tPhone").value="";
-        root.querySelector("#tUserId").value="";
-      }catch(e){
-        toast("danger","Add Teacher Failed", e.message || "Unknown error");
-      }finally{ setBusy(false); }
-    };
-  }
-
-  return root;
-}
-
-/* =========================
-   7) TOPBAR ACTIONS
-   ========================= */
-$("#btnSwagger").onclick = () => window.open(API.swaggerUrl, "_blank", "noopener,noreferrer");
-
-$("#btnLogout").onclick = () => {
-  store.token = "";
-  store.user = null;
-  state.tab = "login";
-  toast("ok","Logged out","Local session cleared.");
-  render();
-};
-
-$("#btnWhoAmI").onclick = async () => {
-  if(!store.token) return toast("warn","Not Authenticated","Login first.");
-  setBusy(true);
-  try{
-    const data = await apiCall("whoami");
-    if(data && typeof data === "object") store.user = data?.user || data;
-    toast("ok","WhoAmI","Fetched user info.");
-  }catch(e){
-    toast("danger","WhoAmI Failed", e.message || "whoami endpoint مش مظبوط.");
-  }finally{ setBusy(false); }
-};
-
-$("#btnTestAuth").onclick = async () => {
-  if(!store.token) return toast("warn","Not Authenticated","Login first.");
-  setBusy(true);
-  try{
-    await apiCall("whoami");
-    toast("ok","Auth OK","Token accepted.");
-  }catch(e){
-    toast("danger","Auth Test Failed", e.message || "Token rejected / whoami wrong.");
-  }finally{ setBusy(false); }
-};
-
-/* =========================
-   8) INIT
-   ========================= */
-(function init(){
-  state.tab = store.token ? "admin" : "login";
-  render();
-})();
 </script>
 </body>
 </html>
+
+
 
 
 
