@@ -8,8 +8,8 @@
     :root{
       --bg:#0b1220; --card:#0f1b33; --card2:#0c1730; --txt:#e7eefc; --muted:#a9b7d6;
       --line:#1e2b4e; --accent:#7aa7ff; --accent2:#9bffcf; --danger:#ff6b6b; --warn:#ffd166; --ok:#4ade80;
-      --shadow: 0 18px 50px rgba(0,0,0,.35); --radius:18px; --radius2:14px;
-      --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      --shadow:0 18px 50px rgba(0,0,0,.35); --radius:18px; --radius2:14px;
+      --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial;
     }
     *{box-sizing:border-box}
     body{
@@ -168,8 +168,7 @@
         </div>
         <div class="bd">
           <div class="note" style="margin-bottom:12px">
-            Token in <code class="inline">localStorage</code> and sent as <code class="inline">Authorization: Bearer &lt;token&gt;</code>.<br/>
-            لو أي Request بيفشل: افتح DevTools > Console هتلاقي <code class="inline">API ERROR</code> فيها URL/Status/Response.
+            DevTools &gt; Console هتلاقي <code class="inline">API ERROR</code> فيها URL/Status/Response.
           </div>
 
           <div class="kvs">
@@ -207,35 +206,33 @@ const API = {
     login:      { method:"POST", path:"/api/auth/login" },
     register:   { method:"POST", path:"/api/auth/register" },
 
-    // عدّل ده لو عندك endpoint فعلاً بيرجع بيانات اليوزر
+    // عدّل لو عندك endpoint حقيقي
     whoami:     { method:"GET",  path:"/api/auth/me" },
 
     addCourse:  { method:"POST", path:"/api/courses" },
     addCanteen: { method:"POST", path:"/api/canteen/items" },
 
-    // Admin
     addStudent: { method:"POST", path:"/api/students" },
     addTeacher: { method:"POST", path:"/api/teachers" },
   },
 
   validation: { passwordMin: 8 },
 
-  // Payloads EXACT حسب اللي انت بعته
   payloadMaps: {
     login: (v) => ({ email: v.email, password: v.password }),
     register: (v) => ({ fullName: v.fullName, email: v.email, password: v.password, role: v.role }),
 
-    // Course DTO (بالـ description + department)
+    // Course: description + department
     addCourse: (v) => ({
       courseName: v.courseName,
       courseCode: v.courseCode,
       description: v.description,
-      credits: String(v.credits),          // backend عنده سترنج
+      credits: String(v.credits),
       department: v.department,
       teacherId: Number(v.teacherId)
     }),
 
-    // Canteen غالباً زي ما كان
+    // Canteen
     addCanteen: (v) => ({
       name: v.name,
       price: Number(v.price),
@@ -243,7 +240,7 @@ const API = {
       category: v.category || null
     }),
 
-    // Student Schema اللي انت بعته
+    // Student EXACT schema
     addStudent: (v) => ({
       studentId: 0,
       firstName: v.firstName,
@@ -254,7 +251,7 @@ const API = {
       userId: Number(v.userId)
     }),
 
-    // Teacher Schema اللي انت بعته
+    // Teacher EXACT schema
     addTeacher: (v) => ({
       teacherId: 0,
       userId: Number(v.userId),
@@ -373,11 +370,9 @@ async function apiCall(key, body=null, extraOpts={}){
 
   if(!res.ok){
     console.error("API ERROR", { url, status: res.status, response: data });
-
     const msg =
       typeof data === "string" ? data :
       (data?.message ? JSON.stringify(data.message) : JSON.stringify(data));
-
     const err = new Error(msg || `HTTP ${res.status}`);
     err.status = res.status;
     err.data = data;
@@ -418,6 +413,7 @@ function renderTabs(){
   $("#authBadge").textContent = isAuthed ? "AUTH" : "GUEST";
   $("#authBadge").className = "badge " + (isAuthed ? "ok" : "warn");
   $("#btnLogout").style.display = isAuthed ? "inline-block" : "none";
+
   $("#roleBadge").textContent = "ROLE: " + role;
   $("#roleBadge").className = "badge " + (String(role).toUpperCase().includes("ADMIN") ? "ok" : role === "-" ? "warn" : "");
 
@@ -583,9 +579,9 @@ function viewDashboard(){
   const root = document.createElement("div");
   root.innerHTML = `
     <div class="note" style="margin-bottom:12px">
-      Add Course payload: <code class="inline">{courseName,courseCode,description,credits,department,teacherId}</code><br/>
-      Add Student payload: <code class="inline">{studentId,firstName,lastName,department,batch,rollNo,userId}</code><br/>
-      Add Teacher payload: <code class="inline">{teacherId,userId,firstName,lastName,department,qualification,phone}</code>
+      Student: <code class="inline">{studentId,firstName,lastName,department,batch,rollNo,userId}</code><br/>
+      Teacher: <code class="inline">{teacherId,userId,firstName,lastName,department,qualification,phone}</code><br/>
+      Course: <code class="inline">{courseName,courseCode,description,credits,department,teacherId}</code>
     </div>
 
     <!-- Add Course -->
@@ -601,7 +597,7 @@ function viewDashboard(){
           <div><label>Department</label><input id="cDept" placeholder="CS" /></div>
         </div>
         <div class="row" style="margin-top:12px">
-          <div><label>Credits (as string in backend)</label><input id="cCredits" type="number" min="0" step="1" placeholder="3" /></div>
+          <div><label>Credits</label><input id="cCredits" type="number" min="0" step="1" placeholder="3" /></div>
           <div><label>Teacher ID</label><input id="cTeacherId" type="number" min="1" step="1" placeholder="1" /></div>
         </div>
         <div class="actions">
@@ -666,10 +662,10 @@ function viewDashboard(){
         </div>
         <div class="row" style="margin-top:12px">
           <div><label>Department</label><input id="tDept" placeholder="CS" ${isAdmin ? "" : "disabled"} /></div>
-          <div><label>Qualification</label><input id="tQual" placeholder="PhD" ${isAdmin ? "" : "disabled"} /></div>
+          <div><label>Qualification</label><input id="tQual" placeholder="PH" ${isAdmin ? "" : "disabled"} /></div>
         </div>
         <div class="row" style="margin-top:12px">
-          <div><label>Phone</label><input id="tPhone" placeholder="010239203293" ${isAdmin ? "" : "disabled"} /></div>
+          <div><label>Phone</label><input id="tPhone" placeholder="10239203293" ${isAdmin ? "" : "disabled"} /></div>
           <div><label>User ID</label><input id="tUserId" type="number" min="1" step="1" placeholder="6" ${isAdmin ? "" : "disabled"} /></div>
         </div>
         <div class="actions">
@@ -679,7 +675,7 @@ function viewDashboard(){
     </div>
   `;
 
-  // Add Course handler
+  // Add Course
   root.querySelector("#btnAddCourse").onclick = async () => {
     if(state.busy) return;
 
@@ -692,8 +688,8 @@ function viewDashboard(){
       teacherId: root.querySelector("#cTeacherId").value
     };
 
-    if(v.courseName.length < 2) return toast("warn","Invalid","courseName required");
-    if(v.courseCode.length < 2) return toast("warn","Invalid","courseCode required");
+    if(v.courseName.length < 1) return toast("warn","Invalid","courseName required");
+    if(v.courseCode.length < 1) return toast("warn","Invalid","courseCode required");
     if(v.department.length < 1) return toast("warn","Invalid","department required");
     if(String(v.credits||"").trim()==="") return toast("warn","Invalid","credits required");
     if(String(v.teacherId||"").trim()==="") return toast("warn","Invalid","teacherId required");
@@ -715,7 +711,7 @@ function viewDashboard(){
     }finally{ setBusy(false); }
   };
 
-  // Add Canteen handler
+  // Add Canteen
   root.querySelector("#btnAddItem").onclick = async () => {
     if(state.busy) return;
 
@@ -745,7 +741,7 @@ function viewDashboard(){
     }finally{ setBusy(false); }
   };
 
-  // Add Student handler
+  // Add Student
   const btnAddStudent = root.querySelector("#btnAddStudent");
   if(btnAddStudent){
     btnAddStudent.onclick = async () => {
@@ -786,7 +782,7 @@ function viewDashboard(){
     };
   }
 
-  // Add Teacher handler
+  // Add Teacher
   const btnAddTeacher = root.querySelector("#btnAddTeacher");
   if(btnAddTeacher){
     btnAddTeacher.onclick = async () => {
@@ -876,7 +872,6 @@ $("#btnTestAuth").onclick = async () => {
 </script>
 </body>
 </html>
-
 
 
 
