@@ -739,14 +739,19 @@ function viewDashboard(){
   root.querySelector("#btnAddCourse").onclick = async () => {
     if(state.busy) return;
     const v = {
-      courseName: root.querySelector("#cName").value.trim(),
-      courseCode: root.querySelector("#cCode").value.trim(),
-      credits: root.querySelector("#cCredits").value,
-      teacherId: root.querySelector("#cTeacherId").value
-    };
+  courseName: root.querySelector("#cName").value.trim(),
+  courseCode: root.querySelector("#cCode").value.trim(),
+  description: root.querySelector("#cDesc").value.trim(),
+  credits: root.querySelector("#cCredits").value,
+  department: root.querySelector("#cDept").value.trim(),
+  teacherId: root.querySelector("#cTeacherId").value
+};
+
     if(v.courseName.length < 2) return toast("warn","Invalid","Course name required.");
-    if(v.courseCode.length < 2) return toast("warn","Invalid","Course code required.");
-    if(String(v.credits||"").trim()==="") return toast("warn","Invalid","Credits required.");
+if(v.courseCode.length < 2) return toast("warn","Invalid","Course code required.");
+if(v.department.length < 2) return toast("warn","Invalid","Department required.");
+if(String(v.credits||"").trim()==="") return toast("warn","Invalid","Credits required.");
+if(String(v.teacherId||"").trim()==="") return toast("warn","Invalid","Teacher ID required.");
 
     setBusy(true);
     try{
@@ -885,6 +890,8 @@ $("#btnWhoAmI").onclick = async () => {
   }finally{ setBusy(false); }
 };
 
+  
+
 $("#btnTestAuth").onclick = async () => {
   if(!store.token) return toast("warn","Not Authenticated","Login first.");
   setBusy(true);
@@ -908,6 +915,7 @@ $("#btnTestAuth").onclick = async () => {
 </script>
 </body>
 </html>
+
 
 
 
