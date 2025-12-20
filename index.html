@@ -429,6 +429,8 @@ function buildFormFromSchema(schema, { mode="create" } = {}){
   const fields = [];
 
   for(const [name, def] of Object.entries(props)){
+  if(mode === "create" && name.toLowerCase() === "id") continue;
+
     const f = document.createElement("div");
     const id = `f_${name}_${Math.random().toString(16).slice(2)}`;
 
@@ -1114,6 +1116,7 @@ el("btnCopyToken").onclick = async ()=>{
 </script>
 </body>
 </html>
+
 
 
 
