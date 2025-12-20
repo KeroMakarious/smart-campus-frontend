@@ -1,1125 +1,1436 @@
 <!doctype html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Just Presence Admin Portal (Frontend)</title>
+  <title>Smart Campus - Admin/Staff Frontend</title>
   <style>
     :root{
       --bg:#0b1220; --card:#0f1b33; --card2:#0c1730; --txt:#e7eefc; --muted:#a9b7d6;
-      --line:#1e2b4e; --accent:#7aa7ff; --ok:#4ade80; --warn:#ffd166; --danger:#ff6b6b;
-      --shadow: 0 18px 50px rgba(0,0,0,.35);
-      --radius: 16px;
-      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      --line:#1e2b4e; --accent:#7aa7ff; --accent2:#9bffcf; --danger:#ff6b6b; --warn:#ffd166; --ok:#4ade80;
+      --shadow:0 18px 50px rgba(0,0,0,.35); --radius:18px; --radius2:14px;
+      --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
     }
-    *{box-sizing:border-box}
-    body{margin:0; font-family:var(--font); background:radial-gradient(1200px 900px at 10% 10%, #101e3d 0%, var(--bg) 55%) fixed; color:var(--txt);}
-    a{color:var(--accent); text-decoration:none}
-    .wrap{max-width:1200px; margin:0 auto; padding:18px}
-    .topbar{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 16px; background:rgba(15,27,51,.75); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); backdrop-filter: blur(10px);}
-    .brand{display:flex; flex-direction:column; gap:2px}
-    .brand .title{font-weight:800; letter-spacing:.3px}
-    .brand .sub{font-size:12px; color:var(--muted)}
-    .row{display:grid; grid-template-columns: 320px 1fr; gap:16px; margin-top:16px}
-    @media (max-width:980px){ .row{grid-template-columns:1fr} }
-    .card{background:rgba(15,27,51,.78); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden;}
-    .card .hd{padding:14px 16px; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between; gap:10px}
-    .card .hd h3{margin:0; font-size:14px; letter-spacing:.2px}
-    .card .bd{padding:14px 16px}
-    .pill{font-size:12px; padding:4px 10px; border-radius:999px; background:rgba(122,167,255,.12); border:1px solid rgba(122,167,255,.35); color:var(--txt)}
-    .pill.ok{background:rgba(74,222,128,.12); border-color:rgba(74,222,128,.35)}
-    .pill.warn{background:rgba(255,209,102,.12); border-color:rgba(255,209,102,.35)}
-    .pill.danger{background:rgba(255,107,107,.12); border-color:rgba(255,107,107,.35)}
-    .btn{appearance:none; border:1px solid var(--line); background:rgba(12,23,48,.9); color:var(--txt); padding:10px 12px; border-radius:12px; cursor:pointer; font-weight:600}
-    .btn:hover{border-color:rgba(122,167,255,.55)}
-    .btn.primary{background:rgba(122,167,255,.18); border-color:rgba(122,167,255,.55)}
-    .btn.danger{background:rgba(255,107,107,.12); border-color:rgba(255,107,107,.45)}
-    .btn:disabled{opacity:.55; cursor:not-allowed}
-    .grid{display:grid; gap:12px}
-    .nav{display:grid; gap:8px}
-    .nav button{width:100%; text-align:left}
-    .nav .active{border-color:rgba(122,167,255,.8); background:rgba(122,167,255,.18)}
-    .kv{display:grid; grid-template-columns: 1fr auto; gap:10px; align-items:center}
-    .muted{color:var(--muted); font-size:12px}
-    label{display:block; font-size:12px; color:var(--muted); margin-bottom:6px}
+    *{ box-sizing:border-box; }
+    body{ margin:0; font-family:var(--font); background:linear-gradient(180deg,#070c16,#0b1220 40%,#070c16); color:var(--txt); }
+    a{ color:var(--accent); text-decoration:none; }
+    .wrap{ max-width:1200px; margin:0 auto; padding:18px; }
+    header{ display:flex; gap:14px; align-items:center; justify-content:space-between; margin-bottom:14px; }
+    .brand{ display:flex; gap:10px; align-items:center; }
+    .logo{ width:44px; height:44px; border-radius:14px; background:radial-gradient(circle at 30% 30%, var(--accent2), var(--accent)); box-shadow:var(--shadow); }
+    h1{ font-size:18px; margin:0; }
+    .sub{ color:var(--muted); font-size:12px; margin-top:2px; }
+    .grid{ display:grid; grid-template-columns: 360px 1fr; gap:14px; }
+    @media(max-width: 980px){ .grid{ grid-template-columns: 1fr; } }
+
+    .card{ background:linear-gradient(180deg,var(--card), #0b162f); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); }
+    .card .hd{ padding:14px 14px 10px; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; gap:10px; align-items:center; }
+    .card .bd{ padding:14px; }
+    .title{ font-size:14px; font-weight:700; }
+    .pill{ font-size:11px; padding:6px 10px; border-radius:999px; border:1px solid var(--line); color:var(--muted); background:rgba(255,255,255,.02); }
+    .row{ display:flex; gap:10px; }
+    .row > *{ flex:1; }
+
+    label{ display:block; font-size:12px; color:var(--muted); margin-bottom:6px; }
     input, select, textarea{
-      width:100%; padding:10px 12px; border-radius:12px; border:1px solid var(--line);
-      background:rgba(12,23,48,.9); color:var(--txt); outline:none;
+      width:100%; padding:11px 12px; border-radius:12px; border:1px solid var(--line);
+      background:rgba(255,255,255,.03); color:var(--txt); outline:none;
     }
-    textarea{min-height:110px; font-family:var(--mono); font-size:12px}
-    .hint{font-size:12px; color:var(--muted); margin-top:6px}
-    .split{display:grid; grid-template-columns:1fr 1fr; gap:10px}
-    @media (max-width:520px){ .split{grid-template-columns:1fr} }
-    .toast{position:fixed; right:18px; bottom:18px; width:min(420px, calc(100vw - 36px)); display:grid; gap:10px; z-index:99}
-    .titem{padding:12px 12px; border-radius:14px; border:1px solid var(--line); box-shadow:var(--shadow); background:rgba(12,23,48,.95)}
-    .titem .t{font-weight:800; font-size:13px; margin-bottom:4px}
-    .titem.ok{border-color:rgba(74,222,128,.4)}
-    .titem.warn{border-color:rgba(255,209,102,.4)}
-    .titem.danger{border-color:rgba(255,107,107,.4)}
-    .titem pre{margin:8px 0 0; white-space:pre-wrap; word-break:break-word; font-family:var(--mono); font-size:12px; color:#dbe7ff}
-    table{width:100%; border-collapse:collapse; font-size:12px}
-    th,td{padding:10px 8px; border-bottom:1px solid rgba(30,43,78,.7); vertical-align:top}
-    th{color:var(--muted); font-weight:700; text-align:left}
-    .small{font-size:12px}
-    .mono{font-family:var(--mono)}
-    .right{display:flex; gap:8px; align-items:center}
-    .sep{height:1px; background:rgba(30,43,78,.7); margin:10px 0}
-    .badge{font-size:11px; padding:3px 8px; border-radius:999px; border:1px solid rgba(169,183,214,.35); color:var(--muted)}
+    textarea{ min-height:92px; resize:vertical; }
+    input::placeholder, textarea::placeholder{ color:#7f8fb6; }
+    .btn{
+      appearance:none; border:1px solid var(--line); background:rgba(122,167,255,.14);
+      color:var(--txt); padding:10px 12px; border-radius:12px; cursor:pointer;
+      transition:.12s transform ease, .12s opacity ease;
+      font-weight:650;
+    }
+    .btn:hover{ transform:translateY(-1px); }
+    .btn:disabled{ opacity:.5; cursor:not-allowed; transform:none; }
+    .btn.primary{ background:linear-gradient(90deg, rgba(122,167,255,.20), rgba(155,255,207,.12)); border-color:rgba(122,167,255,.35); }
+    .btn.danger{ background:rgba(255,107,107,.12); border-color:rgba(255,107,107,.35); }
+    .btn.ghost{ background:transparent; }
+    .btn.small{ padding:7px 10px; font-size:12px; border-radius:10px; }
+
+    .tabs{ display:flex; gap:8px; flex-wrap:wrap; }
+    .tab{ padding:8px 10px; border-radius:999px; border:1px solid var(--line); cursor:pointer; color:var(--muted); background:rgba(255,255,255,.02); font-size:12px; }
+    .tab.active{ color:var(--txt); border-color:rgba(122,167,255,.4); background:rgba(122,167,255,.12); }
+
+    .list{ display:grid; gap:10px; }
+    .item{
+      border:1px solid var(--line); border-radius:14px; background:rgba(255,255,255,.02);
+      padding:12px;
+      display:flex; justify-content:space-between; gap:10px; align-items:flex-start;
+    }
+    .item .meta{ display:grid; gap:4px; }
+    .item .meta .k{ font-weight:700; font-size:13px; }
+    .item .meta .v{ color:var(--muted); font-size:12px; word-break:break-word; }
+    .actions{ display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+    .hr{ height:1px; background:var(--line); margin:12px 0; }
+    .toast-wrap{ position:fixed; left:16px; bottom:16px; display:grid; gap:10px; z-index:9999; max-width: 420px; }
+    .toast{
+      border:1px solid var(--line); border-radius:14px; padding:12px; background:rgba(12,23,48,.95); box-shadow:var(--shadow);
+    }
+    .toast .t{ font-weight:800; margin-bottom:4px; }
+    .toast .m{ color:var(--muted); font-size:12px; line-height:1.45; }
+    .toast.ok{ border-color:rgba(74,222,128,.4); }
+    .toast.warn{ border-color:rgba(255,209,102,.45); }
+    .toast.err{ border-color:rgba(255,107,107,.45); }
+
+    .badge{ display:inline-flex; align-items:center; gap:6px; font-size:11px; color:var(--muted); }
+    .dot{ width:8px; height:8px; border-radius:50%; background:var(--warn); }
+    .dot.ok{ background:var(--ok); }
+    .dot.err{ background:var(--danger); }
+    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size:12px; color:var(--muted); }
+    .hint{ color:var(--muted); font-size:12px; line-height:1.5; }
+    .kpi{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+    @media(max-width: 520px){ .kpi{ grid-template-columns:1fr; } }
+    .kpi .box{ border:1px solid var(--line); border-radius:14px; padding:12px; background:rgba(255,255,255,.02); }
+    .kpi .box .n{ font-size:18px; font-weight:900; }
+    .kpi .box .l{ color:var(--muted); font-size:12px; }
   </style>
 </head>
 <body>
-
-  <div style="position:fixed;top:10px;left:10px;z-index:999999;background:#ff00ff;color:#000;padding:8px 10px;border-radius:10px;font-weight:900">
-  BUILD: JP-FIRST-2025-12-20-A
-</div>
-
-  
   <div class="wrap">
-    <div class="topbar">
+    <header>
       <div class="brand">
-        <div class="title">Just Presence — Frontend</div>
-        <div class="sub">Auto-mapped from Swagger/OpenAPI. Base: <span class="mono" id="baseTxt"></span></div>
-      </div>
-      <div class="right">
-        <span id="authPill" class="pill warn">Not Authenticated</span>
-        <button class="btn" id="btnReloadSpec">Reload API Spec</button>
-        <button class="btn danger" id="btnLogout" disabled>Logout</button>
-      </div>
-    </div>
-
-    <div class="row">
-      <div class="card">
-        <div class="hd"><h3>Menu</h3><span class="badge" id="specBadge">spec: -</span></div>
-        <div class="bd grid">
-          <div class="nav" id="nav"></div>
-          <div class="sep"></div>
-          <div class="grid">
-            <div class="kv">
-              <div>
-                <div class="small"><b>Swagger UI</b></div>
-                <div class="muted mono" id="swaggerUrl"></div>
-              </div>
-              <button class="btn" id="btnOpenSwagger">Open</button>
-            </div>
-            <div class="kv">
-              <div>
-                <div class="small"><b>Token</b></div>
-                <div class="muted">Stored in localStorage</div>
-              </div>
-              <button class="btn" id="btnCopyToken">Copy</button>
-            </div>
-          </div>
+        <div class="logo"></div>
+        <div>
+          <h1>Smart Campus Frontend</h1>
+          <div class="sub">Login/Register + Courses + Canteen + Admin Users (Students/Teachers)</div>
         </div>
       </div>
+      <div class="badge" id="apiStatus">
+        <span class="dot" id="apiDot"></span>
+        <span id="apiText">API: checking…</span>
+      </div>
+    </header>
 
+    <div class="grid">
+      <!-- LEFT: AUTH + SETTINGS -->
       <div class="card">
         <div class="hd">
-          <h3 id="pageTitle">Loading…</h3>
-          <span class="muted" id="pageHint"></span>
+          <div class="title">الحساب</div>
+          <div class="pill" id="rolePill">Role: -</div>
         </div>
-        <div class="bd" id="page"></div>
+        <div class="bd">
+          <div class="tabs" id="authTabs">
+            <div class="tab active" data-tab="login">Login</div>
+            <div class="tab" data-tab="register">Register</div>
+          </div>
+
+          <div id="loginPane" style="margin-top:12px;">
+            <label>Email</label>
+            <input id="loginEmail" placeholder="name@example.com" autocomplete="username" />
+            <div style="height:10px"></div>
+            <label>Password</label>
+            <input id="loginPassword" type="password" placeholder="Your password" autocomplete="current-password" />
+            <div style="height:12px"></div>
+            <button class="btn primary" id="btnLogin">Login</button>
+          </div>
+
+          <div id="registerPane" style="display:none; margin-top:12px;">
+            <div class="row">
+              <div>
+                <label>Full name</label>
+                <input id="regName" placeholder="Your name" autocomplete="name" />
+              </div>
+              <div>
+                <label>Role</label>
+                <select id="regRole">
+                  <option value="STUDENT">STUDENT</option>
+                  <option value="TEACHER">TEACHER</option>
+                </select>
+              </div>
+            </div>
+            <div style="height:10px"></div>
+            <label>Email</label>
+            <input id="regEmail" placeholder="name@example.com" autocomplete="email" />
+            <div style="height:10px"></div>
+            <label>Password</label>
+            <input id="regPassword" type="password" placeholder="Min 8, فيها حرف و رقم (لو الباك إند بيطلب كده)" autocomplete="new-password" />
+            <div style="height:12px"></div>
+            <button class="btn primary" id="btnRegister">Register</button>
+          </div>
+
+          <div class="hr"></div>
+
+          <div class="kpi">
+            <div class="box">
+              <div class="n" id="kpiUser">-</div>
+              <div class="l">User</div>
+            </div>
+            <div class="box">
+              <div class="n" id="kpiToken">-</div>
+              <div class="l">Token</div>
+            </div>
+            <div class="box">
+              <div class="n" id="kpiApi">-</div>
+              <div class="l">API</div>
+            </div>
+          </div>
+
+          <div class="hr"></div>
+
+          <div class="row">
+            <button class="btn ghost" id="btnWhoAmI">WhoAmI</button>
+            <button class="btn danger" id="btnLogout">Logout</button>
+          </div>
+
+          <div class="hr"></div>
+
+          <div class="title" style="margin-bottom:8px;">إعدادات الربط</div>
+          <div class="hint">
+            Base API ثابت على Railway. اكتشاف OpenAPI تلقائي. لو فشل، بيستخدم Fallback Routes تحت.
+          </div>
+          <div style="height:10px"></div>
+
+          <label>Base API</label>
+          <input id="baseUrl" class="mono" />
+          <div style="height:10px"></div>
+          <label>Detected OpenAPI URL</label>
+          <input id="openapiUrl" class="mono" disabled />
+          <div style="height:12px"></div>
+          <button class="btn small" id="btnReDetect">Re-detect API</button>
+        </div>
+      </div>
+
+      <!-- RIGHT: MODULES -->
+      <div class="card">
+        <div class="hd">
+          <div class="title">الإدارة</div>
+          <div class="tabs" id="mainTabs">
+            <div class="tab active" data-tab="courses">Courses</div>
+            <div class="tab" data-tab="canteen">Canteen</div>
+            <div class="tab" data-tab="admin">Admin Users</div>
+            <div class="tab" data-tab="raw">Raw API</div>
+          </div>
+        </div>
+        <div class="bd">
+          <!-- COURSES -->
+          <div class="pane" id="paneCourses">
+            <div class="row">
+              <button class="btn primary" id="btnLoadCourses">Load Courses</button>
+              <button class="btn" id="btnNewCourse">New Course</button>
+            </div>
+            <div id="courseForm" style="display:none; margin-top:12px;">
+              <div class="row">
+                <div>
+                  <label>Course name</label>
+                  <input id="courseName" placeholder="مثال: Math 101" />
+                </div>
+                <div>
+                  <label>Course code</label>
+                  <input id="courseCode" placeholder="مثال: MTH101" />
+                </div>
+              </div>
+              <div style="height:10px"></div>
+              <div class="row">
+                <div>
+                  <label>Teacher Id (اختياري حسب الباك)</label>
+                  <input id="courseTeacherId" placeholder="مثال: 12" />
+                </div>
+                <div>
+                  <label>Credits / Price (اختياري)</label>
+                  <input id="courseMeta" placeholder="رقم" />
+                </div>
+              </div>
+              <div style="height:10px"></div>
+              <label>Description (اختياري)</label>
+              <textarea id="courseDesc" placeholder="وصف مختصر"></textarea>
+              <div style="height:10px"></div>
+              <div class="row">
+                <button class="btn primary" id="btnSaveCourse">Save</button>
+                <button class="btn ghost" id="btnCancelCourse">Cancel</button>
+              </div>
+              <div class="hint" style="margin-top:10px;">
+                الفورم بيبني JSON مرن. لو الباك إند طالب أسماء حقول مختلفة، هتتضبط تلقائيًا لو OpenAPI اتكشف.
+              </div>
+            </div>
+
+            <div class="hr"></div>
+            <div class="list" id="coursesList"></div>
+          </div>
+
+          <!-- CANTEEN -->
+          <div class="pane" id="paneCanteen" style="display:none;">
+            <div class="row">
+              <button class="btn primary" id="btnLoadCanteen">Load Items</button>
+              <button class="btn" id="btnNewItem">New Item</button>
+            </div>
+            <div id="itemForm" style="display:none; margin-top:12px;">
+              <div class="row">
+                <div>
+                  <label>Item name</label>
+                  <input id="itemName" placeholder="مثال: Sandwich" />
+                </div>
+                <div>
+                  <label>Price</label>
+                  <input id="itemPrice" placeholder="مثال: 25" />
+                </div>
+              </div>
+              <div style="height:10px"></div>
+              <div class="row">
+                <div>
+                  <label>Quantity / Stock (اختياري)</label>
+                  <input id="itemQty" placeholder="مثال: 100" />
+                </div>
+                <div>
+                  <label>Category (اختياري)</label>
+                  <input id="itemCat" placeholder="مثال: Drinks" />
+                </div>
+              </div>
+              <div style="height:10px"></div>
+              <label>Description (اختياري)</label>
+              <textarea id="itemDesc" placeholder="وصف مختصر"></textarea>
+              <div style="height:10px"></div>
+              <div class="row">
+                <button class="btn primary" id="btnSaveItem">Save</button>
+                <button class="btn ghost" id="btnCancelItem">Cancel</button>
+              </div>
+            </div>
+
+            <div class="hr"></div>
+            <div class="list" id="canteenList"></div>
+          </div>
+
+          <!-- ADMIN USERS -->
+          <div class="pane" id="paneAdmin" style="display:none;">
+            <div class="hint">
+              إضافة Student/Teacher مسموحة لو Role = ADMIN. الفرونت هيمنع الزرار لو مش Admin.
+            </div>
+            <div style="height:10px"></div>
+
+            <div class="row">
+              <button class="btn primary" id="btnLoadUsers">Load Users</button>
+              <button class="btn" id="btnNewStudent">New Student</button>
+              <button class="btn" id="btnNewTeacher">New Teacher</button>
+            </div>
+
+            <div id="userForm" style="display:none; margin-top:12px;">
+              <div class="row">
+                <div>
+                  <label>Full name</label>
+                  <input id="userName" placeholder="Name" />
+                </div>
+                <div>
+                  <label>Type</label>
+                  <select id="userType">
+                    <option value="STUDENT">STUDENT</option>
+                    <option value="TEACHER">TEACHER</option>
+                  </select>
+                </div>
+              </div>
+              <div style="height:10px"></div>
+              <div class="row">
+                <div>
+                  <label>Email</label>
+                  <input id="userEmail" placeholder="name@example.com" />
+                </div>
+                <div>
+                  <label>Password</label>
+                  <input id="userPassword" type="password" placeholder="Min 8" />
+                </div>
+              </div>
+              <div style="height:10px"></div>
+              <div class="row">
+                <div>
+                  <label>StudentId / StaffId (اختياري)</label>
+                  <input id="userExternalId" placeholder="مثال: 2025001" />
+                </div>
+                <div>
+                  <label>Department (اختياري)</label>
+                  <input id="userDept" placeholder="CS / Math" />
+                </div>
+              </div>
+              <div style="height:10px"></div>
+              <div class="row">
+                <button class="btn primary" id="btnSaveUser">Save</button>
+                <button class="btn ghost" id="btnCancelUser">Cancel</button>
+              </div>
+            </div>
+
+            <div class="hr"></div>
+            <div class="list" id="usersList"></div>
+          </div>
+
+          <!-- RAW API -->
+          <div class="pane" id="paneRaw" style="display:none;">
+            <div class="hint">
+              ده لاختبار أي Endpoint بسرعة. بيحط Authorization تلقائي لو فيه Token.
+            </div>
+            <div style="height:10px"></div>
+            <div class="row">
+              <div>
+                <label>Method</label>
+                <select id="rawMethod">
+                  <option>GET</option><option>POST</option><option>PUT</option><option>PATCH</option><option>DELETE</option>
+                </select>
+              </div>
+              <div style="flex:3;">
+                <label>Path</label>
+                <input id="rawPath" placeholder="/api/..." class="mono" />
+              </div>
+            </div>
+            <div style="height:10px"></div>
+            <label>Body JSON (لو POST/PUT/PATCH)</label>
+            <textarea id="rawBody" class="mono" placeholder='{"name":"..."}'></textarea>
+            <div style="height:10px"></div>
+            <button class="btn primary" id="btnSendRaw">Send</button>
+            <div class="hr"></div>
+            <label>Response</label>
+            <textarea id="rawResp" class="mono" style="min-height:220px;" readonly></textarea>
+          </div>
+
+        </div>
       </div>
     </div>
   </div>
 
-  <div class="toast" id="toast"></div>
+  <div class="toast-wrap" id="toasts"></div>
 
 <script>
 /* =========================
    CONFIG
    ========================= */
-const CONFIG = {
-  baseUrl: "https://just-presence-production-79e0.up.railway.app",
-  swaggerUi: "https://just-presence-production-79e0.up.railway.app/swagger-ui/index.html#/",
-  // Tries these in order (Springdoc + common variants).
-  openApiCandidates: [
-    "/v3/api-docs",
-    "/v3/api-docs?group=default",
-    "/api-docs",
-    "/swagger/v1/swagger.json",
-    "/openapi.json"
-  ],
-  // field-level validation rules
-  validation: {
-    password: { min: 8, max: 72 },
-    email: { pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/i },
-    phone: { pattern: /^[0-9+\-\s()]{6,}$/ }
-  }
-};
-
-/* =========================
-   STATE
-   ========================= */
 const store = {
+  baseUrl: "https://just-presence-production-79e0.up.railway.app",
   token: localStorage.getItem("jp_token") || "",
-  user: safeJson(localStorage.getItem("jp_user")) || null,
-  spec: null,
-  specUrl: null,
-  // derived operations (best-effort mapping)
-  ops: {
-    login: null,
-    register: null,
-    me: null,
-    createCourse: null,
-    listCourses: null,
-    updateCourse: null,
-    createCanteenItem: null,
-    listCanteenItems: null,
-    updateCanteenItem: null,
-    createStudent: null,
-    listStudents: null,
-    updateStudent: null,
-    createTeacher: null,
-    listTeachers: null,
-    updateTeacher: null
+  user: JSON.parse(localStorage.getItem("jp_user") || "null"),
+  openapi: null,
+  openapiUrl: "",
+  routes: null,
+  busy: false,
+  editing: {
+    course: null,
+    item: null,
+    user: null
   }
 };
 
-const el = (id)=>document.getElementById(id);
+/* Fallback routes. بتشتغل لو OpenAPI مش متاح.
+   لو عندك paths مختلفة، عدّل هنا فقط. */
+const FALLBACK = {
+  auth: {
+    login:  { method:"POST", path:"/api/auth/login" },
+    register:{ method:"POST", path:"/api/auth/register" },
+    me:     { method:"GET",  path:"/api/auth/me" }, // أو /api/users/{id}
+  },
+  courses: {
+    list:   { method:"GET",  path:"/api/courses" },
+    create: { method:"POST", path:"/api/courses" },
+    update: { method:"PUT",  path:"/api/courses/{id}" },
+    delete: { method:"DELETE", path:"/api/courses/{id}" }
+  },
+  canteen: {
+    list:   { method:"GET",  path:"/api/canteen/items" },
+    create: { method:"POST", path:"/api/canteen/items" },
+    update: { method:"PUT",  path:"/api/canteen/items/{id}" },
+    delete: { method:"DELETE", path:"/api/canteen/items/{id}" }
+  },
+  users: {
+    list:   { method:"GET",  path:"/api/users" },
+    createStudent:{ method:"POST", path:"/api/admin/students" },
+    createTeacher:{ method:"POST", path:"/api/admin/teachers" },
+    update: { method:"PUT",  path:"/api/users/{id}" },
+    delete: { method:"DELETE", path:"/api/users/{id}" }
+  }
+};
 
 /* =========================
-   UI HELPERS
+   UTIL
    ========================= */
-function toast(kind, title, detail){
-  const host = el("toast");
-  const item = document.createElement("div");
-  item.className = `titem ${kind||""}`;
-  item.innerHTML = `
-    <div class="t">${escapeHtml(title||"")}</div>
-    ${detail ? `<pre>${escapeHtml(String(detail))}</pre>` : ``}
-  `;
-  host.appendChild(item);
-  setTimeout(()=>{ item.style.opacity="0"; item.style.transform="translateY(8px)"; }, 4200);
-  setTimeout(()=>{ item.remove(); }, 4800);
+const $ = (s)=>document.querySelector(s);
+const el = (tag, cls)=>{ const x=document.createElement(tag); if(cls) x.className=cls; return x; };
+const sleep = (ms)=>new Promise(r=>setTimeout(r,ms));
+
+function toast(type, title, msg){
+  const w = $("#toasts");
+  const t = el("div", "toast " + (type||""));
+  const tt = el("div","t"); tt.textContent = title||"";
+  const mm = el("div","m"); mm.textContent = msg||"";
+  t.appendChild(tt); t.appendChild(mm);
+  w.appendChild(t);
+  setTimeout(()=>{ t.style.opacity="0"; t.style.transform="translateY(6px)"; }, 3200);
+  setTimeout(()=>{ t.remove(); }, 3800);
 }
-function setBusy(isBusy){
-  document.querySelectorAll("button, input, select, textarea").forEach(n=>{
-    if(n.id==="btnOpenSwagger") return;
-    if(n.id==="btnCopyToken") return;
-    n.disabled = !!isBusy && (n.tagName==="BUTTON" ? true : n.disabled);
-  });
+
+function setBusy(v){
+  store.busy = v;
+  ["#btnLogin","#btnRegister","#btnWhoAmI","#btnLogout","#btnLoadCourses","#btnSaveCourse","#btnLoadCanteen","#btnSaveItem","#btnLoadUsers","#btnSaveUser","#btnSendRaw","#btnReDetect"]
+    .forEach(id=>{ const b=$(id); if(b) b.disabled = !!v; });
 }
-function escapeHtml(s){
-  return s.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+
+function setStatus(ok, text){
+  $("#apiText").textContent = text;
+  const d = $("#apiDot");
+  d.classList.remove("ok","err");
+  d.classList.add(ok ? "ok" : "err");
 }
-function safeJson(s){ try{ return JSON.parse(s); }catch{ return null; } }
+
+function saveSession(){
+  localStorage.setItem("jp_token", store.token||"");
+  localStorage.setItem("jp_user", JSON.stringify(store.user||null));
+  $("#kpiToken").textContent = store.token ? "YES" : "NO";
+  $("#kpiUser").textContent = store.user ? (store.user.email || store.user.username || store.user.name || "OK") : "-";
+  const role = getRole();
+  $("#rolePill").textContent = "Role: " + (role||"-");
+}
+
+function getRole(){
+  const u = store.user;
+  if(!u) return "";
+  return u.role || u.userRole || u.type || u.authorities?.[0] || "";
+}
+
+function isAdmin(){
+  const r = (getRole()||"").toUpperCase();
+  return r.includes("ADMIN");
+}
+
+function normalizeBaseUrl(u){
+  u = (u||"").trim().replace(/\/+$/,"");
+  if(!u) return store.baseUrl;
+  return u;
+}
+
+function safeJsonParse(s){
+  try{ return JSON.parse(s); }catch{ return null; }
+}
+
+function pickId(obj){
+  if(!obj) return null;
+  return obj.id ?? obj.userId ?? obj.courseId ?? obj.itemId ?? obj._id ?? null;
+}
+
+function buildPath(path, params){
+  let p = path;
+  if(params){
+    for(const k of Object.keys(params)){
+      p = p.replaceAll("{"+k+"}", encodeURIComponent(params[k]));
+    }
+  }
+  return p;
+}
 
 /* =========================
-   API CLIENT
+   API CALL CORE
    ========================= */
-async function apiFetch(path, { method="GET", headers={}, body=null, query=null } = {}){
-  const url = new URL(CONFIG.baseUrl + path);
-  if(query){
-    Object.entries(query).forEach(([k,v])=>{
+async function request({method, path, body, pathParams, queryParams}){
+  const base = normalizeBaseUrl($("#baseUrl").value || store.baseUrl);
+  store.baseUrl = base;
+
+  let url = base + buildPath(path, pathParams);
+
+  if(queryParams){
+    const qs = new URLSearchParams();
+    Object.entries(queryParams).forEach(([k,v])=>{
       if(v===undefined || v===null || v==="") return;
-      url.searchParams.set(k, String(v));
+      qs.set(k, v);
     });
+    const q = qs.toString();
+    if(q) url += (url.includes("?") ? "&" : "?") + q;
   }
 
-  const h = { "Accept":"application/json", ...headers };
-  if(store.token) h["Authorization"] = `Bearer ${store.token}`;
+  const headers = { "Content-Type":"application/json" };
+  if(store.token) headers["Authorization"] = "Bearer " + store.token;
 
-  let payload = body;
-  if(body && typeof body === "object" && !(body instanceof FormData)){
-    h["Content-Type"] = "application/json";
-    payload = JSON.stringify(body);
+  const opts = { method, headers };
+  if(body !== undefined && body !== null && method !== "GET" && method !== "DELETE"){
+    opts.body = JSON.stringify(body);
   }
 
-  const res = await fetch(url.toString(), { method, headers: h, body: payload });
-  const text = await res.text();
-  let data = null;
-  try{ data = text ? JSON.parse(text) : null; }catch{ data = text; }
+  let res, text;
+  try{
+    res = await fetch(url, opts);
+    text = await res.text();
+  }catch(e){
+    throw new Error("Network error: " + (e?.message || e));
+  }
 
+  let data = safeJsonParse(text);
   if(!res.ok){
-    const msg = (data && (data.message || data.error || data.detail)) ? (data.message || data.error || data.detail) : res.statusText;
-    const err = new Error(msg || `HTTP ${res.status}`);
+    const msg = (data && (data.message || data.error || data.details)) ? (data.message||data.error||data.details) : text;
+    const err = new Error(`HTTP ${res.status}: ${msg}`);
     err.status = res.status;
-    err.data = data;
+    err.payload = data || text;
     throw err;
   }
-  return data;
+
+  return data ?? text;
 }
 
 /* =========================
-   OPENAPI LOADING + MAPPING
+   OPENAPI AUTO-DETECT + ROUTE RESOLVE
    ========================= */
-async function loadSpec(){
-  store.spec = null;
-  store.specUrl = null;
-  el("specBadge").textContent = "spec: loading…";
+async function detectOpenApi(){
+  const base = normalizeBaseUrl($("#baseUrl").value || store.baseUrl);
 
-  let lastErr = null;
-  for(const p of CONFIG.openApiCandidates){
+  const candidates = [
+    base + "/v3/api-docs",
+    base + "/v3/api-docs/swagger-config",
+    base + "/api-docs",
+    base + "/swagger/v1/swagger.json",
+    base + "/swagger.json",
+    base + "/openapi.json",
+    base + "/v2/api-docs"
+  ];
+
+  store.openapi = null;
+  store.openapiUrl = "";
+  $("#openapiUrl").value = "";
+
+  for(const url of candidates){
     try{
-      const data = await apiFetch(p, { method:"GET", headers:{}, body:null });
-      if(data && (data.openapi || data.swagger) && data.paths){
-        store.spec = data;
-        store.specUrl = CONFIG.baseUrl + p;
-        el("specBadge").textContent = "spec: loaded";
-        deriveOps();
-        return;
-      }
-    }catch(e){
-      lastErr = e;
-    }
-  }
+      const res = await fetch(url, { method:"GET" });
+      if(!res.ok) continue;
+      const text = await res.text();
+      const js = safeJsonParse(text);
+      if(!js) continue;
 
-  el("specBadge").textContent = "spec: not found";
-  toast("danger","OpenAPI spec not reachable",
-        "Backend must expose JSON (ex: /v3/api-docs). Swagger UI alone is not enough for auto-linking.\n\nLast error:\n" + (lastErr ? (lastErr.message || String(lastErr)) : "unknown"));
+      // swagger-config sometimes contains url field
+      if(js.url && typeof js.url === "string"){
+        const full = js.url.startsWith("http") ? js.url : (base + js.url);
+        const r2 = await fetch(full, { method:"GET" });
+        if(r2.ok){
+          const specText = await r2.text();
+          const spec = safeJsonParse(specText);
+          if(spec && (spec.paths || spec.openapi || spec.swagger)){
+            store.openapi = spec;
+            store.openapiUrl = full;
+            $("#openapiUrl").value = full;
+            return true;
+          }
+        }
+      }
+
+      if(js && (js.paths || js.openapi || js.swagger)){
+        store.openapi = js;
+        store.openapiUrl = url;
+        $("#openapiUrl").value = url;
+        return true;
+      }
+    }catch(_e){ /* ignore */ }
+  }
+  return false;
 }
 
-function deriveOps(){
-  // Reset
-  Object.keys(store.ops).forEach(k=>store.ops[k]=null);
-
-  const spec = store.spec;
-  if(!spec || !spec.paths) return;
-
-  const paths = spec.paths;
-
-  const candidates = [];
-  for(const [path, methods] of Object.entries(paths)){
-    for(const [m, op] of Object.entries(methods)){
-      if(!op || typeof op !== "object") continue;
-      const method = m.toUpperCase();
-      candidates.push({ path, method, op });
+function buildRoutesFromOpenApi(spec){
+  // هدفنا: نطلع endpoints الأساسية: auth login/register/me + courses CRUD + canteen CRUD + users + admin create student/teacher
+  const paths = spec.paths || {};
+  const ops = [];
+  for(const [p, methods] of Object.entries(paths)){
+    for(const [m, op] of Object.entries(methods || {})){
+      const mm = (m||"").toUpperCase();
+      if(!["GET","POST","PUT","PATCH","DELETE"].includes(mm)) continue;
+      const tag = (op.tags && op.tags[0]) ? op.tags[0] : "";
+      const sum = op.summary || op.operationId || "";
+      ops.push({ method:mm, path:p, tag, sum, op });
     }
   }
 
-  const pick = (preds) => {
-    // preds: array of predicate functions, each tries to find best match
+  const pick = (preds)=>{
     for(const pred of preds){
-      const found = candidates.find(pred);
-      if(found) return found;
+      const hit = ops.find(o=>pred(o));
+      if(hit) return { method:hit.method, path:hit.path };
     }
     return null;
   };
 
-  const has = (s, ...parts) => {
-    const t = String(s||"").toLowerCase();
-    return parts.every(p => t.includes(String(p).toLowerCase()));
-  };
+  const r = JSON.parse(JSON.stringify(FALLBACK));
 
-  // Auth
-  store.ops.login = pick([
-    x => x.method==="POST" && (has(x.path,"/auth","login") || has(x.op.operationId,"login")),
-    x => x.method==="POST" && (has(x.op.summary,"login") || has(x.op.description,"login"))
-  ]);
-  store.ops.register = pick([
-    x => x.method==="POST" && (has(x.path,"/auth","register") || has(x.op.operationId,"register") || has(x.path,"/register")),
-    x => x.method==="POST" && (has(x.op.summary,"register") || has(x.op.description,"register") || has(x.op.summary,"sign") && has(x.op.summary,"up"))
-  ]);
-  store.ops.me = pick([
-    x => x.method==="GET" && (has(x.path,"/auth","me") || has(x.op.operationId,"me") || has(x.path,"/me")),
-    x => x.method==="GET" && (has(x.op.summary,"profile") || has(x.op.summary,"current user"))
-  ]);
+  // AUTH
+  r.auth.login = pick([
+    o=>/auth/i.test(o.tag) && /login/i.test(o.sum) && o.method==="POST",
+    o=>/\/auth\/login$/i.test(o.path) && o.method==="POST",
+    o=>/\/login$/i.test(o.path) && o.method==="POST"
+  ]) || r.auth.login;
 
-  // Entity helpers: best effort for typical CRUD naming
-  const crud = (entity) => {
-    const e = entity.toLowerCase();
-    const create = pick([
-      x => x.method==="POST" && (has(x.path, `/${e}`) || has(x.path, `/${e}s`)) && !has(x.path,"/search"),
-      x => x.method==="POST" && (has(x.op.operationId, "create", e) || has(x.op.operationId, "add", e)),
-      x => x.method==="POST" && (has(x.op.summary, "create", e) || has(x.op.summary, "add", e))
-    ]);
-    const list = pick([
-      x => x.method==="GET" && (has(x.path, `/${e}`) || has(x.path, `/${e}s`)) && !has(x.path,"/{") && !has(x.path,"/search"),
-      x => x.method==="GET" && (has(x.op.operationId, "get", e) || has(x.op.operationId, "list", e)),
-      x => x.method==="GET" && (has(x.op.summary, "list", e) || has(x.op.summary, "get", e)) && !has(x.path,"/{")
-    ]);
-    const update = pick([
-      x => (x.method==="PUT" || x.method==="PATCH") && (has(x.path, `/${e}`) || has(x.path, `/${e}s`)) && has(x.path,"/{"),
-      x => (x.method==="PUT" || x.method==="PATCH") && (has(x.op.operationId, "update", e) || has(x.op.summary, "update", e)),
-    ]);
-    return { create, list, update };
-  };
+  r.auth.register = pick([
+    o=>/auth/i.test(o.tag) && /(register|signup)/i.test(o.sum) && o.method==="POST",
+    o=>/\/auth\/register$/i.test(o.path) && o.method==="POST",
+    o=>/(register|signup)$/i.test(o.path) && o.method==="POST"
+  ]) || r.auth.register;
 
-  const course = crud("course");
-  store.ops.createCourse = course.create;
-  store.ops.listCourses = course.list;
-  store.ops.updateCourse = course.update;
+  r.auth.me = pick([
+    o=>/auth/i.test(o.tag) && /(me|whoami|profile)/i.test(o.sum) && o.method==="GET",
+    o=>/\/auth\/me$/i.test(o.path) && o.method==="GET",
+    o=>/\/users\/\{id\}$/i.test(o.path) && o.method==="GET",
+    o=>/\/users\/me$/i.test(o.path) && o.method==="GET",
+  ]) || r.auth.me;
 
-  const canteen = crud("canteen");
-  // some APIs use "canteen-item" or "item"
-  store.ops.createCanteenItem = pick([
-    x => x.method==="POST" && (has(x.path,"canteen") && (has(x.path,"item") || has(x.path,"items"))),
-    x => canteen.create
-  ]);
-  store.ops.listCanteenItems = pick([
-    x => x.method==="GET" && (has(x.path,"canteen") && (has(x.path,"item") || has(x.path,"items"))) && !has(x.path,"/{"),
-    x => canteen.list
-  ]);
-  store.ops.updateCanteenItem = pick([
-    x => (x.method==="PUT" || x.method==="PATCH") && (has(x.path,"canteen") && (has(x.path,"item") || has(x.path,"items"))) && has(x.path,"/{"),
-    x => canteen.update
-  ]);
+  // COURSES
+  r.courses.list = pick([
+    o=>/course/i.test(o.tag) && o.method==="GET" && !/\{id\}/.test(o.path),
+    o=>/\/courses$/i.test(o.path) && o.method==="GET"
+  ]) || r.courses.list;
 
-  const student = crud("student");
-  store.ops.createStudent = student.create;
-  store.ops.listStudents = student.list;
-  store.ops.updateStudent = student.update;
+  r.courses.create = pick([
+    o=>/course/i.test(o.tag) && o.method==="POST",
+    o=>/\/courses$/i.test(o.path) && o.method==="POST"
+  ]) || r.courses.create;
 
-  const teacher = crud("teacher");
-  store.ops.createTeacher = teacher.create;
-  store.ops.listTeachers = teacher.list;
-  store.ops.updateTeacher = teacher.update;
-}
+  r.courses.update = pick([
+    o=>/course/i.test(o.tag) && (o.method==="PUT"||o.method==="PATCH") && /\{id\}/.test(o.path),
+    o=>/\/courses\/\{id\}$/i.test(o.path) && (o.method==="PUT"||o.method==="PATCH")
+  ]) || r.courses.update;
 
-function opToText(op){
-  if(!op) return "-";
-  return `${op.method} ${op.path}`;
-}
+  r.courses.delete = pick([
+    o=>/course/i.test(o.tag) && o.method==="DELETE" && /\{id\}/.test(o.path),
+    o=>/\/courses\/\{id\}$/i.test(o.path) && o.method==="DELETE"
+  ]) || r.courses.delete;
 
-function getRequestSchema(op){
-  if(!op || !op.op) return null;
-  const rb = op.op.requestBody;
-  if(!rb || !rb.content) return null;
+  // CANTEEN
+  r.canteen.list = pick([
+    o=>/canteen|item|food/i.test(o.tag) && o.method==="GET" && !/\{id\}/.test(o.path),
+    o=>/\/canteen\/items$/i.test(o.path) && o.method==="GET",
+    o=>/\/items$/i.test(o.path) && o.method==="GET"
+  ]) || r.canteen.list;
 
-  // prefer JSON
-  const json = rb.content["application/json"] || rb.content["application/*+json"];
-  if(json && json.schema) return derefSchema(json.schema);
+  r.canteen.create = pick([
+    o=>/canteen|item|food/i.test(o.tag) && o.method==="POST",
+    o=>/\/canteen\/items$/i.test(o.path) && o.method==="POST",
+    o=>/\/items$/i.test(o.path) && o.method==="POST"
+  ]) || r.canteen.create;
 
-  // fallback: first content type
-  const first = Object.values(rb.content)[0];
-  if(first && first.schema) return derefSchema(first.schema);
+  r.canteen.update = pick([
+    o=>/canteen|item|food/i.test(o.tag) && (o.method==="PUT"||o.method==="PATCH") && /\{id\}/.test(o.path),
+    o=>/\/canteen\/items\/\{id\}$/i.test(o.path) && (o.method==="PUT"||o.method==="PATCH"),
+    o=>/\/items\/\{id\}$/i.test(o.path) && (o.method==="PUT"||o.method==="PATCH"),
+  ]) || r.canteen.update;
 
-  return null;
-}
+  r.canteen.delete = pick([
+    o=>/canteen|item|food/i.test(o.tag) && o.method==="DELETE" && /\{id\}/.test(o.path),
+    o=>/\/canteen\/items\/\{id\}$/i.test(o.path) && o.method==="DELETE",
+    o=>/\/items\/\{id\}$/i.test(o.path) && o.method==="DELETE",
+  ]) || r.canteen.delete;
 
-function derefSchema(schema){
-  const spec = store.spec;
-  if(!schema || !spec) return schema;
+  // USERS
+  r.users.list = pick([
+    o=>/user/i.test(o.tag) && o.method==="GET" && !/\{id\}/.test(o.path),
+    o=>/\/users$/i.test(o.path) && o.method==="GET"
+  ]) || r.users.list;
 
-  if(schema.$ref){
-    const ref = schema.$ref;
-    const key = ref.split("/").pop();
-    const comps = (spec.components && spec.components.schemas) ? spec.components.schemas : {};
-    return comps[key] ? comps[key] : schema;
-  }
-  return schema;
+  r.users.update = pick([
+    o=>/user/i.test(o.tag) && (o.method==="PUT"||o.method==="PATCH") && /\{id\}/.test(o.path),
+    o=>/\/users\/\{id\}$/i.test(o.path) && (o.method==="PUT"||o.method==="PATCH")
+  ]) || r.users.update;
+
+  r.users.delete = pick([
+    o=>/user/i.test(o.tag) && o.method==="DELETE" && /\{id\}/.test(o.path),
+    o=>/\/users\/\{id\}$/i.test(o.path) && o.method==="DELETE"
+  ]) || r.users.delete;
+
+  r.users.createStudent = pick([
+    o=>(/admin/i.test(o.tag) || /student/i.test(o.tag)) && o.method==="POST" && /student/i.test(o.path),
+    o=>/\/admin\/students$/i.test(o.path) && o.method==="POST",
+  ]) || r.users.createStudent;
+
+  r.users.createTeacher = pick([
+    o=>(/admin/i.test(o.tag) || /teacher/i.test(o.tag)) && o.method==="POST" && /teacher/i.test(o.path),
+    o=>/\/admin\/teachers$/i.test(o.path) && o.method==="POST",
+  ]) || r.users.createTeacher;
+
+  return r;
 }
 
 /* =========================
-   FORM GENERATION + VALIDATION
+   AUTH
    ========================= */
-function buildFormFromSchema(schema, { mode="create" } = {}){
-  // Returns { htmlEl, getValue(), validate() }
-  const wrap = document.createElement("div");
-  wrap.className = "grid";
-
-  if(!schema){
-    wrap.innerHTML = `
-      <div class="muted">
-        No request schema found in OpenAPI for this endpoint.
-        Use the JSON editor below and send raw payload.
-      </div>
-      <label>Raw JSON Body</label>
-      <textarea id="rawJson" placeholder='{"example":"value"}'></textarea>
-    `;
-    return {
-      el: wrap,
-      getValue: () => {
-        const t = wrap.querySelector("#rawJson").value.trim();
-        if(!t) return {};
-        return JSON.parse(t);
-      },
-      validate: () => ({ ok:true })
-    };
-  }
-
-  const props = schema.properties || {};
-  const required = new Set(schema.required || []);
-
-  const fields = [];
-
-  for(const [name, def] of Object.entries(props)){
-    const f = document.createElement("div");
-    const id = `f_${name}_${Math.random().toString(16).slice(2)}`;
-
-    const labelTxt = `${name}${required.has(name) ? " *" : ""}`;
-    const type = (def.format==="email" || name.toLowerCase().includes("email")) ? "email"
-               : (def.format==="password" || name.toLowerCase().includes("password")) ? "password"
-               : (def.type==="integer" || def.type==="number") ? "number"
-               : "text";
-
-    let inputEl;
-
-    if(def.enum && Array.isArray(def.enum)){
-      inputEl = document.createElement("select");
-      inputEl.id = id;
-      inputEl.innerHTML = `<option value="">Select…</option>` + def.enum.map(v=>`<option value="${escapeHtml(String(v))}">${escapeHtml(String(v))}</option>`).join("");
-    }else if(def.type==="boolean"){
-      inputEl = document.createElement("select");
-      inputEl.id = id;
-      inputEl.innerHTML = `<option value="">Select…</option><option value="true">true</option><option value="false">false</option>`;
-    }else if(def.type==="object" || def.type==="array"){
-      inputEl = document.createElement("textarea");
-      inputEl.id = id;
-      inputEl.placeholder = def.type==="array" ? "[]" : "{}";
-      inputEl.className = "mono";
-    }else{
-      inputEl = document.createElement("input");
-      inputEl.id = id;
-      inputEl.type = type;
-      if(type==="password"){
-        inputEl.autocomplete = mode==="create" ? "new-password" : "current-password";
-      }
-    }
-
-    const desc = def.description || def.title || "";
-    f.innerHTML = `<label for="${id}">${escapeHtml(labelTxt)}</label>`;
-    f.appendChild(inputEl);
-    if(desc) {
-      const d = document.createElement("div");
-      d.className="hint";
-      d.textContent = desc;
-      f.appendChild(d);
-    }
-
-    fields.push({ name, def, required: required.has(name), inputEl });
-    wrap.appendChild(f);
-  }
-
-  const validate = () => {
-    const errors = [];
-
-    for(const fld of fields){
-      const n = fld.name;
-      const v = getFieldValue(fld);
-
-      if(fld.required && (v===undefined || v===null || v==="" )){
-        errors.push(`${n} is required`);
-        continue;
-      }
-      if(v===undefined || v===null || v==="") continue;
-
-      const lname = n.toLowerCase();
-      if(lname.includes("email") || fld.def.format==="email"){
-        if(!CONFIG.validation.email.pattern.test(String(v))) errors.push(`Invalid email: ${n}`);
-      }
-      if(lname.includes("password") || fld.def.format==="password"){
-        const s = String(v);
-        if(s.length < CONFIG.validation.password.min) errors.push(`Password too short (${CONFIG.validation.password.min}+): ${n}`);
-        if(s.length > CONFIG.validation.password.max) errors.push(`Password too long (${CONFIG.validation.password.max} max): ${n}`);
-      }
-      if(lname.includes("phone") || lname.includes("mobile")){
-        if(!CONFIG.validation.phone.pattern.test(String(v))) errors.push(`Invalid phone: ${n}`);
-      }
-    }
-
-    return errors.length ? { ok:false, errors } : { ok:true };
-  };
-
-  const getValue = () => {
-    const obj = {};
-    for(const fld of fields){
-      const v = getFieldValue(fld);
-      if(v===undefined) continue;
-      if(v==="" && !fld.required) continue;
-      obj[fld.name] = v;
-    }
-    return obj;
-  };
-
-  return { el: wrap, getValue, validate };
+function validateEmail(e){
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((e||"").trim());
+}
+function validatePassword(p){
+  // سياسة مرنة: أقل حاجة 8. لو الباك إند عايز أقوى، هيطلع message ونظهره.
+  p = (p||"");
+  return p.length >= 8;
 }
 
-function getFieldValue(fld){
-  const el = fld.inputEl;
-  const def = fld.def;
+async function login(){
+  const email = $("#loginEmail").value.trim();
+  const password = $("#loginPassword").value;
 
-  if(el.tagName === "TEXTAREA"){
-    const t = el.value.trim();
-    if(!t) return fld.required ? "" : undefined;
-    try { return JSON.parse(t); } catch { return t; }
-  }
-  if(el.tagName === "SELECT"){
-    const v = el.value;
-    if(v==="") return fld.required ? "" : undefined;
-    if(def.type==="boolean") return v === "true";
-    return v;
-  }
-  const raw = el.value;
-  if(raw === "") return fld.required ? "" : undefined;
-  if(def.type==="integer") return parseInt(raw,10);
-  if(def.type==="number") return Number(raw);
-  return raw;
-}
+  if(!validateEmail(email)) return toast("warn","Email غلط","اكتب Email صحيح");
+  if(!password) return toast("warn","Password ناقص","اكتب Password");
 
-/* =========================
-   PAGES
-   ========================= */
-const pages = [
-  { key:"login", title:"Login", hint:"Authenticate and store JWT", render: renderLogin },
-  { key:"register", title:"Register", hint:"Create an account (if backend supports it)", render: renderRegister },
-  { key:"courses", title:"Courses", hint:"Add / list / update courses", render: ()=>renderCrud("Course", store.ops.createCourse, store.ops.listCourses, store.ops.updateCourse) },
-  { key:"canteen", title:"Canteen Items", hint:"Add / list / update canteen items", render: ()=>renderCrud("Canteen Item", store.ops.createCanteenItem, store.ops.listCanteenItems, store.ops.updateCanteenItem) },
-  { key:"students", title:"Students (Admin)", hint:"Add / list / update students", render: ()=>renderCrud("Student", store.ops.createStudent, store.ops.listStudents, store.ops.updateStudent, { adminOnly:true }) },
-  { key:"teachers", title:"Teachers (Admin)", hint:"Add / list / update teachers", render: ()=>renderCrud("Teacher", store.ops.createTeacher, store.ops.listTeachers, store.ops.updateTeacher, { adminOnly:true }) },
-  { key:"debug", title:"Debug", hint:"See detected endpoints and call raw operations", render: renderDebug }
-];
-
-let currentPage = "login";
-
-function renderNav(){
-  const nav = el("nav");
-  nav.innerHTML = "";
-  pages.forEach(p=>{
-    const b = document.createElement("button");
-    b.className = "btn " + (p.key===currentPage ? "active" : "");
-    b.textContent = p.title;
-    b.onclick = ()=>goto(p.key);
-    nav.appendChild(b);
-  });
-}
-
-function goto(key){
-  currentPage = key;
-  renderNav();
-  const p = pages.find(x=>x.key===key);
-  el("pageTitle").textContent = p ? p.title : key;
-  el("pageHint").textContent = p ? p.hint : "";
-  const host = el("page");
-  host.innerHTML = "";
-  (p ? p.render : renderDebug)();
-}
-
-function setAuthUI(){
-  el("baseTxt").textContent = CONFIG.baseUrl;
-  el("swaggerUrl").textContent = CONFIG.swaggerUi;
-  const pill = el("authPill");
-  const btnLogout = el("btnLogout");
-  if(store.token){
-    pill.className = "pill ok";
-    pill.textContent = "Authenticated";
-    btnLogout.disabled = false;
-  }else{
-    pill.className = "pill warn";
-    pill.textContent = "Not Authenticated";
-    btnLogout.disabled = true;
-  }
-}
-
-function renderLogin(){
-  const host = el("page");
-
-  const op = store.ops.login;
-  const schema = getRequestSchema(op);
-
-  const form = buildFormFromSchema(schema, { mode:"login" });
-  const box = document.createElement("div");
-  box.className = "grid";
-
-  const info = document.createElement("div");
-  info.className = "muted";
-  info.innerHTML = `
-    Detected login endpoint: <span class="mono">${escapeHtml(opToText(op))}</span>
-    <div class="hint">If login mapping is wrong, open Debug and use raw call.</div>
-  `;
-  box.appendChild(info);
-  box.appendChild(form.el);
-
-  const actions = document.createElement("div");
-  actions.className = "split";
-  actions.innerHTML = `
-    <button class="btn primary" id="doLogin">Login</button>
-    <button class="btn" id="goRegister">Go to Register</button>
-  `;
-  box.appendChild(actions);
-
-  host.appendChild(box);
-
-  host.querySelector("#goRegister").onclick = ()=>goto("register");
-  host.querySelector("#doLogin").onclick = async ()=>{
-    try{
-      if(!op) throw new Error("Login operation not found in spec.");
-      const v = form.validate();
-      if(!v.ok) throw new Error(v.errors.join("\n"));
-
-      const payload = form.getValue();
-      const data = await apiFetch(op.path, { method: op.method, body: payload });
-
-      // token heuristics
-      const token = (data && (data.token || data.accessToken || data.jwt || data.id_token)) ? (data.token || data.accessToken || data.jwt || data.id_token) : null;
-      if(!token) {
-        // some APIs return {data:{token:...}}
-        const t2 = data && data.data && (data.data.token || data.data.accessToken || data.data.jwt);
-        if(!t2) throw new Error("Login succeeded but token not found in response. Check response in Debug.");
-        store.token = t2;
-      } else {
-        store.token = token;
-      }
-
-      localStorage.setItem("jp_token", store.token);
-
-      toast("ok","Login success","Token stored.");
-      setAuthUI();
-
-      // Load /me if exists
-      if(store.ops.me){
-        try{
-          const me = await apiFetch(store.ops.me.path, { method: store.ops.me.method });
-          store.user = me;
-          localStorage.setItem("jp_user", JSON.stringify(me));
-        }catch{}
-      }
-
-      goto("courses");
-    }catch(e){
-      toast("danger","Login failed", `${e.message}\n\n${e.data ? JSON.stringify(e.data,null,2) : ""}`.trim());
-    }
-  };
-}
-
-function renderRegister(){
-  const host = el("page");
-
-  const op = store.ops.register;
-  const schema = getRequestSchema(op);
-  const form = buildFormFromSchema(schema, { mode:"register" });
-
-  const box = document.createElement("div");
-  box.className = "grid";
-
-  const info = document.createElement("div");
-  info.className = "muted";
-  info.innerHTML = `
-    Detected register endpoint: <span class="mono">${escapeHtml(opToText(op))}</span>
-    <div class="hint">Email/password validation enforced client-side.</div>
-  `;
-  box.appendChild(info);
-  box.appendChild(form.el);
-
-  const actions = document.createElement("div");
-  actions.className = "split";
-  actions.innerHTML = `
-    <button class="btn primary" id="doRegister">Register</button>
-    <button class="btn" id="goLogin">Go to Login</button>
-  `;
-  box.appendChild(actions);
-
-  host.appendChild(box);
-
-  host.querySelector("#goLogin").onclick = ()=>goto("login");
-  host.querySelector("#doRegister").onclick = async ()=>{
-    try{
-      if(!op) throw new Error("Register operation not found in spec.");
-      const v = form.validate();
-      if(!v.ok) throw new Error(v.errors.join("\n"));
-      const payload = form.getValue();
-      const data = await apiFetch(op.path, { method: op.method, body: payload });
-      toast("ok","Register success", JSON.stringify(data,null,2));
-      goto("login");
-    }catch(e){
-      toast("danger","Register failed", `${e.message}\n\n${e.data ? JSON.stringify(e.data,null,2) : ""}`.trim());
-    }
-  };
-}
-
-function renderCrud(label, opCreate, opList, opUpdate, { adminOnly=false } = {}){
-  const host = el("page");
-  const box = document.createElement("div");
-  box.className = "grid";
-
-  const gate = document.createElement("div");
-  gate.className = "muted";
-  gate.innerHTML = `
-    <div><b>${escapeHtml(label)}</b></div>
-    <div class="hint">
-      Create: <span class="mono">${escapeHtml(opToText(opCreate))}</span><br/>
-      List: <span class="mono">${escapeHtml(opToText(opList))}</span><br/>
-      Update: <span class="mono">${escapeHtml(opToText(opUpdate))}</span>
-    </div>
-  `;
-  box.appendChild(gate);
-
-  const authNote = document.createElement("div");
-  authNote.className = "muted";
-  authNote.innerHTML = adminOnly
-    ? `Admin-only screen. Backend enforces role; frontend blocks if not logged in.`
-    : `Token is required for protected endpoints.`;
-  box.appendChild(authNote);
-
-  const createCard = document.createElement("div");
-  createCard.className = "card";
-  createCard.innerHTML = `<div class="hd"><h3>Create ${escapeHtml(label)}</h3><span class="muted">POST</span></div><div class="bd" id="createBox"></div>`;
-  box.appendChild(createCard);
-
-  const listCard = document.createElement("div");
-  listCard.className = "card";
-  listCard.innerHTML = `<div class="hd"><h3>${escapeHtml(label)} List</h3><div class="right"><button class="btn" id="btnRefresh">Refresh</button></div></div><div class="bd" id="listBox"></div>`;
-  box.appendChild(listCard);
-
-  host.appendChild(box);
-
-  // Create form
-  const createHost = createCard.querySelector("#createBox");
-  if(!opCreate){
-    createHost.innerHTML = `<div class="muted">Create endpoint not detected. Use Debug.</div>`;
-  }else{
-    const schema = getRequestSchema(opCreate);
-    const form = buildFormFromSchema(schema, { mode:"create" });
-    createHost.appendChild(form.el);
-
-    const btn = document.createElement("button");
-    btn.className = "btn primary";
-    btn.textContent = `Create ${label}`;
-    btn.onclick = async ()=>{
-      try{
-        if(!store.token) throw new Error("Not authenticated.");
-        const v = form.validate();
-        if(!v.ok) throw new Error(v.errors.join("\n"));
-        const payload = form.getValue();
-        const data = await apiFetch(opCreate.path, { method: opCreate.method, body: payload });
-        toast("ok", `${label} created`, JSON.stringify(data,null,2));
-        await refreshList();
-      }catch(e){
-        toast("danger", `Create ${label} failed`, `${e.message}\n\n${e.data ? JSON.stringify(e.data,null,2) : ""}`.trim());
-      }
-    };
-    createHost.appendChild(document.createElement("div")).style.height="8px";
-    createHost.appendChild(btn);
-  }
-
-  // List + Update inline
-  const listHost = listCard.querySelector("#listBox");
-  listCard.querySelector("#btnRefresh").onclick = refreshList;
-
-  async function refreshList(){
-    try{
-      if(!opList){
-        listHost.innerHTML = `<div class="muted">List endpoint not detected. Use Debug.</div>`;
-        return;
-      }
-      if(!store.token) throw new Error("Not authenticated.");
-
-      const data = await apiFetch(opList.path, { method: opList.method });
-      const rows = normalizeList(data);
-
-      listHost.innerHTML = "";
-      if(!rows.length){
-        listHost.innerHTML = `<div class="muted">No items returned.</div><div class="hint mono">${escapeHtml(JSON.stringify(data,null,2))}</div>`;
-        return;
-      }
-
-      const table = document.createElement("table");
-      const keys = collectKeys(rows, 8);
-
-      table.innerHTML = `
-        <thead>
-          <tr>
-            ${keys.map(k=>`<th>${escapeHtml(k)}</th>`).join("")}
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${rows.map((r,i)=>`
-            <tr>
-              ${keys.map(k=>`<td class="mono">${escapeHtml(toCell(r[k]))}</td>`).join("")}
-              <td>
-                <button class="btn" data-i="${i}" data-act="edit">Edit</button>
-              </td>
-            </tr>
-          `).join("")}
-        </tbody>
-      `;
-      listHost.appendChild(table);
-
-      // edit handlers
-      table.querySelectorAll("button[data-act='edit']").forEach(b=>{
-        b.onclick = ()=>openEdit(rows[Number(b.dataset.i)]);
-      });
-
-    }catch(e){
-      listHost.innerHTML = `<div class="muted">Failed to load list.</div>`;
-      toast("danger", "List failed", `${e.message}\n\n${e.data ? JSON.stringify(e.data,null,2) : ""}`.trim());
-    }
-  }
-
-  function normalizeList(data){
-    if(!data) return [];
-    if(Array.isArray(data)) return data;
-    if(Array.isArray(data.items)) return data.items;
-    if(Array.isArray(data.content)) return data.content;
-    if(Array.isArray(data.data)) return data.data;
-    // sometimes wrapped as {result:[...]}
-    for(const v of Object.values(data)){
-      if(Array.isArray(v)) return v;
-    }
-    return [];
-  }
-
-  function collectKeys(rows, limit){
-    const freq = new Map();
-    rows.forEach(r=>{
-      if(!r || typeof r !== "object") return;
-      Object.keys(r).forEach(k=> freq.set(k, (freq.get(k)||0)+1));
-    });
-    return [...freq.entries()].sort((a,b)=>b[1]-a[1]).slice(0,limit).map(x=>x[0]);
-  }
-
-  function toCell(v){
-    if(v===null || v===undefined) return "";
-    if(typeof v === "object") return JSON.stringify(v);
-    return String(v);
-  }
-
-  function pickId(obj){
-    if(!obj || typeof obj!=="object") return null;
-    return obj.id ?? obj._id ?? obj.userId ?? obj.studentId ?? obj.teacherId ?? obj.courseId ?? obj.itemId ?? null;
-  }
-
-  function openEdit(row){
-    if(!opUpdate){
-      toast("warn","Update not available","Update endpoint not detected. Use Debug.");
-      return;
-    }
-    const id = pickId(row);
-    if(id===null || id===undefined || id===""){
-      toast("warn","Cannot edit","No id field detected in list item.");
-      return;
-    }
-
-    const modal = document.createElement("div");
-    modal.style.position="fixed";
-    modal.style.inset="0";
-    modal.style.background="rgba(0,0,0,.55)";
-    modal.style.display="grid";
-    modal.style.placeItems="center";
-    modal.style.padding="18px";
-    modal.style.zIndex="999";
-
-    const panel = document.createElement("div");
-    panel.className="card";
-    panel.style.width="min(980px, 100%)";
-
-    const schema = getRequestSchema(opUpdate);
-    const form = buildFormFromSchema(schema, { mode:"update" });
-
-    // prefill best-effort
-    prefill(form.el, row);
-
-    panel.innerHTML = `
-      <div class="hd">
-        <h3>Edit ${escapeHtml(label)} <span class="muted mono">id=${escapeHtml(String(id))}</span></h3>
-        <div class="right">
-          <button class="btn" id="close">Close</button>
-        </div>
-      </div>
-      <div class="bd" id="body"></div>
-    `;
-    panel.querySelector("#close").onclick = ()=>modal.remove();
-
-    const body = panel.querySelector("#body");
-    body.appendChild(form.el);
-
-    const btns = document.createElement("div");
-    btns.className="split";
-    btns.style.marginTop="10px";
-    btns.innerHTML = `
-      <button class="btn primary" id="save">Save</button>
-      <button class="btn" id="raw">Show Raw Row</button>
-    `;
-    body.appendChild(btns);
-
-    btns.querySelector("#raw").onclick = ()=>toast("warn","Raw row", JSON.stringify(row,null,2));
-
-    btns.querySelector("#save").onclick = async ()=>{
-      try{
-        if(!store.token) throw new Error("Not authenticated.");
-        const v = form.validate();
-        if(!v.ok) throw new Error(v.errors.join("\n"));
-
-        const payload = form.getValue();
-
-        // inject id into path params: replace {id} or similar
-        let path = opUpdate.path;
-        const pathParams = extractPathParams(path);
-
-        // map first param to detected id if not in payload
-        if(pathParams.length){
-          const key = pathParams[0];
-          path = path.replace(`{${key}}`, encodeURIComponent(String(id)));
-        }
-
-        const data = await apiFetch(path, { method: opUpdate.method, body: payload });
-        toast("ok", `${label} updated`, JSON.stringify(data,null,2));
-        modal.remove();
-        await refreshList();
-      }catch(e){
-        toast("danger", `Update ${label} failed`, `${e.message}\n\n${e.data ? JSON.stringify(e.data,null,2) : ""}`.trim());
-      }
-    };
-
-    modal.appendChild(panel);
-    document.body.appendChild(modal);
-  }
-
-  function prefill(root, obj){
-    root.querySelectorAll("input, select, textarea").forEach(inp=>{
-      const id = inp.id || "";
-      const m = id.match(/^f_(.+?)_/);
-      if(!m) return;
-      const key = m[1];
-      const val = obj[key];
-      if(val===undefined) return;
-
-      if(inp.tagName==="TEXTAREA"){
-        inp.value = (typeof val === "object") ? JSON.stringify(val,null,2) : String(val);
-        return;
-      }
-      if(inp.tagName==="SELECT"){
-        inp.value = String(val);
-        return;
-      }
-      inp.value = String(val);
-    });
-  }
-
-  function extractPathParams(path){
-    const out = [];
-    const re = /\{([^}]+)\}/g;
-    let m;
-    while((m=re.exec(path))) out.push(m[1]);
-    return out;
-  }
-
-  // first auto load
-  refreshList();
-}
-
-function renderDebug(){
-  const host = el("page");
-
-  const box = document.createElement("div");
-  box.className = "grid";
-
-  const ops = document.createElement("div");
-  ops.className = "card";
-  ops.innerHTML = `
-    <div class="hd"><h3>Detected Operations</h3><span class="muted">Best-effort mapping</span></div>
-    <div class="bd">
-      <table>
-        <thead><tr><th>Key</th><th>Endpoint</th></tr></thead>
-        <tbody>
-          ${Object.entries(store.ops).map(([k,v])=>`
-            <tr><td class="mono">${escapeHtml(k)}</td><td class="mono">${escapeHtml(opToText(v))}</td></tr>
-          `).join("")}
-        </tbody>
-      </table>
-      <div class="hint">If an operation is "-", mapping failed because OpenAPI is missing or paths are named differently.</div>
-    </div>
-  `;
-  box.appendChild(ops);
-
-  const raw = document.createElement("div");
-  raw.className = "card";
-  raw.innerHTML = `
-    <div class="hd"><h3>Raw Call</h3><span class="muted">Manual request to any path</span></div>
-    <div class="bd grid">
-      <div class="split">
-        <div>
-          <label>Method</label>
-          <select id="m">
-            <option>GET</option><option>POST</option><option>PUT</option><option>PATCH</option><option>DELETE</option>
-          </select>
-        </div>
-        <div>
-          <label>Path (starts with /)</label>
-          <input id="p" placeholder="/api/..." value="/" />
-        </div>
-      </div>
-      <div class="split">
-        <div>
-          <label>Query (JSON object)</label>
-          <textarea id="q" placeholder='{"page":0,"size":10}'></textarea>
-        </div>
-        <div>
-          <label>Body (JSON object)</label>
-          <textarea id="b" placeholder='{"key":"value"}'></textarea>
-        </div>
-      </div>
-      <button class="btn primary" id="send">Send</button>
-      <div>
-        <label>Response</label>
-        <textarea id="r" readonly></textarea>
-      </div>
-    </div>
-  `;
-  box.appendChild(raw);
-
-  host.appendChild(box);
-
-  raw.querySelector("#send").onclick = async ()=>{
-    try{
-      const method = raw.querySelector("#m").value;
-      const path = raw.querySelector("#p").value.trim();
-      const qtxt = raw.querySelector("#q").value.trim();
-      const btxt = raw.querySelector("#b").value.trim();
-
-      const query = qtxt ? JSON.parse(qtxt) : null;
-      const body = btxt ? JSON.parse(btxt) : null;
-
-      const data = await apiFetch(path, { method, query, body });
-      raw.querySelector("#r").value = JSON.stringify(data,null,2);
-      toast("ok","Request success", `${method} ${path}`);
-    }catch(e){
-      raw.querySelector("#r").value = `${e.message}\n\n${e.data ? JSON.stringify(e.data,null,2) : ""}`.trim();
-      toast("danger","Request failed", e.message);
-    }
-  };
-}
-
-/* =========================
-   TOPBAR ACTIONS
-   ========================= */
-el("btnReloadSpec").onclick = async ()=>{
+  setBusy(true);
   try{
-    await loadSpec();
-    toast("ok","Spec reloaded", store.specUrl || "not found");
-    goto(currentPage);
-  }catch(e){
-    toast("danger","Reload failed", e.message);
-  }
-};
+    const r = store.routes.auth.login;
+    const data = await request({ method:r.method, path:r.path, body:{ email, password } });
 
-el("btnLogout").onclick = ()=>{
+    // توكن ممكن يرجع: token / accessToken / jwt
+    const token = data?.token || data?.accessToken || data?.jwt || data?.data?.token || "";
+    if(!token) throw new Error("Token مش راجع من الباك إند");
+
+    store.token = token;
+
+    // user ممكن يرجع في نفس الريسبونس
+    store.user = data?.user || data?.data?.user || null;
+    if(!store.user){
+      // حاول me
+      await whoami(true);
+    }else{
+      saveSession();
+    }
+
+    toast("ok","تم تسجيل الدخول","Login OK");
+    await pingApi();
+  }catch(e){
+    toast("err","Login فشل", e.message || String(e));
+  }finally{
+    setBusy(false);
+  }
+}
+
+async function register(){
+  const name = $("#regName").value.trim();
+  const role = $("#regRole").value;
+  const email = $("#regEmail").value.trim();
+  const password = $("#regPassword").value;
+
+  if(!name) return toast("warn","Name ناقص","اكتب الاسم");
+  if(!validateEmail(email)) return toast("warn","Email غلط","اكتب Email صحيح");
+  if(!validatePassword(password)) return toast("warn","Password ضعيف","على الأقل 8 حروف");
+
+  setBusy(true);
+  try{
+    const r = store.routes.auth.register;
+
+    // جسم مرن. الباك إند ممكن يبقى name/fullName/username + role/type
+    const body = { name, fullName:name, username:name, email, password, role, type:role };
+
+    const data = await request({ method:r.method, path:r.path, body });
+
+    // بعض الباكات بتعمل register وترجع token
+    const token = data?.token || data?.accessToken || data?.jwt || data?.data?.token || "";
+    if(token){
+      store.token = token;
+      store.user = data?.user || data?.data?.user || null;
+      if(!store.user) await whoami(true);
+      saveSession();
+      toast("ok","Register OK","الحساب اتعمل واتسجلت دخول");
+    }else{
+      toast("ok","Register OK","الحساب اتعمل. اعمل Login");
+      // نقل للوجين
+      switchAuthTab("login");
+      $("#loginEmail").value = email;
+      $("#loginPassword").value = password;
+    }
+
+    await pingApi();
+  }catch(e){
+    toast("err","Register فشل", e.message || String(e));
+  }finally{
+    setBusy(false);
+  }
+}
+
+async function whoami(silent){
+  if(!store.token){
+    if(!silent) toast("warn","مش مسجل دخول","Login الأول");
+    return null;
+  }
+  setBusy(true);
+  try{
+    const r = store.routes.auth.me;
+
+    // لو endpoint هو /api/users/{id} لازم id
+    let pathParams = undefined;
+    if(/\{id\}/.test(r.path)){
+      const id = store.user?.id || store.user?.userId;
+      if(!id) throw new Error("User ID not found");
+      pathParams = { id };
+    }
+
+    const data = await request({ method:r.method, path:r.path, pathParams });
+
+    store.user = data?.user || data?.data?.user || data;
+    saveSession();
+
+    // تحديث صلاحيات admin buttons
+    syncAdminButtons();
+
+    if(!silent) toast("ok","WhoAmI OK","تم تحديث بيانات الحساب");
+    return store.user;
+  }catch(e){
+    if(!silent) toast("err","WhoAmI فشل", e.message || String(e));
+    return null;
+  }finally{
+    setBusy(false);
+  }
+}
+
+function logout(){
   store.token = "";
   store.user = null;
-  localStorage.removeItem("jp_token");
-  localStorage.removeItem("jp_user");
-  setAuthUI();
-  toast("warn","Logged out","");
-  goto("login");
-};
-
-el("btnOpenSwagger").onclick = ()=>{
-  window.open(CONFIG.swaggerUi, "_blank");
-};
-
-el("btnCopyToken").onclick = async ()=>{
-  try{
-    await navigator.clipboard.writeText(store.token || "");
-    toast("ok","Copied","Token copied to clipboard.");
-  }catch{
-    toast("danger","Copy failed","Browser blocked clipboard.");
-  }
-};
+  saveSession();
+  syncAdminButtons();
+  toast("ok","Logout","تم تسجيل الخروج");
+}
 
 /* =========================
-   BOOT
+   MODULES: COURSES
    ========================= */
-(async function init(){
-  setAuthUI();
-  renderNav();
-  await loadSpec();
-  goto(store.token ? "courses" : "login");
-})();
+function showCourseForm(editObj){
+  store.editing.course = editObj || null;
+  $("#courseForm").style.display = "block";
+  $("#courseName").value = editObj?.name || editObj?.courseName || "";
+  $("#courseCode").value = editObj?.code || editObj?.courseCode || "";
+  $("#courseTeacherId").value = editObj?.teacherId || editObj?.teacher?.id || "";
+  $("#courseMeta").value = editObj?.credits || editObj?.price || editObj?.meta || "";
+  $("#courseDesc").value = editObj?.description || editObj?.desc || "";
+}
+function hideCourseForm(){
+  store.editing.course = null;
+  $("#courseForm").style.display = "none";
+}
+async function loadCourses(){
+  setBusy(true);
+  try{
+    const r = store.routes.courses.list;
+    const data = await request({ method:r.method, path:r.path });
+
+    const arr = Array.isArray(data) ? data : (data?.content || data?.data || data?.items || []);
+    renderCourses(arr);
+    toast("ok","Courses","تم تحميل الكورسات");
+  }catch(e){
+    toast("err","Courses فشل", e.message || String(e));
+  }finally{
+    setBusy(false);
+  }
+}
+function renderCourses(list){
+  const root = $("#coursesList");
+  root.innerHTML = "";
+  if(!list || !list.length){
+    const empty = el("div","hint");
+    empty.textContent = "مفيش Courses.";
+    root.appendChild(empty);
+    return;
+  }
+
+  list.forEach(c=>{
+    const it = el("div","item");
+    const meta = el("div","meta");
+    const k = el("div","k"); k.textContent = (c.name || c.courseName || "Course") + (c.code || c.courseCode ? " • " + (c.code || c.courseCode) : "");
+    const v = el("div","v"); v.textContent = "id: " + (pickId(c) ?? "-") + (c.description ? " | " + c.description : "");
+    meta.appendChild(k); meta.appendChild(v);
+
+    const act = el("div","actions");
+    const bEdit = el("button","btn small"); bEdit.textContent="Edit";
+    bEdit.onclick = ()=>showCourseForm(c);
+
+    const bDel = el("button","btn small danger"); bDel.textContent="Delete";
+    bDel.onclick = ()=>deleteCourse(c);
+
+    act.appendChild(bEdit); act.appendChild(bDel);
+
+    it.appendChild(meta); it.appendChild(act);
+    root.appendChild(it);
+  });
+}
+async function saveCourse(){
+  const name = $("#courseName").value.trim();
+  const code = $("#courseCode").value.trim();
+  const teacherId = $("#courseTeacherId").value.trim();
+  const meta = $("#courseMeta").value.trim();
+  const desc = $("#courseDesc").value.trim();
+
+  if(!name) return toast("warn","Course","Name مطلوب");
+
+  setBusy(true);
+  try{
+    const editing = store.editing.course;
+    const id = editing ? pickId(editing) : null;
+
+    const body = {
+      name, courseName:name,
+      code, courseCode:code,
+      description: desc, desc,
+    };
+
+    if(teacherId) body.teacherId = Number(teacherId) || teacherId;
+    if(meta) body.credits = Number(meta) || meta;
+
+    let r;
+    if(id){
+      r = store.routes.courses.update;
+      await request({ method:r.method, path:r.path, pathParams:{ id }, body });
+      toast("ok","Course Updated","تم التعديل");
+    }else{
+      r = store.routes.courses.create;
+      await request({ method:r.method, path:r.path, body });
+      toast("ok","Course Created","تم الإضافة");
+    }
+
+    hideCourseForm();
+    await loadCourses();
+  }catch(e){
+    toast("err","Save Course فشل", e.message || String(e));
+  }finally{
+    setBusy(false);
+  }
+}
+async function deleteCourse(c){
+  const id = pickId(c);
+  if(id === null || id === undefined) return toast("warn","Delete","id مش موجود في العنصر");
+
+  setBusy(true);
+  try{
+    const r = store.routes.courses.delete;
+    await request({ method:r.method, path:r.path, pathParams:{ id } });
+    toast("ok","Deleted","تم الحذف");
+    await loadCourses();
+  }catch(e){
+    toast("err","Delete فشل", e.message || String(e));
+  }finally{
+    setBusy(false);
+  }
+}
+
+/* =========================
+   MODULES: CANTEEN
+   ========================= */
+function showItemForm(editObj){
+  store.editing.item = editObj || null;
+  $("#itemForm").style.display = "block";
+  $("#itemName").value = editObj?.name || editObj?.itemName || "";
+  $("#itemPrice").value = editObj?.price || editObj?.cost || "";
+  $("#itemQty").value = editObj?.quantity || editObj?.stock || "";
+  $("#itemCat").value = editObj?.category || editObj?.type || "";
+  $("#itemDesc").value = editObj?.description || editObj?.desc || "";
+}
+function hideItemForm(){
+  store.editing.item = null;
+  $("#itemForm").style.display = "none";
+}
+async function loadCanteen(){
+  setBusy(true);
+  try{
+    const r = store.routes.canteen.list;
+    const data = await request({ method:r.method, path:r.path });
+
+    const arr = Array.isArray(data) ? data : (data?.content || data?.data || data?.items || []);
+    renderItems(arr);
+    toast("ok","Canteen","تم تحميل العناصر");
+  }catch(e){
+    toast("err","Canteen فشل", e.message || String(e));
+  }finally{
+    setBusy(false);
+  }
+}
+function renderItems(list){
+  const root = $("#canteenList");
+  root.innerHTML = "";
+  if(!list || !list.length){
+    const empty = el("div","hint");
+    empty.textContent = "مفيش Items.";
+    root.appendChild(empty);
+    return;
+  }
+
+  list.forEach(x=>{
+    const it = el("div","item");
+    const meta = el("div","meta");
+    const k = el("div","k"); k.textContent = (x.name || x.itemName || "Item") + (x.price ? " • " + x.price : "");
+    const v = el("div","v"); v.textContent = "id: " + (pickId(x) ?? "-") + (x.category ? " | " + x.category : "");
+    meta.appendChild(k); meta.appendChild(v);
+
+    const act = el("div","actions");
+    const bEdit = el("button","btn small"); bEdit.textContent="Edit";
+    bEdit.onclick = ()=>showItemForm(x);
+
+    const bDel = el("button","btn small danger"); bDel.textContent="Delete";
+    bDel.onclick = ()=>deleteItem(x);
+
+    act.appendChild(bEdit); act.appendChild(bDel);
+
+    it.appendChild(meta); it.appendChild(act);
+    root.appendChild(it);
+  });
+}
+async function saveItem(){
+  const name = $("#itemName").value.trim();
+  const price = $("#itemPrice").value.trim();
+  const qty = $("#itemQty").value.trim();
+  const cat = $("#itemCat").value.trim();
+  const desc = $("#itemDesc").value.trim();
+
+  if(!name) return toast("warn","Item","Name مطلوب");
+  if(price && isNaN(Number(price))) return toast("warn","Item","Price لازم رقم");
+
+  setBusy(true);
+  try{
+    const editing = store.editing.item;
+    const id = editing ? pickId(editing) : null;
+
+    const body = {
+      name, itemName:name,
+      price: price ? Number(price) : undefined,
+      cost: price ? Number(price) : undefined,
+      description: desc, desc,
+      category: cat || undefined,
+      type: cat || undefined,
+      quantity: qty ? Number(qty) : undefined,
+      stock: qty ? Number(qty) : undefined,
+    };
+
+    // شيل undefined عشان بعض الباكات بتضايق
+    Object.keys(body).forEach(k=> body[k]===undefined && delete body[k]);
+
+    let r;
+    if(id){
+      r = store.routes.canteen.update;
+      await request({ method:r.method, path:r.path, pathParams:{ id }, body });
+      toast("ok","Item Updated","تم التعديل");
+    }else{
+      r = store.routes.canteen.create;
+      await request({ method:r.method, path:r.path, body });
+      toast("ok","Item Created","تم الإضافة");
+    }
+
+    hideItemForm();
+    await loadCanteen();
+  }catch(e){
+    toast("err","Save Item فشل", e.message || String(e));
+  }finally{
+    setBusy(false);
+  }
+}
+async function deleteItem(x){
+  const id = pickId(x);
+  if(id === null || id === undefined) return toast("warn","Delete","id مش موجود في العنصر");
+
+  setBusy(true);
+  try{
+    const r = store.routes.canteen.delete;
+    await request({ method:r.method, path:r.path, pathParams:{ id } });
+    toast("ok","Deleted","تم الحذف");
+    await loadCanteen();
+  }catch(e){
+    toast("err","Delete فشل", e.message || String(e));
+  }finally{
+    setBusy(false);
+  }
+}
+
+/* =========================
+   MODULES: ADMIN USERS
+   ========================= */
+function syncAdminButtons(){
+  const ok = isAdmin();
+  $("#btnNewStudent").disabled = !ok;
+  $("#btnNewTeacher").disabled = !ok;
+  $("#btnSaveUser").disabled = !ok;
+}
+function showUserForm(type, editObj){
+  store.editing.user = editObj || null;
+  $("#userForm").style.display = "block";
+  $("#userType").value = type || editObj?.type || editObj?.role || "STUDENT";
+  $("#userName").value = editObj?.name || editObj?.fullName || editObj?.username || "";
+  $("#userEmail").value = editObj?.email || "";
+  $("#userPassword").value = "";
+  $("#userExternalId").value = editObj?.studentId || editObj?.staffId || editObj?.externalId || "";
+  $("#userDept").value = editObj?.department || editObj?.dept || "";
+}
+function hideUserForm(){
+  store.editing.user = null;
+  $("#userForm").style.display = "none";
+}
+async function loadUsers(){
+  setBusy(true);
+  try{
+    const r = store.routes.users.list;
+    const data = await request({ method:r.method, path:r.path });
+    const arr = Array.isArray(data) ? data : (data?.content || data?.data || data?.items || []);
+    renderUsers(arr);
+    toast("ok","Users","تم تحميل اليوزرز");
+  }catch(e){
+    toast("err","Users فشل", e.message || String(e));
+  }finally{
+    setBusy(false);
+  }
+}
+function renderUsers(list){
+  const root = $("#usersList");
+  root.innerHTML = "";
+  if(!list || !list.length){
+    const empty = el("div","hint");
+    empty.textContent = "مفيش Users.";
+    root.appendChild(empty);
+    return;
+  }
+
+  list.forEach(u=>{
+    const it = el("div","item");
+    const meta = el("div","meta");
+    const k = el("div","k");
+    k.textContent = (u.name || u.fullName || u.username || "User") + " • " + (u.role || u.type || "-");
+    const v = el("div","v");
+    v.textContent = (u.email ? u.email + " | " : "") + "id: " + (pickId(u) ?? "-");
+    meta.appendChild(k); meta.appendChild(v);
+
+    const act = el("div","actions");
+
+    const bEdit = el("button","btn small");
+    bEdit.textContent="Edit";
+    bEdit.onclick = ()=>showUserForm((u.role||u.type||"STUDENT"), u);
+
+    const bDel = el("button","btn small danger");
+    bDel.textContent="Delete";
+    bDel.onclick = ()=>deleteUser(u);
+
+    act.appendChild(bEdit);
+    act.appendChild(bDel);
+
+    it.appendChild(meta);
+    it.appendChild(act);
+    root.appendChild(it);
+  });
+}
+async function saveUser(){
+  if(!isAdmin()) return toast("warn","Admin فقط","مش مسموح غير للأدمن");
+
+  const type = $("#userType").value;
+  const name = $("#userName").value.trim();
+  const email = $("#userEmail").value.trim();
+  const password = $("#userPassword").value;
+  const externalId = $("#userExternalId").value.trim();
+  const dept = $("#userDept").value.trim();
+
+  if(!name) return toast("warn","User","Name مطلوب");
+  if(!validateEmail(email)) return toast("warn","User","Email غلط");
+  // باسورد: لو إنشاء جديد لازم. لو تعديل ممكن يفضل فاضي.
+  const editing = store.editing.user;
+  if(!editing && !validatePassword(password)) return toast("warn","User","Password لازم 8+");
+
+  setBusy(true);
+  try{
+    const body = {
+      name, fullName:name, username:name,
+      email,
+      role:type, type,
+      department: dept || undefined,
+      dept: dept || undefined,
+      externalId: externalId || undefined,
+      studentId: type==="STUDENT" ? (externalId || undefined) : undefined,
+      staffId: type==="TEACHER" ? (externalId || undefined) : undefined,
+    };
+    if(password) body.password = password;
+
+    Object.keys(body).forEach(k=> body[k]===undefined && delete body[k]);
+
+    if(editing){
+      const id = pickId(editing);
+      const r = store.routes.users.update;
+      await request({ method:r.method, path:r.path, pathParams:{ id }, body });
+      toast("ok","User Updated","تم التعديل");
+    }else{
+      const r = (type==="STUDENT") ? store.routes.users.createStudent : store.routes.users.createTeacher;
+      await request({ method:r.method, path:r.path, body });
+      toast("ok","User Created","تم الإضافة");
+    }
+
+    hideUserForm();
+    await loadUsers();
+  }catch(e){
+    toast("err","Save User فشل", e.message || String(e));
+  }finally{
+    setBusy(false);
+  }
+}
+async function deleteUser(u){
+  if(!isAdmin()) return toast("warn","Admin فقط","مش مسموح غير للأدمن");
+  const id = pickId(u);
+  if(id === null || id === undefined) return toast("warn","Delete","id مش موجود");
+
+  setBusy(true);
+  try{
+    const r = store.routes.users.delete;
+    await request({ method:r.method, path:r.path, pathParams:{ id } });
+    toast("ok","Deleted","تم الحذف");
+    await loadUsers();
+  }catch(e){
+    toast("err","Delete فشل", e.message || String(e));
+  }finally{
+    setBusy(false);
+  }
+}
+
+/* =========================
+   RAW API
+   ========================= */
+async function sendRaw(){
+  const method = $("#rawMethod").value;
+  const path = $("#rawPath").value.trim();
+  const bodyText = $("#rawBody").value.trim();
+
+  if(!path.startsWith("/")) return toast("warn","Raw","Path لازم يبدأ بـ /");
+
+  let body = null;
+  if(["POST","PUT","PATCH"].includes(method)){
+    if(bodyText){
+      body = safeJsonParse(bodyText);
+      if(!body) return toast("warn","Raw","Body JSON غلط");
+    }else{
+      body = {};
+    }
+  }
+
+  setBusy(true);
+  try{
+    const data = await request({ method, path, body });
+    $("#rawResp").value = JSON.stringify(data, null, 2);
+    toast("ok","Raw","OK");
+  }catch(e){
+    $("#rawResp").value = (e.payload && typeof e.payload!=="string") ? JSON.stringify(e.payload, null, 2) : (e.message || String(e));
+    toast("err","Raw فشل", e.message || String(e));
+  }finally{
+    setBusy(false);
+  }
+}
+
+/* =========================
+   UI TABS
+   ========================= */
+function switchAuthTab(tab){
+  [...document.querySelectorAll("#authTabs .tab")].forEach(x=>x.classList.toggle("active", x.dataset.tab===tab));
+  $("#loginPane").style.display = tab==="login" ? "block" : "none";
+  $("#registerPane").style.display = tab==="register" ? "block" : "none";
+}
+function switchMainTab(tab){
+  [...document.querySelectorAll("#mainTabs .tab")].forEach(x=>x.classList.toggle("active", x.dataset.tab===tab));
+  $("#paneCourses").style.display = tab==="courses" ? "block" : "none";
+  $("#paneCanteen").style.display = tab==="canteen" ? "block" : "none";
+  $("#paneAdmin").style.display = tab==="admin" ? "block" : "none";
+  $("#paneRaw").style.display = tab==="raw" ? "block" : "none";
+}
+
+/* =========================
+   HEALTH CHECK
+   ========================= */
+async function pingApi(){
+  $("#kpiApi").textContent = "…";
+  try{
+    // محاولة بسيطة: GET على base (ممكن يدي html) أو على OpenAPI لو موجود
+    if(store.openapiUrl){
+      const r = await fetch(store.openapiUrl, { method:"GET" });
+      if(r.ok){
+        setStatus(true, "API: OK");
+        $("#kpiApi").textContent = "OK";
+        return true;
+      }
+    }
+    const r2 = await fetch(store.baseUrl, { method:"GET" });
+    if(r2.ok){
+      setStatus(true, "API: OK");
+      $("#kpiApi").textContent = "OK";
+      return true;
+    }
+    setStatus(false, "API: ERR");
+    $("#kpiApi").textContent = "ERR";
+    return false;
+  }catch{
+    setStatus(false, "API: ERR");
+    $("#kpiApi").textContent = "ERR";
+    return false;
+  }
+}
+
+/* =========================
+   INIT
+   ========================= */
+async function init(){
+  $("#baseUrl").value = store.baseUrl;
+  saveSession();
+  syncAdminButtons();
+
+  // tabs wiring
+  $("#authTabs").addEventListener("click", (e)=>{
+    const t = e.target.closest(".tab");
+    if(!t) return;
+    switchAuthTab(t.dataset.tab);
+  });
+  $("#mainTabs").addEventListener("click", (e)=>{
+    const t = e.target.closest(".tab");
+    if(!t) return;
+    switchMainTab(t.dataset.tab);
+  });
+
+  // buttons wiring
+  $("#btnLogin").onclick = login;
+  $("#btnRegister").onclick = register;
+  $("#btnWhoAmI").onclick = ()=>whoami(false);
+  $("#btnLogout").onclick = logout;
+
+  $("#btnReDetect").onclick = async ()=>{
+    setBusy(true);
+    try{
+      const ok = await detectOpenApi();
+      if(ok){
+        store.routes = buildRoutesFromOpenApi(store.openapi);
+        toast("ok","OpenAPI","تم اكتشاف الـ API تلقائي");
+      }else{
+        store.routes = JSON.parse(JSON.stringify(FALLBACK));
+        toast("warn","OpenAPI","مش متاح. شغال بـ Fallback Routes");
+      }
+      await pingApi();
+    }finally{
+      setBusy(false);
+    }
+  };
+
+  $("#btnLoadCourses").onclick = loadCourses;
+  $("#btnNewCourse").onclick = ()=>showCourseForm(null);
+  $("#btnSaveCourse").onclick = saveCourse;
+  $("#btnCancelCourse").onclick = hideCourseForm;
+
+  $("#btnLoadCanteen").onclick = loadCanteen;
+  $("#btnNewItem").onclick = ()=>showItemForm(null);
+  $("#btnSaveItem").onclick = saveItem;
+  $("#btnCancelItem").onclick = hideItemForm;
+
+  $("#btnLoadUsers").onclick = loadUsers;
+  $("#btnNewStudent").onclick = ()=>showUserForm("STUDENT", null);
+  $("#btnNewTeacher").onclick = ()=>showUserForm("TEACHER", null);
+  $("#btnSaveUser").onclick = saveUser;
+  $("#btnCancelUser").onclick = hideUserForm;
+
+  $("#btnSendRaw").onclick = sendRaw;
+
+  // Detect OpenAPI on load
+  setBusy(true);
+  try{
+    const ok = await detectOpenApi();
+    if(ok){
+      store.routes = buildRoutesFromOpenApi(store.openapi);
+      toast("ok","API Ready","OpenAPI اتقري. Routing مضبوط");
+    }else{
+      store.routes = JSON.parse(JSON.stringify(FALLBACK));
+      toast("warn","API Ready","OpenAPI مش متاح. Routing على Fallback");
+    }
+
+    await pingApi();
+
+    // لو فيه token، حاول whoami silent
+    if(store.token){
+      await whoami(true);
+      saveSession();
+    }
+
+    // خام: ادي مثال default في Raw
+    $("#rawPath").value = store.routes.auth.me.path;
+    $("#rawMethod").value = store.routes.auth.me.method;
+
+  }finally{
+    setBusy(false);
+  }
+}
+
+init();
 </script>
 </body>
 </html>
+
 
 
 
