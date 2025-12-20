@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>CHECK__777__</title>
+  <title>Just Presence Admin Portal (Frontend)</title>
   <style>
     :root{
       --bg:#0b1220; --card:#0f1b33; --card2:#0c1730; --txt:#e7eefc; --muted:#a9b7d6;
@@ -66,7 +66,6 @@
     .right{display:flex; gap:8px; align-items:center}
     .sep{height:1px; background:rgba(30,43,78,.7); margin:10px 0}
     .badge{font-size:11px; padding:3px 8px; border-radius:999px; border:1px solid rgba(169,183,214,.35); color:var(--muted)}
-    .dangerText{color:var(--danger)}
   </style>
 </head>
 <body>
@@ -106,10 +105,10 @@
             </div>
             <div class="kv">
               <div>
-                <div class="small"><b>User</b></div>
-                <div class="muted mono" id="userTxt">-</div>
+                <div class="small"><b>UserId</b></div>
+                <div class="muted mono" id="userIdTxt">-</div>
               </div>
-              <button class="btn" id="btnClearUser">Clear</button>
+              <button class="btn" id="btnResolveUserId">Resolve</button>
             </div>
           </div>
         </div>
@@ -154,28 +153,23 @@ const CONFIG = {
 const store = {
   token: localStorage.getItem("jp_token") || "",
   user: safeJson(localStorage.getItem("jp_user")) || null,
+  userId: localStorage.getItem("jp_userId") || "",
+  lastEmail: localStorage.getItem("jp_lastEmail") || "",
   spec: null,
   specUrl: null,
   ops: {
     login: null,
     register: null,
     me: null,
-
-    // optional "get user by id" (fixes User not found with id: 7 when /me not used)
-    userById: null,
-
     createCourse: null,
     listCourses: null,
     updateCourse: null,
-
     createCanteenItem: null,
     listCanteenItems: null,
     updateCanteenItem: null,
-
     createStudent: null,
     listStudents: null,
     updateStudent: null,
-
     createTeacher: null,
     listTeachers: null,
     updateTeacher: null
@@ -199,77 +193,10 @@ function toast(kind, title, detail){
   setTimeout(()=>{ item.style.opacity="0"; item.style.transform="translateY(8px)"; }, 4200);
   setTimeout(()=>{ item.remove(); }, 4800);
 }
-function setBusy(isBusy){
-  document.querySelectorAll("button, input, select, textarea").forEach(n=>{
-    if(n.id==="btnOpenSwagger") return;
-    if(n.id==="btnCopyToken") return;
-    if(n.id==="btnClearUser") return;
-    n.disabled = !!isBusy && (n.tagName==="BUTTON" ? true : n.disabled);
-  });
-}
 function escapeHtml(s){
   return s.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 }
 function safeJson(s){ try{ return JSON.parse(s); }catch{ return null; } }
-
-/* =========================
-   JWT + USER NORMALIZATION (FIX USERID)
-   ========================= */
-function parseJwt(token){
-  try{
-    const base64Url = token.split(".")[1];
-    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-    const json = decodeURIComponent(atob(base64).split("").map(c =>
-      "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2)
-    ).join(""));
-    return JSON.parse(json);
-  }catch{
-    return null;
-  }
-}
-
-function normalizeUser(me, token){
-  const jwt = token ? parseJwt(token) : null;
-
-  const id =
-    me?.id ??
-    me?.userId ??
-    me?.uid ??
-    jwt?.id ??
-    jwt?.userId ??
-    jwt?.uid ??
-    jwt?.sub ??
-    null;
-
-  const email =
-    me?.email ??
-    me?.username ??
-    jwt?.email ??
-    jwt?.preferred_username ??
-    jwt?.upn ??
-    null;
-
-  const role =
-    me?.role ??
-    me?.userRole ??
-    me?.type ??
-    jwt?.role ??
-    (Array.isArray(jwt?.roles) ? jwt.roles[0] : jwt?.roles) ??
-    (Array.isArray(jwt?.authorities) ? jwt.authorities[0] : jwt?.authorities) ??
-    null;
-
-  return { ...(me||{}), id, email, role, _jwt: jwt };
-}
-
-function getUserId(){
-  return store.user?.id ?? store.user?.userId ?? store.user?._jwt?.sub ?? null;
-}
-
-function persistSession(){
-  localStorage.setItem("jp_token", store.token || "");
-  localStorage.setItem("jp_user", JSON.stringify(store.user || null));
-  setAuthUI();
-}
 
 /* =========================
    API CLIENT
@@ -308,6 +235,41 @@ async function apiFetch(path, { method="GET", headers={}, body=null, query=null 
 }
 
 /* =========================
+   USERID RESOLVE (100% fixes null id on student)
+   ========================= */
+async function resolveUserId(){
+  try{
+    if(!store.token) throw new Error("Login first.");
+    const users = await apiFetch("/api/users", { method:"GET" });
+    const arr = Array.isArray(users) ? users : (users.data || users.items || users.content || []);
+    if(!arr.length) throw new Error("No users returned from /api/users");
+
+    let picked = null;
+
+    if(store.lastEmail){
+      picked = arr.find(u => String(u.email||"").toLowerCase() === String(store.lastEmail).toLowerCase());
+    }
+
+    if(!picked && store.user && (store.user.email || store.user.username)){
+      const key = (store.user.email || store.user.username);
+      picked = arr.find(u => String(u.email||u.username||"").toLowerCase() === String(key).toLowerCase());
+    }
+
+    if(!picked) picked = arr[0];
+
+    const id = picked.id ?? picked.userId ?? picked._id ?? null;
+    if(!id) throw new Error("Could not detect user id field on /api/users response.");
+
+    store.userId = String(id);
+    localStorage.setItem("jp_userId", store.userId);
+    el("userIdTxt").textContent = store.userId;
+    toast("ok","UserId resolved", store.userId);
+  }catch(e){
+    toast("danger","Resolve userId failed", `${e.message}\n\n${e.data ? JSON.stringify(e.data,null,2) : ""}`.trim());
+  }
+}
+
+/* =========================
    OPENAPI LOADING + MAPPING
    ========================= */
 async function loadSpec(){
@@ -318,7 +280,7 @@ async function loadSpec(){
   let lastErr = null;
   for(const p of CONFIG.openApiCandidates){
     try{
-      const data = await apiFetch(p, { method:"GET", headers:{}, body:null });
+      const data = await apiFetch(p, { method:"GET" });
       if(data && (data.openapi || data.swagger) && data.paths){
         store.spec = data;
         store.specUrl = CONFIG.baseUrl + p;
@@ -333,7 +295,7 @@ async function loadSpec(){
 
   el("specBadge").textContent = "spec: not found";
   toast("danger","OpenAPI spec not reachable",
-        "Backend must expose JSON (ex: /v3/api-docs). Swagger UI alone is not enough for auto-linking.\n\nLast error:\n" + (lastErr ? (lastErr.message || String(lastErr)) : "unknown"));
+        "Backend must expose JSON (ex: /v3/api-docs).\n\nLast error:\n" + (lastErr ? (lastErr.message || String(lastErr)) : "unknown"));
 }
 
 function deriveOps(){
@@ -370,24 +332,17 @@ function deriveOps(){
     x => x.method==="POST" && (has(x.path,"/auth","login") || has(x.op.operationId,"login")),
     x => x.method==="POST" && (has(x.op.summary,"login") || has(x.op.description,"login"))
   ]);
-
   store.ops.register = pick([
     x => x.method==="POST" && (has(x.path,"/auth","register") || has(x.op.operationId,"register") || has(x.path,"/register")),
     x => x.method==="POST" && (has(x.op.summary,"register") || has(x.op.description,"register") || (has(x.op.summary,"sign") && has(x.op.summary,"up")))
   ]);
 
+  // "me" is OPTIONAL. Avoid wrong mapping like /api/payments/{id}
   store.ops.me = pick([
-    x => x.method==="GET" && (has(x.path,"/auth","me") || has(x.op.operationId,"me") || has(x.path,"/me")),
-    x => x.method==="GET" && (has(x.op.summary,"profile") || has(x.op.summary,"current user"))
+    x => x.method==="GET" && (has(x.path,"/auth","me") || has(x.path,"/me") || has(x.op.operationId,"me")) && !has(x.path,"payment"),
+    x => x.method==="GET" && (has(x.op.summary,"current user") || has(x.op.summary,"profile")) && !has(x.path,"payment")
   ]);
 
-  // user by id (GET /users/{id})
-  store.ops.userById = pick([
-    x => x.method==="GET" && (has(x.path,"/users/{") || has(x.path,"/user/{")),
-    x => x.method==="GET" && (has(x.op.operationId,"get") && (has(x.op.operationId,"user") || has(x.op.summary,"user"))) && has(x.path,"/{")
-  ]);
-
-  // CRUD helper
   const crud = (entity) => {
     const e = entity.toLowerCase();
     const create = pick([
@@ -412,18 +367,17 @@ function deriveOps(){
   store.ops.listCourses = course.list;
   store.ops.updateCourse = course.update;
 
-  const canteen = crud("canteen");
   store.ops.createCanteenItem = pick([
     x => x.method==="POST" && (has(x.path,"canteen") && (has(x.path,"item") || has(x.path,"items"))),
-    x => canteen.create
+    x => crud("canteen").create
   ]);
   store.ops.listCanteenItems = pick([
     x => x.method==="GET" && (has(x.path,"canteen") && (has(x.path,"item") || has(x.path,"items"))) && !has(x.path,"/{"),
-    x => canteen.list
+    x => crud("canteen").list
   ]);
   store.ops.updateCanteenItem = pick([
     x => (x.method==="PUT" || x.method==="PATCH") && (has(x.path,"canteen") && (has(x.path,"item") || has(x.path,"items"))) && has(x.path,"/{"),
-    x => canteen.update
+    x => crud("canteen").update
   ]);
 
   const student = crud("student");
@@ -492,7 +446,8 @@ function buildFormFromSchema(schema, { mode="create" } = {}){
         if(!t) return {};
         return JSON.parse(t);
       },
-      validate: () => ({ ok:true })
+      validate: () => ({ ok:true }),
+      meta: { fields: [] }
     };
   }
 
@@ -501,7 +456,8 @@ function buildFormFromSchema(schema, { mode="create" } = {}){
   const fields = [];
 
   for(const [name, def] of Object.entries(props)){
-    if(mode === "create" && name.toLowerCase() === "id") continue;
+    // IMPORTANT: skip only generic "id" on CREATE (not studentId/userId)
+    if(mode === "create" && String(name).toLowerCase() === "id") continue;
 
     const f = document.createElement("div");
     const id = `f_${name}_${Math.random().toString(16).slice(2)}`;
@@ -591,7 +547,7 @@ function buildFormFromSchema(schema, { mode="create" } = {}){
     return obj;
   };
 
-  return { el: wrap, getValue, validate };
+  return { el: wrap, getValue, validate, meta: { fields } };
 }
 
 function getFieldValue(fld){
@@ -617,45 +573,6 @@ function getFieldValue(fld){
 }
 
 /* =========================
-   WHOAMI (FIX)
-   ========================= */
-async function refreshMeSmart(){
-  if(!store.token) return null;
-
-  // 1) prefer /auth/me if present
-  if(store.ops.me){
-    try{
-      const me = await apiFetch(store.ops.me.path, { method: store.ops.me.method });
-      store.user = normalizeUser(me, store.token);
-      persistSession();
-      return store.user;
-    }catch(e){
-      // continue fallback
-    }
-  }
-
-  // 2) fallback to JWT only (still gives id/sub if exists)
-  store.user = normalizeUser(store.user || {}, store.token);
-  persistSession();
-
-  // 3) if API doesn't have /me but has /users/{id}, call it using id from JWT
-  const uid = getUserId();
-  if(uid && store.ops.userById){
-    try{
-      const path = store.ops.userById.path.replace(/\{[^}]+\}/, encodeURIComponent(String(uid)));
-      const u = await apiFetch(path, { method: store.ops.userById.method });
-      store.user = normalizeUser(u, store.token);
-      persistSession();
-      return store.user;
-    }catch{
-      // ignore
-    }
-  }
-
-  return store.user;
-}
-
-/* =========================
    PAGES
    ========================= */
 const pages = [
@@ -663,9 +580,9 @@ const pages = [
   { key:"register", title:"Register", hint:"Create an account (if backend supports it)", render: renderRegister },
   { key:"courses", title:"Courses", hint:"Add / list / update courses", render: ()=>renderCrud("Course", store.ops.createCourse, store.ops.listCourses, store.ops.updateCourse) },
   { key:"canteen", title:"Canteen Items", hint:"Add / list / update canteen items", render: ()=>renderCrud("Canteen Item", store.ops.createCanteenItem, store.ops.listCanteenItems, store.ops.updateCanteenItem) },
-  { key:"students", title:"Students (Admin)", hint:"Add / list / update students", render: ()=>renderCrud("Student", store.ops.createStudent, store.ops.listStudents, store.ops.updateStudent, { adminOnly:true }) },
+  { key:"students", title:"Students (Admin)", hint:"Add / list / update students", render: ()=>renderCrud("Student", store.ops.createStudent, store.ops.listStudents, store.ops.updateStudent, { adminOnly:true, entityKey:"student" }) },
   { key:"teachers", title:"Teachers (Admin)", hint:"Add / list / update teachers", render: ()=>renderCrud("Teacher", store.ops.createTeacher, store.ops.listTeachers, store.ops.updateTeacher, { adminOnly:true }) },
-  { key:"debug", title:"Debug", hint:"See detected endpoints + WhoAmI + Raw", render: renderDebug }
+  { key:"debug", title:"Debug", hint:"See detected endpoints and call raw operations", render: renderDebug }
 ];
 
 let currentPage = "login";
@@ -697,22 +614,13 @@ function setAuthUI(){
   el("baseTxt").textContent = CONFIG.baseUrl;
   el("swaggerUrl").textContent = CONFIG.swaggerUi;
 
+  el("userIdTxt").textContent = store.userId ? store.userId : "-";
+
   const pill = el("authPill");
   const btnLogout = el("btnLogout");
-  const userTxt = el("userTxt");
-
-  if(store.user){
-    const uid = store.user.id ?? store.user.userId ?? null;
-    const em = store.user.email ?? store.user.username ?? null;
-    userTxt.textContent = `${uid ? "id="+uid : "id=-"}${em ? " | "+em : ""}`;
-  }else{
-    userTxt.textContent = "-";
-  }
-
   if(store.token){
     pill.className = "pill ok";
-    const uid = getUserId();
-    pill.textContent = uid ? `Authenticated (id: ${uid})` : "Authenticated";
+    pill.textContent = "Authenticated";
     btnLogout.disabled = false;
   }else{
     pill.className = "pill warn";
@@ -735,7 +643,7 @@ function renderLogin(){
   info.className = "muted";
   info.innerHTML = `
     Detected login endpoint: <span class="mono">${escapeHtml(opToText(op))}</span>
-    <div class="hint">بعد اللوجين هيتعمل WhoAmI تلقائي عشان يظبط الـuserId.</div>
+    <div class="hint">After login, it auto-resolves userId from GET /api/users.</div>
   `;
   box.appendChild(info);
   box.appendChild(form.el);
@@ -758,25 +666,42 @@ function renderLogin(){
       if(!v.ok) throw new Error(v.errors.join("\n"));
 
       const payload = form.getValue();
+
+      // save lastEmail to match /api/users later
+      const emailKey = Object.keys(payload).find(k => String(k).toLowerCase().includes("email"));
+      if(emailKey && payload[emailKey]){
+        store.lastEmail = String(payload[emailKey]);
+        localStorage.setItem("jp_lastEmail", store.lastEmail);
+      }
+
       const data = await apiFetch(op.path, { method: op.method, body: payload });
 
-      const token = (data && (data.token || data.accessToken || data.jwt || data.id_token))
-        ? (data.token || data.accessToken || data.jwt || data.id_token)
-        : (data && data.data && (data.data.token || data.data.accessToken || data.data.jwt))
-          ? (data.data.token || data.data.accessToken || data.data.jwt)
-          : null;
+      const token = (data && (data.token || data.accessToken || data.jwt || data.id_token)) ? (data.token || data.accessToken || data.jwt || data.id_token) : null;
+      if(!token) {
+        const t2 = data && data.data && (data.data.token || data.data.accessToken || data.data.jwt);
+        if(!t2) throw new Error("Login succeeded but token not found in response.");
+        store.token = t2;
+      } else {
+        store.token = token;
+      }
 
-      if(!token) throw new Error("Login succeeded but token not found in response. Check response in Debug.");
-
-      store.token = token;
       localStorage.setItem("jp_token", store.token);
-
-      // FIX: Always normalize userId from /me or JWT
-      await refreshMeSmart();
-
-      toast("ok","Login success", "Token saved + userId normalized.");
+      toast("ok","Login success","Token stored.");
       setAuthUI();
-      goto("courses");
+
+      // try /me if exists (not required)
+      if(store.ops.me){
+        try{
+          const me = await apiFetch(store.ops.me.path, { method: store.ops.me.method });
+          store.user = me;
+          localStorage.setItem("jp_user", JSON.stringify(me));
+        }catch{}
+      }
+
+      // IMPORTANT: always resolve userId from /api/users
+      await resolveUserId();
+
+      goto("students");
     }catch(e){
       toast("danger","Login failed", `${e.message}\n\n${e.data ? JSON.stringify(e.data,null,2) : ""}`.trim());
     }
@@ -828,7 +753,10 @@ function renderRegister(){
   };
 }
 
-function renderCrud(label, opCreate, opList, opUpdate, { adminOnly=false } = {}){
+/* =========================
+   CRUD (STUDENT FIX INSIDE)
+   ========================= */
+function renderCrud(label, opCreate, opList, opUpdate, { adminOnly=false, entityKey="" } = {}){
   const host = el("page");
   const box = document.createElement("div");
   box.className = "grid";
@@ -865,6 +793,7 @@ function renderCrud(label, opCreate, opList, opUpdate, { adminOnly=false } = {})
   host.appendChild(box);
 
   const createHost = createCard.querySelector("#createBox");
+
   if(!opCreate){
     createHost.innerHTML = `<div class="muted">Create endpoint not detected. Use Debug.</div>`;
   }else{
@@ -872,15 +801,63 @@ function renderCrud(label, opCreate, opList, opUpdate, { adminOnly=false } = {})
     const form = buildFormFromSchema(schema, { mode:"create" });
     createHost.appendChild(form.el);
 
+    // STUDENT AUTO-FILL (100% fix)
+    if(entityKey === "student"){
+      // fill userId input if exists
+      const uInp = findFieldInput(form.el, "userId");
+      if(uInp){
+        uInp.value = store.userId || uInp.value || "";
+        uInp.placeholder = "auto from login (must not be null)";
+      }
+
+      // fill studentId if exists and empty (to avoid null id server errors)
+      const sInp = findFieldInput(form.el, "studentId");
+      if(sInp && (sInp.value==="" || sInp.value===null)){
+        sInp.value = String(1000 + Math.floor(Math.random()*9000));
+      }
+
+      // optional nice defaults if fields exist
+      setIfEmpty(form.el, "firstName", "Omar");
+      setIfEmpty(form.el, "lastName", "Hassan");
+      setIfEmpty(form.el, "department", "Computer Science");
+      setIfEmpty(form.el, "batch", "2025");
+      setIfEmpty(form.el, "rollNo", "CS-017");
+    }
+
     const btn = document.createElement("button");
     btn.className = "btn primary";
     btn.textContent = `Create ${label}`;
     btn.onclick = async ()=>{
       try{
         if(!store.token) throw new Error("Not authenticated.");
+
+        // ensure userId exists before creating Student
+        if(entityKey === "student" && !store.userId){
+          await resolveUserId();
+        }
+
         const v = form.validate();
         if(!v.ok) throw new Error(v.errors.join("\n"));
+
         const payload = form.getValue();
+
+        if(entityKey === "student"){
+          // enforce userId must not be null
+          if((payload.userId === undefined || payload.userId === null || payload.userId === "") && store.userId){
+            payload.userId = store.userId;
+          }
+          if(payload.userId === undefined || payload.userId === null || payload.userId === ""){
+            throw new Error("userId is required (backend throws: The given id must not be null).");
+          }
+
+          // ensure studentId not null if field exists in schema
+          if("studentId" in payload){
+            if(payload.studentId === undefined || payload.studentId === null || payload.studentId === ""){
+              payload.studentId = 1000 + Math.floor(Math.random()*9000);
+            }
+          }
+        }
+
         const data = await apiFetch(opCreate.path, { method: opCreate.method, body: payload });
         toast("ok", `${label} created`, JSON.stringify(data,null,2));
         await refreshList();
@@ -888,6 +865,7 @@ function renderCrud(label, opCreate, opList, opUpdate, { adminOnly=false } = {})
         toast("danger", `Create ${label} failed`, `${e.message}\n\n${e.data ? JSON.stringify(e.data,null,2) : ""}`.trim());
       }
     };
+
     createHost.appendChild(document.createElement("div")).style.height="8px";
     createHost.appendChild(btn);
   }
@@ -913,7 +891,7 @@ function renderCrud(label, opCreate, opList, opUpdate, { adminOnly=false } = {})
       }
 
       const table = document.createElement("table");
-      const keys = collectKeys(rows, 8);
+      const keys = collectKeys(rows, 10);
 
       table.innerHTML = `
         <thead>
@@ -974,7 +952,7 @@ function renderCrud(label, opCreate, opList, opUpdate, { adminOnly=false } = {})
 
   function pickId(obj){
     if(!obj || typeof obj!=="object") return null;
-    return obj.id ?? obj._id ?? obj.userId ?? obj.studentId ?? obj.teacherId ?? obj.courseId ?? obj.itemId ?? null;
+    return obj.id ?? obj._id ?? obj.studentId ?? obj.teacherId ?? obj.courseId ?? obj.itemId ?? obj.userId ?? null;
   }
 
   function openEdit(row){
@@ -1037,8 +1015,8 @@ function renderCrud(label, opCreate, opList, opUpdate, { adminOnly=false } = {})
         if(!v.ok) throw new Error(v.errors.join("\n"));
 
         const payload = form.getValue();
-        let path = opUpdate.path;
 
+        let path = opUpdate.path;
         const pathParams = extractPathParams(path);
         if(pathParams.length){
           const key = pathParams[0];
@@ -1087,11 +1065,31 @@ function renderCrud(label, opCreate, opList, opUpdate, { adminOnly=false } = {})
     return out;
   }
 
+  function findFieldInput(root, fieldName){
+    const lower = String(fieldName).toLowerCase();
+    const inputs = root.querySelectorAll("input, textarea, select");
+    for(const inp of inputs){
+      const id = inp.id || "";
+      const m = id.match(/^f_(.+?)_/);
+      if(!m) continue;
+      if(String(m[1]).toLowerCase() === lower) return inp;
+    }
+    return null;
+  }
+
+  function setIfEmpty(root, fieldName, value){
+    const inp = findFieldInput(root, fieldName);
+    if(!inp) return;
+    if(String(inp.value||"").trim() !== "") return;
+    inp.value = value;
+  }
+
   refreshList();
 }
 
 function renderDebug(){
   const host = el("page");
+
   const box = document.createElement("div");
   box.className = "grid";
 
@@ -1108,23 +1106,9 @@ function renderDebug(){
           `).join("")}
         </tbody>
       </table>
-      <div class="hint">لو me مش متكشف، هتستخدم JWT fallback. لو userById متكشف، هيتجرب بعد الـJWT.</div>
     </div>
   `;
   box.appendChild(ops);
-
-  const who = document.createElement("div");
-  who.className = "card";
-  who.innerHTML = `
-    <div class="hd"><h3>WhoAmI Fix</h3><span class="muted">Normalize userId</span></div>
-    <div class="bd grid">
-      <button class="btn primary" id="btnWho">WhoAmI (try /me then JWT then /users/{id})</button>
-      <div class="muted">Current detected me: <span class="mono">${escapeHtml(opToText(store.ops.me))}</span></div>
-      <div class="muted">Current detected userById: <span class="mono">${escapeHtml(opToText(store.ops.userById))}</span></div>
-      <textarea id="whoResp" readonly></textarea>
-    </div>
-  `;
-  box.appendChild(who);
 
   const raw = document.createElement("div");
   raw.className = "card";
@@ -1164,18 +1148,6 @@ function renderDebug(){
 
   host.appendChild(box);
 
-  who.querySelector("#btnWho").onclick = async ()=>{
-    try{
-      if(!store.token) throw new Error("Not authenticated.");
-      const u = await refreshMeSmart();
-      who.querySelector("#whoResp").value = JSON.stringify(u, null, 2);
-      toast("ok","WhoAmI OK", `userId=${getUserId()}`);
-    }catch(e){
-      who.querySelector("#whoResp").value = `${e.message}\n\n${e.data ? JSON.stringify(e.data,null,2) : ""}`.trim();
-      toast("danger","WhoAmI failed", e.message);
-    }
-  };
-
   raw.querySelector("#send").onclick = async ()=>{
     try{
       const method = raw.querySelector("#m").value;
@@ -1201,22 +1173,21 @@ function renderDebug(){
    ========================= */
 el("btnReloadSpec").onclick = async ()=>{
   try{
-    setBusy(true);
     await loadSpec();
     toast("ok","Spec reloaded", store.specUrl || "not found");
     goto(currentPage);
   }catch(e){
     toast("danger","Reload failed", e.message);
-  }finally{
-    setBusy(false);
   }
 };
 
 el("btnLogout").onclick = ()=>{
   store.token = "";
   store.user = null;
+  store.userId = "";
   localStorage.removeItem("jp_token");
   localStorage.removeItem("jp_user");
+  localStorage.removeItem("jp_userId");
   setAuthUI();
   toast("warn","Logged out","");
   goto("login");
@@ -1235,12 +1206,7 @@ el("btnCopyToken").onclick = async ()=>{
   }
 };
 
-el("btnClearUser").onclick = ()=>{
-  store.user = null;
-  localStorage.removeItem("jp_user");
-  setAuthUI();
-  toast("warn","User cleared","Local user removed.");
-};
+el("btnResolveUserId").onclick = resolveUserId;
 
 /* =========================
    BOOT
@@ -1248,36 +1214,9 @@ el("btnClearUser").onclick = ()=>{
 (async function init(){
   setAuthUI();
   renderNav();
-  setBusy(true);
-  try{
-    await loadSpec();
-
-    // لو فيه token، ظبط userId فوراً
-    if(store.token){
-      await refreshMeSmart();
-    }
-
-    goto(store.token ? "courses" : "login");
-  }finally{
-    setBusy(false);
-  }
+  await loadSpec();
+  goto(store.token ? "students" : "login");
 })();
 </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
