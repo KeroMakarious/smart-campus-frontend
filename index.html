@@ -337,7 +337,7 @@ function isEmail(email){
 
 function validatePassword(pw){
   const p = String(pw||"");
-  if(p.length < API.validation.passwordMin) return Password must be at least ${API.validation.passwordMin} characters;
+  if(p.length < API.validation.passwordMin) return `Password must be at least ${API.validation.passwordMin} characters`;
   if(/\s/.test(p)) return "Password must not contain spaces";
   return "";
 }
@@ -373,7 +373,7 @@ function setBusy(b){
    ========================= */
 async function apiCall(key, body=null, extraOpts={}){
   const ep = API.endpoints[key];
-  if(!ep) throw new Error(Endpoint not configured: ${key});
+  if(!ep) throw new Error(`Endpoint not configured: ${key}`);
 
   const url = API.baseUrl + ep.path;
   const headers = Object.assign(
@@ -383,7 +383,7 @@ async function apiCall(key, body=null, extraOpts={}){
   );
 
   if(store.token){
-    headers["Authorization"] = Bearer ${store.token};
+    headers["Authorization"] = `Bearer ${store.token}`;
   }
 
   const res = await fetch(url, {
@@ -398,7 +398,7 @@ async function apiCall(key, body=null, extraOpts={}){
   if(!res.ok){
     console.error("API ERROR", { url, status: res.status, response: data, sentBody: body });
     const msg = typeof data === "string" ? data : JSON.stringify(data);
-    throw new Error(msg || HTTP ${res.status});
+    throw new Error(msg || `HTTP ${res.status}`);
   }
 
   return data;
@@ -901,8 +901,6 @@ $("#btnTestAuth").onclick = async () => {
 </script>
 </body>
 </html>
-
-
 
 
 
