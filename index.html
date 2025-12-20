@@ -66,6 +66,26 @@
     .right{display:flex; gap:8px; align-items:center}
     .sep{height:1px; background:rgba(30,43,78,.7); margin:10px 0}
     .badge{font-size:11px; padding:3px 8px; border-radius:999px; border:1px solid rgba(169,183,214,.35); color:var(--muted)}
+
+    /* busy overlay */
+    .busy-overlay{
+      position:fixed; inset:0;
+      background:rgba(0,0,0,.35);
+      display:none;
+      place-items:center;
+      z-index:1000;
+      backdrop-filter: blur(3px);
+    }
+    .busy-overlay.show{ display:grid; }
+    .spinner{
+      width:46px; height:46px;
+      border-radius:50%;
+      border:4px solid rgba(255,255,255,.18);
+      border-top-color: rgba(122,167,255,.95);
+      animation:spin 900ms linear infinite;
+      box-shadow: var(--shadow);
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
@@ -103,13 +123,6 @@
               </div>
               <button class="btn" id="btnCopyToken">Copy</button>
             </div>
-            <div class="kv">
-              <div>
-                <div class="small"><b>UserId</b></div>
-                <div class="muted mono" id="userIdTxt">-</div>
-              </div>
-              <button class="btn" id="btnResolveUserId">Resolve</button>
-            </div>
           </div>
         </div>
       </div>
@@ -125,6 +138,10 @@
   </div>
 
   <div class="toast" id="toast"></div>
+
+  <div class="busy-overlay" id="busy">
+    <div class="spinner" aria-label="Loading"></div>
+  </div>
 
 <script>
 /* =========================
@@ -144,7 +161,8 @@ const CONFIG = {
     password: { min: 8, max: 72 },
     email: { pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/i },
     phone: { pattern: /^[0-9+\-\s()]{6,}$/ }
-  }
+  },
+  requestTimeoutMs: 20000
 };
 
 /* =========================
@@ -153,8 +171,6 @@ const CONFIG = {
 const store = {
   token: localStorage.getItem("jp_token") || "",
   user: safeJson(localStorage.getItem("jp_user")) || null,
-  userId: localStorage.getItem("jp_userId") || "",
-  lastEmail: localStorage.getItem("jp_lastEmail") || "",
   spec: null,
   specUrl: null,
   ops: {
@@ -193,15 +209,55 @@ function toast(kind, title, detail){
   setTimeout(()=>{ item.style.opacity="0"; item.style.transform="translateY(8px)"; }, 4200);
   setTimeout(()=>{ item.remove(); }, 4800);
 }
+
+let __busyDepth = 0;
+function setBusy(isBusy){
+  const overlay = el("busy");
+  if(isBusy){
+    __busyDepth++;
+    overlay.classList.add("show");
+    snapshotDisable(true);
+  }else{
+    __busyDepth = Math.max(0, __busyDepth - 1);
+    if(__busyDepth===0){
+      overlay.classList.remove("show");
+      snapshotDisable(false);
+    }
+  }
+}
+
+function snapshotDisable(disable){
+  const nodes = document.querySelectorAll("button, input, select, textarea");
+  nodes.forEach(n=>{
+    // never block open swagger + copy token
+    if(n.id==="btnOpenSwagger" || n.id==="btnCopyToken") return;
+
+    if(disable){
+      if(!n.dataset.prevDisabled) n.dataset.prevDisabled = n.disabled ? "1" : "0";
+      n.disabled = true;
+    }else{
+      const prev = n.dataset.prevDisabled;
+      if(prev!==undefined){
+        n.disabled = (prev==="1");
+        delete n.dataset.prevDisabled;
+      }
+    }
+  });
+
+  // restore auth-locked buttons state properly
+  setAuthUI();
+}
+
 function escapeHtml(s){
-  return s.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const str = String(s ?? "");
+  return str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 }
 function safeJson(s){ try{ return JSON.parse(s); }catch{ return null; } }
 
 /* =========================
-   API CLIENT
+   API CLIENT (timeout + better errors)
    ========================= */
-async function apiFetch(path, { method="GET", headers={}, body=null, query=null } = {}){
+async function apiFetch(path, { method="GET", headers={}, body=null, query=null, noAuth=false } = {}){
   const url = new URL(CONFIG.baseUrl + path);
   if(query){
     Object.entries(query).forEach(([k,v])=>{
@@ -211,7 +267,7 @@ async function apiFetch(path, { method="GET", headers={}, body=null, query=null 
   }
 
   const h = { "Accept":"application/json", ...headers };
-  if(store.token) h["Authorization"] = `Bearer ${store.token}`;
+  if(store.token && !noAuth) h["Authorization"] = `Bearer ${store.token}`;
 
   let payload = body;
   if(body && typeof body === "object" && !(body instanceof FormData)){
@@ -219,54 +275,37 @@ async function apiFetch(path, { method="GET", headers={}, body=null, query=null 
     payload = JSON.stringify(body);
   }
 
-  const res = await fetch(url.toString(), { method, headers: h, body: payload });
-  const text = await res.text();
-  let data = null;
-  try{ data = text ? JSON.parse(text) : null; }catch{ data = text; }
+  const ctrl = new AbortController();
+  const t = setTimeout(()=>ctrl.abort(), CONFIG.requestTimeoutMs);
+
+  let res, text, data;
+  try{
+    res = await fetch(url.toString(), { method, headers: h, body: payload, signal: ctrl.signal });
+    text = await res.text();
+    try{ data = text ? JSON.parse(text) : null; }catch{ data = text; }
+  }catch(e){
+    if(e && e.name==="AbortError"){
+      const err = new Error("Request timeout");
+      err.status = 0;
+      err.data = null;
+      throw err;
+    }
+    const err = new Error(e?.message || "Network error");
+    err.status = 0;
+    err.data = null;
+    throw err;
+  }finally{
+    clearTimeout(t);
+  }
 
   if(!res.ok){
-    const msg = (data && (data.message || data.error || data.detail)) ? (data.message || data.error || data.detail) : res.statusText;
+    const msg = (data && (data.message || data.error || data.detail)) ? (data.message || data.error || data.detail) : (res.statusText || `HTTP ${res.status}`);
     const err = new Error(msg || `HTTP ${res.status}`);
     err.status = res.status;
     err.data = data;
     throw err;
   }
   return data;
-}
-
-/* =========================
-   USERID RESOLVE (100% fixes null id on student)
-   ========================= */
-async function resolveUserId(){
-  try{
-    if(!store.token) throw new Error("Login first.");
-    const users = await apiFetch("/api/users", { method:"GET" });
-    const arr = Array.isArray(users) ? users : (users.data || users.items || users.content || []);
-    if(!arr.length) throw new Error("No users returned from /api/users");
-
-    let picked = null;
-
-    if(store.lastEmail){
-      picked = arr.find(u => String(u.email||"").toLowerCase() === String(store.lastEmail).toLowerCase());
-    }
-
-    if(!picked && store.user && (store.user.email || store.user.username)){
-      const key = (store.user.email || store.user.username);
-      picked = arr.find(u => String(u.email||u.username||"").toLowerCase() === String(key).toLowerCase());
-    }
-
-    if(!picked) picked = arr[0];
-
-    const id = picked.id ?? picked.userId ?? picked._id ?? null;
-    if(!id) throw new Error("Could not detect user id field on /api/users response.");
-
-    store.userId = String(id);
-    localStorage.setItem("jp_userId", store.userId);
-    el("userIdTxt").textContent = store.userId;
-    toast("ok","UserId resolved", store.userId);
-  }catch(e){
-    toast("danger","Resolve userId failed", `${e.message}\n\n${e.data ? JSON.stringify(e.data,null,2) : ""}`.trim());
-  }
 }
 
 /* =========================
@@ -280,7 +319,8 @@ async function loadSpec(){
   let lastErr = null;
   for(const p of CONFIG.openApiCandidates){
     try{
-      const data = await apiFetch(p, { method:"GET" });
+      // spec endpoints غالباً public، فبنبعتها من غير Bearer لتفادي 401 لو فيه فلتر
+      const data = await apiFetch(p, { method:"GET", noAuth:true });
       if(data && (data.openapi || data.swagger) && data.paths){
         store.spec = data;
         store.specUrl = CONFIG.baseUrl + p;
@@ -295,7 +335,7 @@ async function loadSpec(){
 
   el("specBadge").textContent = "spec: not found";
   toast("danger","OpenAPI spec not reachable",
-        "Backend must expose JSON (ex: /v3/api-docs).\n\nLast error:\n" + (lastErr ? (lastErr.message || String(lastErr)) : "unknown"));
+        "Backend must expose JSON (ex: /v3/api-docs). Swagger UI alone is not enough for auto-linking.\n\nLast error:\n" + (lastErr ? (lastErr.message || String(lastErr)) : "unknown"));
 }
 
 function deriveOps(){
@@ -306,11 +346,9 @@ function deriveOps(){
 
   const candidates = [];
   for(const [path, methods] of Object.entries(spec.paths)){
-    for(const [m, op] of Object.entries(methods)){
+    for(const [m, op] of Object.entries(methods || {})){
       if(!op || typeof op !== "object") continue;
-      const method = m.toUpperCase();
-      if(!["GET","POST","PUT","PATCH","DELETE"].includes(method)) continue;
-      candidates.push({ path, method, op });
+      candidates.push({ path, method: String(m).toUpperCase(), op });
     }
   }
 
@@ -327,20 +365,19 @@ function deriveOps(){
     return parts.every(p => t.includes(String(p).toLowerCase()));
   };
 
-  // Auth
   store.ops.login = pick([
     x => x.method==="POST" && (has(x.path,"/auth","login") || has(x.op.operationId,"login")),
     x => x.method==="POST" && (has(x.op.summary,"login") || has(x.op.description,"login"))
   ]);
+
   store.ops.register = pick([
     x => x.method==="POST" && (has(x.path,"/auth","register") || has(x.op.operationId,"register") || has(x.path,"/register")),
-    x => x.method==="POST" && (has(x.op.summary,"register") || has(x.op.description,"register") || (has(x.op.summary,"sign") && has(x.op.summary,"up")))
+    x => x.method==="POST" && ((has(x.op.summary,"register") || has(x.op.description,"register")) || (has(x.op.summary,"sign") && has(x.op.summary,"up")))
   ]);
 
-  // "me" is OPTIONAL. Avoid wrong mapping like /api/payments/{id}
   store.ops.me = pick([
-    x => x.method==="GET" && (has(x.path,"/auth","me") || has(x.path,"/me") || has(x.op.operationId,"me")) && !has(x.path,"payment"),
-    x => x.method==="GET" && (has(x.op.summary,"current user") || has(x.op.summary,"profile")) && !has(x.path,"payment")
+    x => x.method==="GET" && (has(x.path,"/auth","me") || has(x.op.operationId,"me") || has(x.path,"/me")),
+    x => x.method==="GET" && (has(x.op.summary,"profile") || has(x.op.summary,"current user"))
   ]);
 
   const crud = (entity) => {
@@ -367,17 +404,26 @@ function deriveOps(){
   store.ops.listCourses = course.list;
   store.ops.updateCourse = course.update;
 
+  const canteen = crud("canteen");
   store.ops.createCanteenItem = pick([
     x => x.method==="POST" && (has(x.path,"canteen") && (has(x.path,"item") || has(x.path,"items"))),
-    x => crud("canteen").create
+    () => canteen.create
+  ].map(fn => (typeof fn==="function" ? fn : (x)=>fn)));
+
+  // fix pick() inputs above: keep it simple
+  store.ops.createCanteenItem = pick([
+    x => x.method==="POST" && (has(x.path,"canteen") && (has(x.path,"item") || has(x.path,"items"))),
+    x => canteen.create === x
   ]);
+
   store.ops.listCanteenItems = pick([
     x => x.method==="GET" && (has(x.path,"canteen") && (has(x.path,"item") || has(x.path,"items"))) && !has(x.path,"/{"),
-    x => crud("canteen").list
+    x => canteen.list === x
   ]);
+
   store.ops.updateCanteenItem = pick([
     x => (x.method==="PUT" || x.method==="PATCH") && (has(x.path,"canteen") && (has(x.path,"item") || has(x.path,"items"))) && has(x.path,"/{"),
-    x => crud("canteen").update
+    x => canteen.update === x
   ]);
 
   const student = crud("student");
@@ -396,18 +442,41 @@ function opToText(op){
   return `${op.method} ${op.path}`;
 }
 
+/* robust schema deref: handles $ref + allOf */
 function getRequestSchema(op){
   if(!op || !op.op) return null;
   const rb = op.op.requestBody;
   if(!rb || !rb.content) return null;
 
   const json = rb.content["application/json"] || rb.content["application/*+json"];
-  if(json && json.schema) return derefSchema(json.schema);
+  const schema = (json && json.schema) ? json.schema : (Object.values(rb.content)[0]?.schema || null);
+  if(!schema) return null;
 
-  const first = Object.values(rb.content)[0];
-  if(first && first.schema) return derefSchema(first.schema);
+  return normalizeSchema(derefSchemaDeep(schema));
+}
 
-  return null;
+function normalizeSchema(schema){
+  if(!schema) return null;
+  if(schema.allOf && Array.isArray(schema.allOf) && schema.allOf.length){
+    const merged = { type:"object", properties:{}, required:[] };
+    schema.allOf.map(s=>normalizeSchema(derefSchemaDeep(s))).forEach(s=>{
+      if(!s) return;
+      if(s.properties) Object.assign(merged.properties, s.properties);
+      if(Array.isArray(s.required)) merged.required.push(...s.required);
+    });
+    merged.required = Array.from(new Set(merged.required));
+    return merged;
+  }
+  return schema;
+}
+
+function derefSchemaDeep(schema, depth=0){
+  if(!schema || depth>8) return schema;
+  const s = derefSchema(schema);
+  if(s.allOf) return { ...s, allOf: s.allOf.map(x=>derefSchemaDeep(x, depth+1)) };
+  if(s.oneOf) return { ...s, oneOf: s.oneOf.map(x=>derefSchemaDeep(x, depth+1)) };
+  if(s.anyOf) return { ...s, anyOf: s.anyOf.map(x=>derefSchemaDeep(x, depth+1)) };
+  return s;
 }
 
 function derefSchema(schema){
@@ -415,7 +484,7 @@ function derefSchema(schema){
   if(!schema || !spec) return schema;
 
   if(schema.$ref){
-    const ref = schema.$ref;
+    const ref = String(schema.$ref);
     const key = ref.split("/").pop();
     const comps = (spec.components && spec.components.schemas) ? spec.components.schemas : {};
     return comps[key] ? comps[key] : schema;
@@ -430,10 +499,10 @@ function buildFormFromSchema(schema, { mode="create" } = {}){
   const wrap = document.createElement("div");
   wrap.className = "grid";
 
-  if(!schema){
+  if(!schema || schema.type!=="object"){
     wrap.innerHTML = `
       <div class="muted">
-        No request schema found in OpenAPI for this endpoint.
+        No usable request schema found in OpenAPI for this endpoint.
         Use the JSON editor below and send raw payload.
       </div>
       <label>Raw JSON Body</label>
@@ -446,8 +515,7 @@ function buildFormFromSchema(schema, { mode="create" } = {}){
         if(!t) return {};
         return JSON.parse(t);
       },
-      validate: () => ({ ok:true }),
-      meta: { fields: [] }
+      validate: () => ({ ok:true })
     };
   }
 
@@ -455,11 +523,8 @@ function buildFormFromSchema(schema, { mode="create" } = {}){
   const required = new Set(schema.required || []);
   const fields = [];
 
- for(const [name, def] of Object.entries(props)){
-  // اسقط id فقط لو مش مطلوب (مش required) عشان لو مطلوب لازم يدخل
-  if(mode === "create" && name.toLowerCase() === "id" && !required.has(name)) continue;
-
-
+  for(const [name, def0] of Object.entries(props)){
+    const def = def0 || {};
     const f = document.createElement("div");
     const id = `f_${name}_${Math.random().toString(16).slice(2)}`;
 
@@ -509,7 +574,6 @@ function buildFormFromSchema(schema, { mode="create" } = {}){
 
   const validate = () => {
     const errors = [];
-
     for(const fld of fields){
       const n = fld.name;
       const v = getFieldValue(fld);
@@ -533,7 +597,6 @@ function buildFormFromSchema(schema, { mode="create" } = {}){
         if(!CONFIG.validation.phone.pattern.test(String(v))) errors.push(`Invalid phone: ${n}`);
       }
     }
-
     return errors.length ? { ok:false, errors } : { ok:true };
   };
 
@@ -548,25 +611,25 @@ function buildFormFromSchema(schema, { mode="create" } = {}){
     return obj;
   };
 
-  return { el: wrap, getValue, validate, meta: { fields } };
+  return { el: wrap, getValue, validate };
 }
 
 function getFieldValue(fld){
-  const elx = fld.inputEl;
-  const def = fld.def;
+  const node = fld.inputEl;
+  const def = fld.def || {};
 
-  if(elx.tagName === "TEXTAREA"){
-    const t = elx.value.trim();
+  if(node.tagName === "TEXTAREA"){
+    const t = node.value.trim();
     if(!t) return fld.required ? "" : undefined;
     try { return JSON.parse(t); } catch { return t; }
   }
-  if(elx.tagName === "SELECT"){
-    const v = elx.value;
+  if(node.tagName === "SELECT"){
+    const v = node.value;
     if(v==="") return fld.required ? "" : undefined;
     if(def.type==="boolean") return v === "true";
     return v;
   }
-  const raw = elx.value;
+  const raw = node.value;
   if(raw === "") return fld.required ? "" : undefined;
   if(def.type==="integer") return parseInt(raw,10);
   if(def.type==="number") return Number(raw);
@@ -581,7 +644,7 @@ const pages = [
   { key:"register", title:"Register", hint:"Create an account (if backend supports it)", render: renderRegister },
   { key:"courses", title:"Courses", hint:"Add / list / update courses", render: ()=>renderCrud("Course", store.ops.createCourse, store.ops.listCourses, store.ops.updateCourse) },
   { key:"canteen", title:"Canteen Items", hint:"Add / list / update canteen items", render: ()=>renderCrud("Canteen Item", store.ops.createCanteenItem, store.ops.listCanteenItems, store.ops.updateCanteenItem) },
-  { key:"students", title:"Students (Admin)", hint:"Add / list / update students", render: ()=>renderCrud("Student", store.ops.createStudent, store.ops.listStudents, store.ops.updateStudent, { adminOnly:true, entityKey:"student" }) },
+  { key:"students", title:"Students (Admin)", hint:"Add / list / update students", render: ()=>renderCrud("Student", store.ops.createStudent, store.ops.listStudents, store.ops.updateStudent, { adminOnly:true }) },
   { key:"teachers", title:"Teachers (Admin)", hint:"Add / list / update teachers", render: ()=>renderCrud("Teacher", store.ops.createTeacher, store.ops.listTeachers, store.ops.updateTeacher, { adminOnly:true }) },
   { key:"debug", title:"Debug", hint:"See detected endpoints and call raw operations", render: renderDebug }
 ];
@@ -615,10 +678,9 @@ function setAuthUI(){
   el("baseTxt").textContent = CONFIG.baseUrl;
   el("swaggerUrl").textContent = CONFIG.swaggerUi;
 
-  el("userIdTxt").textContent = store.userId ? store.userId : "-";
-
   const pill = el("authPill");
   const btnLogout = el("btnLogout");
+
   if(store.token){
     pill.className = "pill ok";
     pill.textContent = "Authenticated";
@@ -632,11 +694,10 @@ function setAuthUI(){
 
 function renderLogin(){
   const host = el("page");
-
   const op = store.ops.login;
   const schema = getRequestSchema(op);
-
   const form = buildFormFromSchema(schema, { mode:"login" });
+
   const box = document.createElement("div");
   box.className = "grid";
 
@@ -644,7 +705,7 @@ function renderLogin(){
   info.className = "muted";
   info.innerHTML = `
     Detected login endpoint: <span class="mono">${escapeHtml(opToText(op))}</span>
-    <div class="hint">After login, it auto-resolves userId from GET /api/users.</div>
+    <div class="hint">If login mapping is wrong, open Debug and use raw call.</div>
   `;
   box.appendChild(info);
   box.appendChild(form.el);
@@ -661,36 +722,27 @@ function renderLogin(){
 
   host.querySelector("#goRegister").onclick = ()=>goto("register");
   host.querySelector("#doLogin").onclick = async ()=>{
+    setBusy(true);
     try{
       if(!op) throw new Error("Login operation not found in spec.");
       const v = form.validate();
       if(!v.ok) throw new Error(v.errors.join("\n"));
 
       const payload = form.getValue();
-
-      // save lastEmail to match /api/users later
-      const emailKey = Object.keys(payload).find(k => String(k).toLowerCase().includes("email"));
-      if(emailKey && payload[emailKey]){
-        store.lastEmail = String(payload[emailKey]);
-        localStorage.setItem("jp_lastEmail", store.lastEmail);
-      }
-
       const data = await apiFetch(op.path, { method: op.method, body: payload });
 
-      const token = (data && (data.token || data.accessToken || data.jwt || data.id_token)) ? (data.token || data.accessToken || data.jwt || data.id_token) : null;
-      if(!token) {
-        const t2 = data && data.data && (data.data.token || data.data.accessToken || data.data.jwt);
-        if(!t2) throw new Error("Login succeeded but token not found in response.");
-        store.token = t2;
-      } else {
-        store.token = token;
-      }
+      const token = (data && (data.token || data.accessToken || data.jwt || data.id_token))
+        ? (data.token || data.accessToken || data.jwt || data.id_token)
+        : (data && data.data && (data.data.token || data.data.accessToken || data.data.jwt)) || null;
 
+      if(!token) throw new Error("Login succeeded but token not found in response. Check response in Debug.");
+
+      store.token = token;
       localStorage.setItem("jp_token", store.token);
+
       toast("ok","Login success","Token stored.");
       setAuthUI();
 
-      // try /me if exists (not required)
       if(store.ops.me){
         try{
           const me = await apiFetch(store.ops.me.path, { method: store.ops.me.method });
@@ -699,19 +751,17 @@ function renderLogin(){
         }catch{}
       }
 
-      // IMPORTANT: always resolve userId from /api/users
-      await resolveUserId();
-
-      goto("students");
+      goto("courses");
     }catch(e){
       toast("danger","Login failed", `${e.message}\n\n${e.data ? JSON.stringify(e.data,null,2) : ""}`.trim());
+    }finally{
+      setBusy(false);
     }
   };
 }
 
 function renderRegister(){
   const host = el("page");
-
   const op = store.ops.register;
   const schema = getRequestSchema(op);
   const form = buildFormFromSchema(schema, { mode:"register" });
@@ -740,24 +790,25 @@ function renderRegister(){
 
   host.querySelector("#goLogin").onclick = ()=>goto("login");
   host.querySelector("#doRegister").onclick = async ()=>{
+    setBusy(true);
     try{
       if(!op) throw new Error("Register operation not found in spec.");
       const v = form.validate();
       if(!v.ok) throw new Error(v.errors.join("\n"));
+
       const payload = form.getValue();
       const data = await apiFetch(op.path, { method: op.method, body: payload });
       toast("ok","Register success", JSON.stringify(data,null,2));
       goto("login");
     }catch(e){
       toast("danger","Register failed", `${e.message}\n\n${e.data ? JSON.stringify(e.data,null,2) : ""}`.trim());
+    }finally{
+      setBusy(false);
     }
   };
 }
 
-/* =========================
-   CRUD (STUDENT FIX INSIDE)
-   ========================= */
-function renderCrud(label, opCreate, opList, opUpdate, { adminOnly=false, entityKey="" } = {}){
+function renderCrud(label, opCreate, opList, opUpdate, { adminOnly=false } = {}){
   const host = el("page");
   const box = document.createElement("div");
   box.className = "grid";
@@ -794,7 +845,6 @@ function renderCrud(label, opCreate, opList, opUpdate, { adminOnly=false, entity
   host.appendChild(box);
 
   const createHost = createCard.querySelector("#createBox");
-
   if(!opCreate){
     createHost.innerHTML = `<div class="muted">Create endpoint not detected. Use Debug.</div>`;
   }else{
@@ -802,71 +852,26 @@ function renderCrud(label, opCreate, opList, opUpdate, { adminOnly=false, entity
     const form = buildFormFromSchema(schema, { mode:"create" });
     createHost.appendChild(form.el);
 
-    // STUDENT AUTO-FILL (100% fix)
-    if(entityKey === "student"){
-      // fill userId input if exists
-      const uInp = findFieldInput(form.el, "userId");
-      if(uInp){
-        uInp.value = store.userId || uInp.value || "";
-        uInp.placeholder = "auto from login (must not be null)";
-      }
-
-      // fill studentId if exists and empty (to avoid null id server errors)
-      const sInp = findFieldInput(form.el, "studentId");
-      if(sInp && (sInp.value==="" || sInp.value===null)){
-        sInp.value = String(1000 + Math.floor(Math.random()*9000));
-      }
-
-      // optional nice defaults if fields exist
-      setIfEmpty(form.el, "firstName", "Omar");
-      setIfEmpty(form.el, "lastName", "Hassan");
-      setIfEmpty(form.el, "department", "Computer Science");
-      setIfEmpty(form.el, "batch", "2025");
-      setIfEmpty(form.el, "rollNo", "CS-017");
-    }
-
     const btn = document.createElement("button");
     btn.className = "btn primary";
     btn.textContent = `Create ${label}`;
     btn.onclick = async ()=>{
+      setBusy(true);
       try{
         if(!store.token) throw new Error("Not authenticated.");
-
-        // ensure userId exists before creating Student
-        if(entityKey === "student" && !store.userId){
-          await resolveUserId();
-        }
-
         const v = form.validate();
         if(!v.ok) throw new Error(v.errors.join("\n"));
 
         const payload = form.getValue();
-
-        if(entityKey === "student"){
-          // enforce userId must not be null
-          if((payload.userId === undefined || payload.userId === null || payload.userId === "") && store.userId){
-            payload.userId = store.userId;
-          }
-          if(payload.userId === undefined || payload.userId === null || payload.userId === ""){
-            throw new Error("userId is required (backend throws: The given id must not be null).");
-          }
-
-          // ensure studentId not null if field exists in schema
-          if("studentId" in payload){
-            if(payload.studentId === undefined || payload.studentId === null || payload.studentId === ""){
-              payload.studentId = 1000 + Math.floor(Math.random()*9000);
-            }
-          }
-        }
-
         const data = await apiFetch(opCreate.path, { method: opCreate.method, body: payload });
         toast("ok", `${label} created`, JSON.stringify(data,null,2));
         await refreshList();
       }catch(e){
         toast("danger", `Create ${label} failed`, `${e.message}\n\n${e.data ? JSON.stringify(e.data,null,2) : ""}`.trim());
+      }finally{
+        setBusy(false);
       }
     };
-
     createHost.appendChild(document.createElement("div")).style.height="8px";
     createHost.appendChild(btn);
   }
@@ -875,6 +880,7 @@ function renderCrud(label, opCreate, opList, opUpdate, { adminOnly=false, entity
   listCard.querySelector("#btnRefresh").onclick = refreshList;
 
   async function refreshList(){
+    setBusy(true);
     try{
       if(!opList){
         listHost.innerHTML = `<div class="muted">List endpoint not detected. Use Debug.</div>`;
@@ -892,7 +898,7 @@ function renderCrud(label, opCreate, opList, opUpdate, { adminOnly=false, entity
       }
 
       const table = document.createElement("table");
-      const keys = collectKeys(rows, 10);
+      const keys = collectKeys(rows, 8);
 
       table.innerHTML = `
         <thead>
@@ -904,7 +910,7 @@ function renderCrud(label, opCreate, opList, opUpdate, { adminOnly=false, entity
         <tbody>
           ${rows.map((r,i)=>`
             <tr>
-              ${keys.map(k=>`<td class="mono">${escapeHtml(toCell(r[k]))}</td>`).join("")}
+              ${keys.map(k=>`<td class="mono">${escapeHtml(toCell(r?.[k]))}</td>`).join("")}
               <td>
                 <button class="btn" data-i="${i}" data-act="edit">Edit</button>
               </td>
@@ -921,6 +927,8 @@ function renderCrud(label, opCreate, opList, opUpdate, { adminOnly=false, entity
     }catch(e){
       listHost.innerHTML = `<div class="muted">Failed to load list.</div>`;
       toast("danger", "List failed", `${e.message}\n\n${e.data ? JSON.stringify(e.data,null,2) : ""}`.trim());
+    }finally{
+      setBusy(false);
     }
   }
 
@@ -953,7 +961,7 @@ function renderCrud(label, opCreate, opList, opUpdate, { adminOnly=false, entity
 
   function pickId(obj){
     if(!obj || typeof obj!=="object") return null;
-    return obj.id ?? obj._id ?? obj.studentId ?? obj.teacherId ?? obj.courseId ?? obj.itemId ?? obj.userId ?? null;
+    return obj.id ?? obj._id ?? obj.userId ?? obj.studentId ?? obj.teacherId ?? obj.courseId ?? obj.itemId ?? null;
   }
 
   function openEdit(row){
@@ -1010,6 +1018,7 @@ function renderCrud(label, opCreate, opList, opUpdate, { adminOnly=false, entity
     btns.querySelector("#raw").onclick = ()=>toast("warn","Raw row", JSON.stringify(row,null,2));
 
     btns.querySelector("#save").onclick = async ()=>{
+      setBusy(true);
       try{
         if(!store.token) throw new Error("Not authenticated.");
         const v = form.validate();
@@ -1030,6 +1039,8 @@ function renderCrud(label, opCreate, opList, opUpdate, { adminOnly=false, entity
         await refreshList();
       }catch(e){
         toast("danger", `Update ${label} failed`, `${e.message}\n\n${e.data ? JSON.stringify(e.data,null,2) : ""}`.trim());
+      }finally{
+        setBusy(false);
       }
     };
 
@@ -1043,7 +1054,7 @@ function renderCrud(label, opCreate, opList, opUpdate, { adminOnly=false, entity
       const m = id.match(/^f_(.+?)_/);
       if(!m) return;
       const key = m[1];
-      const val = obj[key];
+      const val = obj?.[key];
       if(val===undefined) return;
 
       if(inp.tagName==="TEXTAREA"){
@@ -1064,25 +1075,6 @@ function renderCrud(label, opCreate, opList, opUpdate, { adminOnly=false, entity
     let m;
     while((m=re.exec(path))) out.push(m[1]);
     return out;
-  }
-
-  function findFieldInput(root, fieldName){
-    const lower = String(fieldName).toLowerCase();
-    const inputs = root.querySelectorAll("input, textarea, select");
-    for(const inp of inputs){
-      const id = inp.id || "";
-      const m = id.match(/^f_(.+?)_/);
-      if(!m) continue;
-      if(String(m[1]).toLowerCase() === lower) return inp;
-    }
-    return null;
-  }
-
-  function setIfEmpty(root, fieldName, value){
-    const inp = findFieldInput(root, fieldName);
-    if(!inp) return;
-    if(String(inp.value||"").trim() !== "") return;
-    inp.value = value;
   }
 
   refreshList();
@@ -1107,6 +1099,7 @@ function renderDebug(){
           `).join("")}
         </tbody>
       </table>
+      <div class="hint">If an operation is "-", mapping failed because OpenAPI is missing or paths are named differently.</div>
     </div>
   `;
   box.appendChild(ops);
@@ -1150,6 +1143,7 @@ function renderDebug(){
   host.appendChild(box);
 
   raw.querySelector("#send").onclick = async ()=>{
+    setBusy(true);
     try{
       const method = raw.querySelector("#m").value;
       const path = raw.querySelector("#p").value.trim();
@@ -1165,6 +1159,8 @@ function renderDebug(){
     }catch(e){
       raw.querySelector("#r").value = `${e.message}\n\n${e.data ? JSON.stringify(e.data,null,2) : ""}`.trim();
       toast("danger","Request failed", e.message);
+    }finally{
+      setBusy(false);
     }
   };
 }
@@ -1173,30 +1169,29 @@ function renderDebug(){
    TOPBAR ACTIONS
    ========================= */
 el("btnReloadSpec").onclick = async ()=>{
+  setBusy(true);
   try{
     await loadSpec();
     toast("ok","Spec reloaded", store.specUrl || "not found");
     goto(currentPage);
   }catch(e){
     toast("danger","Reload failed", e.message);
+  }finally{
+    setBusy(false);
   }
 };
 
 el("btnLogout").onclick = ()=>{
   store.token = "";
   store.user = null;
-  store.userId = "";
   localStorage.removeItem("jp_token");
   localStorage.removeItem("jp_user");
-  localStorage.removeItem("jp_userId");
   setAuthUI();
   toast("warn","Logged out","");
   goto("login");
 };
 
-el("btnOpenSwagger").onclick = ()=>{
-  window.open(CONFIG.swaggerUi, "_blank");
-};
+el("btnOpenSwagger").onclick = ()=> window.open(CONFIG.swaggerUi, "_blank");
 
 el("btnCopyToken").onclick = async ()=>{
   try{
@@ -1207,18 +1202,23 @@ el("btnCopyToken").onclick = async ()=>{
   }
 };
 
-el("btnResolveUserId").onclick = resolveUserId;
-
 /* =========================
    BOOT
    ========================= */
 (async function init(){
   setAuthUI();
   renderNav();
-  await loadSpec();
-  goto(store.token ? "students" : "login");
+  setBusy(true);
+  try{
+    await loadSpec();
+  }finally{
+    setBusy(false);
+  }
+  goto(store.token ? "courses" : "login");
 })();
 </script>
 </body>
 </html>
+
+
 
