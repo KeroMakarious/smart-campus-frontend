@@ -6,20 +6,9 @@
   <title>Smart Campus - Frontend</title>
   <style>
     :root{
-      --bg:#0b1220;
-      --card:#0f1b33;
-      --card2:#0c1730;
-      --txt:#e7eefc;
-      --muted:#a9b7d6;
-      --line:#1e2b4e;
-      --accent:#7aa7ff;
-      --accent2:#9bffcf;
-      --danger:#ff6b6b;
-      --warn:#ffd166;
-      --ok:#4ade80;
-      --shadow: 0 18px 50px rgba(0,0,0,.35);
-      --radius: 18px;
-      --radius2: 14px;
+      --bg:#0b1220; --card:#0f1b33; --card2:#0c1730; --txt:#e7eefc; --muted:#a9b7d6;
+      --line:#1e2b4e; --accent:#7aa7ff; --accent2:#9bffcf; --danger:#ff6b6b; --warn:#ffd166; --ok:#4ade80;
+      --shadow: 0 18px 50px rgba(0,0,0,.35); --radius: 18px; --radius2: 14px;
       --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
     }
     *{box-sizing:border-box}
@@ -34,10 +23,7 @@
     }
     a{color:var(--accent); text-decoration:none}
     .wrap{max-width:1100px; margin:0 auto; padding:24px}
-    .topbar{
-      display:flex; align-items:center; justify-content:space-between;
-      gap:12px; margin-bottom:16px;
-    }
+    .topbar{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px;}
     .brand{
       display:flex; align-items:center; gap:10px;
       padding:12px 14px; border:1px solid var(--line);
@@ -199,7 +185,8 @@
         </div>
         <div class="bd">
           <div class="note" style="margin-bottom:12px">
-            This frontend stores token in <code class="inline">localStorage</code> and sends it as <code class="inline">Authorization: Bearer &lt;token&gt;</code>.
+            This frontend stores token in <code class="inline">localStorage</code> and sends it as
+            <code class="inline">Authorization: Bearer &lt;token&gt;</code>.
           </div>
 
           <div class="kvs">
@@ -216,7 +203,7 @@
           </div>
 
           <div class="note" style="margin-top:12px">
-            If requests fail from hosting: fix CORS in backend and ensure frontend uses HTTPS.
+            If hosting issues: backend CORS + frontend HTTPS.
           </div>
         </div>
       </div>
@@ -227,7 +214,7 @@
 
 <script>
 /* =========================
-   1) CONFIG (EDIT THIS)
+   1) CONFIG
    ========================= */
 const API = {
   baseUrl: "https://just-presence-production-79e0.up.railway.app",
@@ -236,7 +223,7 @@ const API = {
   endpoints: {
     login:      { method:"POST", path:"/api/auth/login" },
     register:   { method:"POST", path:"/api/auth/register" },
-    whoami:     { method:"GET",  path:"/api/auth/login" },     // FIXED
+    whoami:     { method:"GET",  path:"/api/auth/me" },     // لو مش موجودة هتفشل بس مش هتبوز باقي السيستم
     addCourse:  { method:"POST", path:"/api/courses" },
     addCanteen: { method:"POST", path:"/api/canteen/items" },
     addStudent: { method:"POST", path:"/api/students" },
@@ -248,6 +235,7 @@ const API = {
       email: v.email,
       password: v.password
     }),
+
     register: (v) => ({
       fullName: v.fullName,
       email: v.email,
@@ -255,22 +243,22 @@ const API = {
       role: v.role
     }),
 
-    // BACKEND SHAPE:
+    // مطابق للباك اند اللي بعتيه:
     // {
-    //  "courseName": "Advanced Java",
-    //  "courseCode": "CS102",
-    //  "description": "...",
-    //  "credits": "3",
-    //  "department": "CS",
-    //  "teacherId": 1
+    //   "courseName": "...",
+    //   "courseCode": "...",
+    //   "description": "...",
+    //   "credits": "3",
+    //   "department": "CS",
+    //   "teacherId": 1
     // }
     addCourse: (v) => ({
       courseName: v.courseName,
       courseCode: v.courseCode,
-      description: v.description,
-      credits: String(v.credits),
+      description: v.description || "",
+      credits: String(v.credits ?? ""),
       department: v.department,
-      teacherId: Number(v.teacherId)
+      teacherId: (String(v.teacherId ?? "").trim() === "") ? null : Number(v.teacherId)
     }),
 
     addCanteen: (v) => ({
@@ -279,6 +267,7 @@ const API = {
       quantity: Number(v.quantity),
       category: v.category || null
     }),
+
     addStudent: (v) => ({
       fullName: v.fullName,
       email: v.email,
@@ -286,6 +275,7 @@ const API = {
       level: v.level ? Number(v.level) : null,
       department: v.department || null
     }),
+
     addTeacher: (v) => ({
       fullName: v.fullName,
       email: v.email,
@@ -406,10 +396,11 @@ async function apiCall(key, body=null, extraOpts={}){
   const data = safeJsonParse(text) ?? text;
 
   if(!res.ok){
-    console.error("API ERROR", { url, status: res.status, response: data });
+    console.error("API ERROR", { url, status: res.status, response: data, sentBody: body });
     const msg = typeof data === "string" ? data : JSON.stringify(data);
     throw new Error(msg || `HTTP ${res.status}`);
   }
+
   return data;
 }
 
@@ -419,8 +410,8 @@ async function apiCall(key, body=null, extraOpts={}){
 function renderTabs(){
   const isAuthed = !!store.token;
   const role = currentRole();
-  const tabs = [];
 
+  const tabs = [];
   if(!isAuthed){
     tabs.push({id:"login", label:"Login"});
     tabs.push({id:"register", label:"Register"});
@@ -446,7 +437,7 @@ function renderTabs(){
   $("#btnLogout").style.display = isAuthed ? "inline-block" : "none";
 
   $("#roleBadge").textContent = "ROLE: " + role;
-  $("#roleBadge").className = "badge " + (String(role).toUpperCase().includes("ADMIN") ? "ok" : (role === "-" ? "warn" : ""));
+  $("#roleBadge").className = "badge " + (String(role).toUpperCase().includes("ADMIN") ? "ok" : role === "-" ? "warn" : "badge");
 
   $("#envTxt").textContent = "API: " + API.baseUrl;
   $("#kvBase").textContent = API.baseUrl;
@@ -458,10 +449,8 @@ function renderTabs(){
 
 function render(){
   renderTabs();
-
   const page = $("#page");
   page.innerHTML = "";
-
   if(state.tab === "login") page.appendChild(viewLogin());
   else if(state.tab === "register") page.appendChild(viewRegister());
   else page.appendChild(viewDashboard());
@@ -474,7 +463,7 @@ function viewLogin(){
   const root = document.createElement("div");
   root.innerHTML = `
     <div class="note" style="margin-bottom:12px">
-      Uses <code class="inline">${escapeHtml(API.endpoints.login.method)} ${escapeHtml(API.endpoints.login.path)}</code>
+      Uses <code class="inline">${escapeHtml(API.endpoints.login.method)} ${escapeHtml(API.endpoints.login.path)}</code>.
     </div>
 
     <div class="row">
@@ -495,6 +484,7 @@ function viewLogin(){
   `;
 
   root.querySelector("#btnGoRegister").onclick = () => { state.tab = "register"; render(); };
+
   root.querySelector("#btnLogin").onclick = async () => {
     if(state.busy) return;
 
@@ -522,7 +512,7 @@ function viewLogin(){
         store.user = p ? { email: p.email || email, role: p.role || p.roles?.[0] || "-" } : { email };
       }
 
-      toast("ok","Logged in","Token saved. Opening dashboard.");
+      toast("ok","Logged in","Opening dashboard.");
       state.tab = "admin";
     }catch(e){
       toast("danger","Login Failed", e.message || "Unknown error");
@@ -538,7 +528,7 @@ function viewRegister(){
   const root = document.createElement("div");
   root.innerHTML = `
     <div class="note" style="margin-bottom:12px">
-      Uses <code class="inline">${escapeHtml(API.endpoints.register.method)} ${escapeHtml(API.endpoints.register.path)}</code>
+      Uses <code class="inline">${escapeHtml(API.endpoints.register.method)} ${escapeHtml(API.endpoints.register.path)}</code>.
     </div>
 
     <div class="row">
@@ -593,7 +583,7 @@ function viewRegister(){
       const payload = API.payloadMaps.register({fullName, email, password, role});
       await apiCall("register", payload);
 
-      toast("ok","Registered","Account created. Now login.");
+      toast("ok","Registered","Now login.");
       state.tab = "login";
     }catch(e){
       toast("danger","Register Failed", e.message || "Unknown error");
@@ -714,12 +704,12 @@ function viewDashboard(){
     if(state.busy) return;
 
     const v = {
-      courseName:  root.querySelector("#cName").value.trim(),
-      courseCode:  root.querySelector("#cCode").value.trim(),
+      courseName: root.querySelector("#cName").value.trim(),
+      courseCode: root.querySelector("#cCode").value.trim(),
       description: root.querySelector("#cDesc").value.trim(),
-      credits:     root.querySelector("#cCredits").value,
-      department:  root.querySelector("#cDept").value.trim(),
-      teacherId:   root.querySelector("#cTeacherId").value
+      credits: root.querySelector("#cCredits").value,
+      department: root.querySelector("#cDept").value.trim(),
+      teacherId: root.querySelector("#cTeacherId").value
     };
 
     if(v.courseName.length < 2) return toast("warn","Invalid","Course name required.");
@@ -735,12 +725,12 @@ function viewDashboard(){
 
       toast("ok","Course Added","Saved in backend.");
 
-      root.querySelector("#cName").value="";
-      root.querySelector("#cCode").value="";
-      root.querySelector("#cDesc").value="";
-      root.querySelector("#cDept").value="";
-      root.querySelector("#cCredits").value="";
-      root.querySelector("#cTeacherId").value="";
+      root.querySelector("#cName").value = "";
+      root.querySelector("#cCode").value = "";
+      root.querySelector("#cDesc").value = "";
+      root.querySelector("#cDept").value = "";
+      root.querySelector("#cCredits").value = "";
+      root.querySelector("#cTeacherId").value = "";
     }catch(e){
       toast("danger","Add Course Failed", e.message || "Unknown error");
     }finally{
@@ -748,7 +738,7 @@ function viewDashboard(){
     }
   };
 
-  // Add Canteen Item
+  // Add Canteen
   root.querySelector("#btnAddItem").onclick = async () => {
     if(state.busy) return;
 
@@ -767,8 +757,8 @@ function viewDashboard(){
     try{
       const payload = API.payloadMaps.addCanteen(v);
       await apiCall("addCanteen", payload);
-
       toast("ok","Item Added","Saved in backend.");
+
       root.querySelector("#iName").value="";
       root.querySelector("#iCat").value="";
       root.querySelector("#iPrice").value="";
@@ -780,7 +770,7 @@ function viewDashboard(){
     }
   };
 
-  // Student/Teacher handlers (unchanged)
+  // Student
   const btnAddStudent = root.querySelector("#btnAddStudent");
   if(btnAddStudent){
     btnAddStudent.onclick = async () => {
@@ -804,8 +794,8 @@ function viewDashboard(){
       try{
         const payload = API.payloadMaps.addStudent(v);
         await apiCall("addStudent", payload);
-
         toast("ok","Student Added","Saved in backend.");
+
         root.querySelector("#sName").value="";
         root.querySelector("#sEmail").value="";
         root.querySelector("#sPass").value="";
@@ -819,6 +809,7 @@ function viewDashboard(){
     };
   }
 
+  // Teacher
   const btnAddTeacher = root.querySelector("#btnAddTeacher");
   if(btnAddTeacher){
     btnAddTeacher.onclick = async () => {
@@ -842,8 +833,8 @@ function viewDashboard(){
       try{
         const payload = API.payloadMaps.addTeacher(v);
         await apiCall("addTeacher", payload);
-
         toast("ok","Teacher Added","Saved in backend.");
+
         root.querySelector("#tName").value="";
         root.querySelector("#tEmail").value="";
         root.querySelector("#tPass").value="";
@@ -881,7 +872,7 @@ $("#btnWhoAmI").onclick = async () => {
     if(data && typeof data === "object") store.user = data?.user || data;
     toast("ok","WhoAmI","Fetched user info.");
   }catch(e){
-    toast("danger","WhoAmI Failed", e.message || "Update whoami endpoint if not available.");
+    toast("danger","WhoAmI Failed", e.message || "whoami not available.");
   }finally{
     setBusy(false);
   }
@@ -894,7 +885,7 @@ $("#btnTestAuth").onclick = async () => {
     await apiCall("whoami");
     toast("ok","Auth OK","Token accepted.");
   }catch(e){
-    toast("danger","Auth Test Failed", e.message || "Token rejected or whoami endpoint not configured.");
+    toast("danger","Auth Test Failed", e.message || "Token rejected or whoami not configured.");
   }finally{
     setBusy(false);
   }
@@ -910,7 +901,6 @@ $("#btnTestAuth").onclick = async () => {
 </script>
 </body>
 </html>
-
 
 
 
