@@ -66,6 +66,7 @@
     .right{display:flex; gap:8px; align-items:center}
     .sep{height:1px; background:rgba(30,43,78,.7); margin:10px 0}
     .badge{font-size:11px; padding:3px 8px; border-radius:999px; border:1px solid rgba(169,183,214,.35); color:var(--muted)}
+    .dangerText{color:var(--danger)}
   </style>
 </head>
 <body>
@@ -103,6 +104,13 @@
               </div>
               <button class="btn" id="btnCopyToken">Copy</button>
             </div>
+            <div class="kv">
+              <div>
+                <div class="small"><b>User</b></div>
+                <div class="muted mono" id="userTxt">-</div>
+              </div>
+              <button class="btn" id="btnClearUser">Clear</button>
+            </div>
           </div>
         </div>
       </div>
@@ -126,7 +134,6 @@
 const CONFIG = {
   baseUrl: "https://just-presence-production-79e0.up.railway.app",
   swaggerUi: "https://just-presence-production-79e0.up.railway.app/swagger-ui/index.html#/",
-  // Tries these in order (Springdoc + common variants).
   openApiCandidates: [
     "/v3/api-docs",
     "/v3/api-docs?group=default",
@@ -134,7 +141,6 @@ const CONFIG = {
     "/swagger/v1/swagger.json",
     "/openapi.json"
   ],
-  // field-level validation rules
   validation: {
     password: { min: 8, max: 72 },
     email: { pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/i },
@@ -150,20 +156,26 @@ const store = {
   user: safeJson(localStorage.getItem("jp_user")) || null,
   spec: null,
   specUrl: null,
-  // derived operations (best-effort mapping)
   ops: {
     login: null,
     register: null,
     me: null,
+
+    // optional "get user by id" (fixes User not found with id: 7 when /me not used)
+    userById: null,
+
     createCourse: null,
     listCourses: null,
     updateCourse: null,
+
     createCanteenItem: null,
     listCanteenItems: null,
     updateCanteenItem: null,
+
     createStudent: null,
     listStudents: null,
     updateStudent: null,
+
     createTeacher: null,
     listTeachers: null,
     updateTeacher: null
@@ -191,6 +203,7 @@ function setBusy(isBusy){
   document.querySelectorAll("button, input, select, textarea").forEach(n=>{
     if(n.id==="btnOpenSwagger") return;
     if(n.id==="btnCopyToken") return;
+    if(n.id==="btnClearUser") return;
     n.disabled = !!isBusy && (n.tagName==="BUTTON" ? true : n.disabled);
   });
 }
@@ -198,6 +211,65 @@ function escapeHtml(s){
   return s.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 }
 function safeJson(s){ try{ return JSON.parse(s); }catch{ return null; } }
+
+/* =========================
+   JWT + USER NORMALIZATION (FIX USERID)
+   ========================= */
+function parseJwt(token){
+  try{
+    const base64Url = token.split(".")[1];
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    const json = decodeURIComponent(atob(base64).split("").map(c =>
+      "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2)
+    ).join(""));
+    return JSON.parse(json);
+  }catch{
+    return null;
+  }
+}
+
+function normalizeUser(me, token){
+  const jwt = token ? parseJwt(token) : null;
+
+  const id =
+    me?.id ??
+    me?.userId ??
+    me?.uid ??
+    jwt?.id ??
+    jwt?.userId ??
+    jwt?.uid ??
+    jwt?.sub ??
+    null;
+
+  const email =
+    me?.email ??
+    me?.username ??
+    jwt?.email ??
+    jwt?.preferred_username ??
+    jwt?.upn ??
+    null;
+
+  const role =
+    me?.role ??
+    me?.userRole ??
+    me?.type ??
+    jwt?.role ??
+    (Array.isArray(jwt?.roles) ? jwt.roles[0] : jwt?.roles) ??
+    (Array.isArray(jwt?.authorities) ? jwt.authorities[0] : jwt?.authorities) ??
+    null;
+
+  return { ...(me||{}), id, email, role, _jwt: jwt };
+}
+
+function getUserId(){
+  return store.user?.id ?? store.user?.userId ?? store.user?._jwt?.sub ?? null;
+}
+
+function persistSession(){
+  localStorage.setItem("jp_token", store.token || "");
+  localStorage.setItem("jp_user", JSON.stringify(store.user || null));
+  setAuthUI();
+}
 
 /* =========================
    API CLIENT
@@ -265,25 +337,22 @@ async function loadSpec(){
 }
 
 function deriveOps(){
-  // Reset
   Object.keys(store.ops).forEach(k=>store.ops[k]=null);
 
   const spec = store.spec;
   if(!spec || !spec.paths) return;
 
-  const paths = spec.paths;
-
   const candidates = [];
-  for(const [path, methods] of Object.entries(paths)){
+  for(const [path, methods] of Object.entries(spec.paths)){
     for(const [m, op] of Object.entries(methods)){
       if(!op || typeof op !== "object") continue;
       const method = m.toUpperCase();
+      if(!["GET","POST","PUT","PATCH","DELETE"].includes(method)) continue;
       candidates.push({ path, method, op });
     }
   }
 
   const pick = (preds) => {
-    // preds: array of predicate functions, each tries to find best match
     for(const pred of preds){
       const found = candidates.find(pred);
       if(found) return found;
@@ -301,16 +370,24 @@ function deriveOps(){
     x => x.method==="POST" && (has(x.path,"/auth","login") || has(x.op.operationId,"login")),
     x => x.method==="POST" && (has(x.op.summary,"login") || has(x.op.description,"login"))
   ]);
+
   store.ops.register = pick([
     x => x.method==="POST" && (has(x.path,"/auth","register") || has(x.op.operationId,"register") || has(x.path,"/register")),
-    x => x.method==="POST" && (has(x.op.summary,"register") || has(x.op.description,"register") || has(x.op.summary,"sign") && has(x.op.summary,"up"))
+    x => x.method==="POST" && (has(x.op.summary,"register") || has(x.op.description,"register") || (has(x.op.summary,"sign") && has(x.op.summary,"up")))
   ]);
+
   store.ops.me = pick([
     x => x.method==="GET" && (has(x.path,"/auth","me") || has(x.op.operationId,"me") || has(x.path,"/me")),
     x => x.method==="GET" && (has(x.op.summary,"profile") || has(x.op.summary,"current user"))
   ]);
 
-  // Entity helpers: best effort for typical CRUD naming
+  // user by id (GET /users/{id})
+  store.ops.userById = pick([
+    x => x.method==="GET" && (has(x.path,"/users/{") || has(x.path,"/user/{")),
+    x => x.method==="GET" && (has(x.op.operationId,"get") && (has(x.op.operationId,"user") || has(x.op.summary,"user"))) && has(x.path,"/{")
+  ]);
+
+  // CRUD helper
   const crud = (entity) => {
     const e = entity.toLowerCase();
     const create = pick([
@@ -336,7 +413,6 @@ function deriveOps(){
   store.ops.updateCourse = course.update;
 
   const canteen = crud("canteen");
-  // some APIs use "canteen-item" or "item"
   store.ops.createCanteenItem = pick([
     x => x.method==="POST" && (has(x.path,"canteen") && (has(x.path,"item") || has(x.path,"items"))),
     x => canteen.create
@@ -371,11 +447,9 @@ function getRequestSchema(op){
   const rb = op.op.requestBody;
   if(!rb || !rb.content) return null;
 
-  // prefer JSON
   const json = rb.content["application/json"] || rb.content["application/*+json"];
   if(json && json.schema) return derefSchema(json.schema);
 
-  // fallback: first content type
   const first = Object.values(rb.content)[0];
   if(first && first.schema) return derefSchema(first.schema);
 
@@ -399,7 +473,6 @@ function derefSchema(schema){
    FORM GENERATION + VALIDATION
    ========================= */
 function buildFormFromSchema(schema, { mode="create" } = {}){
-  // Returns { htmlEl, getValue(), validate() }
   const wrap = document.createElement("div");
   wrap.className = "grid";
 
@@ -425,11 +498,10 @@ function buildFormFromSchema(schema, { mode="create" } = {}){
 
   const props = schema.properties || {};
   const required = new Set(schema.required || []);
-
   const fields = [];
 
   for(const [name, def] of Object.entries(props)){
-  if(mode === "create" && name.toLowerCase() === "id") continue;
+    if(mode === "create" && name.toLowerCase() === "id") continue;
 
     const f = document.createElement("div");
     const id = `f_${name}_${Math.random().toString(16).slice(2)}`;
@@ -523,25 +595,64 @@ function buildFormFromSchema(schema, { mode="create" } = {}){
 }
 
 function getFieldValue(fld){
-  const el = fld.inputEl;
+  const elx = fld.inputEl;
   const def = fld.def;
 
-  if(el.tagName === "TEXTAREA"){
-    const t = el.value.trim();
+  if(elx.tagName === "TEXTAREA"){
+    const t = elx.value.trim();
     if(!t) return fld.required ? "" : undefined;
     try { return JSON.parse(t); } catch { return t; }
   }
-  if(el.tagName === "SELECT"){
-    const v = el.value;
+  if(elx.tagName === "SELECT"){
+    const v = elx.value;
     if(v==="") return fld.required ? "" : undefined;
     if(def.type==="boolean") return v === "true";
     return v;
   }
-  const raw = el.value;
+  const raw = elx.value;
   if(raw === "") return fld.required ? "" : undefined;
   if(def.type==="integer") return parseInt(raw,10);
   if(def.type==="number") return Number(raw);
   return raw;
+}
+
+/* =========================
+   WHOAMI (FIX)
+   ========================= */
+async function refreshMeSmart(){
+  if(!store.token) return null;
+
+  // 1) prefer /auth/me if present
+  if(store.ops.me){
+    try{
+      const me = await apiFetch(store.ops.me.path, { method: store.ops.me.method });
+      store.user = normalizeUser(me, store.token);
+      persistSession();
+      return store.user;
+    }catch(e){
+      // continue fallback
+    }
+  }
+
+  // 2) fallback to JWT only (still gives id/sub if exists)
+  store.user = normalizeUser(store.user || {}, store.token);
+  persistSession();
+
+  // 3) if API doesn't have /me but has /users/{id}, call it using id from JWT
+  const uid = getUserId();
+  if(uid && store.ops.userById){
+    try{
+      const path = store.ops.userById.path.replace(/\{[^}]+\}/, encodeURIComponent(String(uid)));
+      const u = await apiFetch(path, { method: store.ops.userById.method });
+      store.user = normalizeUser(u, store.token);
+      persistSession();
+      return store.user;
+    }catch{
+      // ignore
+    }
+  }
+
+  return store.user;
 }
 
 /* =========================
@@ -554,7 +665,7 @@ const pages = [
   { key:"canteen", title:"Canteen Items", hint:"Add / list / update canteen items", render: ()=>renderCrud("Canteen Item", store.ops.createCanteenItem, store.ops.listCanteenItems, store.ops.updateCanteenItem) },
   { key:"students", title:"Students (Admin)", hint:"Add / list / update students", render: ()=>renderCrud("Student", store.ops.createStudent, store.ops.listStudents, store.ops.updateStudent, { adminOnly:true }) },
   { key:"teachers", title:"Teachers (Admin)", hint:"Add / list / update teachers", render: ()=>renderCrud("Teacher", store.ops.createTeacher, store.ops.listTeachers, store.ops.updateTeacher, { adminOnly:true }) },
-  { key:"debug", title:"Debug", hint:"See detected endpoints and call raw operations", render: renderDebug }
+  { key:"debug", title:"Debug", hint:"See detected endpoints + WhoAmI + Raw", render: renderDebug }
 ];
 
 let currentPage = "login";
@@ -585,11 +696,23 @@ function goto(key){
 function setAuthUI(){
   el("baseTxt").textContent = CONFIG.baseUrl;
   el("swaggerUrl").textContent = CONFIG.swaggerUi;
+
   const pill = el("authPill");
   const btnLogout = el("btnLogout");
+  const userTxt = el("userTxt");
+
+  if(store.user){
+    const uid = store.user.id ?? store.user.userId ?? null;
+    const em = store.user.email ?? store.user.username ?? null;
+    userTxt.textContent = `${uid ? "id="+uid : "id=-"}${em ? " | "+em : ""}`;
+  }else{
+    userTxt.textContent = "-";
+  }
+
   if(store.token){
     pill.className = "pill ok";
-    pill.textContent = "Authenticated";
+    const uid = getUserId();
+    pill.textContent = uid ? `Authenticated (id: ${uid})` : "Authenticated";
     btnLogout.disabled = false;
   }else{
     pill.className = "pill warn";
@@ -612,7 +735,7 @@ function renderLogin(){
   info.className = "muted";
   info.innerHTML = `
     Detected login endpoint: <span class="mono">${escapeHtml(opToText(op))}</span>
-    <div class="hint">If login mapping is wrong, open Debug and use raw call.</div>
+    <div class="hint">بعد اللوجين هيتعمل WhoAmI تلقائي عشان يظبط الـuserId.</div>
   `;
   box.appendChild(info);
   box.appendChild(form.el);
@@ -637,31 +760,22 @@ function renderLogin(){
       const payload = form.getValue();
       const data = await apiFetch(op.path, { method: op.method, body: payload });
 
-      // token heuristics
-      const token = (data && (data.token || data.accessToken || data.jwt || data.id_token)) ? (data.token || data.accessToken || data.jwt || data.id_token) : null;
-      if(!token) {
-        // some APIs return {data:{token:...}}
-        const t2 = data && data.data && (data.data.token || data.data.accessToken || data.data.jwt);
-        if(!t2) throw new Error("Login succeeded but token not found in response. Check response in Debug.");
-        store.token = t2;
-      } else {
-        store.token = token;
-      }
+      const token = (data && (data.token || data.accessToken || data.jwt || data.id_token))
+        ? (data.token || data.accessToken || data.jwt || data.id_token)
+        : (data && data.data && (data.data.token || data.data.accessToken || data.data.jwt))
+          ? (data.data.token || data.data.accessToken || data.data.jwt)
+          : null;
 
+      if(!token) throw new Error("Login succeeded but token not found in response. Check response in Debug.");
+
+      store.token = token;
       localStorage.setItem("jp_token", store.token);
 
-      toast("ok","Login success","Token stored.");
+      // FIX: Always normalize userId from /me or JWT
+      await refreshMeSmart();
+
+      toast("ok","Login success", "Token saved + userId normalized.");
       setAuthUI();
-
-      // Load /me if exists
-      if(store.ops.me){
-        try{
-          const me = await apiFetch(store.ops.me.path, { method: store.ops.me.method });
-          store.user = me;
-          localStorage.setItem("jp_user", JSON.stringify(me));
-        }catch{}
-      }
-
       goto("courses");
     }catch(e){
       toast("danger","Login failed", `${e.message}\n\n${e.data ? JSON.stringify(e.data,null,2) : ""}`.trim());
@@ -750,7 +864,6 @@ function renderCrud(label, opCreate, opList, opUpdate, { adminOnly=false } = {})
 
   host.appendChild(box);
 
-  // Create form
   const createHost = createCard.querySelector("#createBox");
   if(!opCreate){
     createHost.innerHTML = `<div class="muted">Create endpoint not detected. Use Debug.</div>`;
@@ -779,7 +892,6 @@ function renderCrud(label, opCreate, opList, opUpdate, { adminOnly=false } = {})
     createHost.appendChild(btn);
   }
 
-  // List + Update inline
   const listHost = listCard.querySelector("#listBox");
   listCard.querySelector("#btnRefresh").onclick = refreshList;
 
@@ -823,7 +935,6 @@ function renderCrud(label, opCreate, opList, opUpdate, { adminOnly=false } = {})
       `;
       listHost.appendChild(table);
 
-      // edit handlers
       table.querySelectorAll("button[data-act='edit']").forEach(b=>{
         b.onclick = ()=>openEdit(rows[Number(b.dataset.i)]);
       });
@@ -840,7 +951,6 @@ function renderCrud(label, opCreate, opList, opUpdate, { adminOnly=false } = {})
     if(Array.isArray(data.items)) return data.items;
     if(Array.isArray(data.content)) return data.content;
     if(Array.isArray(data.data)) return data.data;
-    // sometimes wrapped as {result:[...]}
     for(const v of Object.values(data)){
       if(Array.isArray(v)) return v;
     }
@@ -893,8 +1003,6 @@ function renderCrud(label, opCreate, opList, opUpdate, { adminOnly=false } = {})
 
     const schema = getRequestSchema(opUpdate);
     const form = buildFormFromSchema(schema, { mode:"update" });
-
-    // prefill best-effort
     prefill(form.el, row);
 
     panel.innerHTML = `
@@ -929,12 +1037,9 @@ function renderCrud(label, opCreate, opList, opUpdate, { adminOnly=false } = {})
         if(!v.ok) throw new Error(v.errors.join("\n"));
 
         const payload = form.getValue();
-
-        // inject id into path params: replace {id} or similar
         let path = opUpdate.path;
-        const pathParams = extractPathParams(path);
 
-        // map first param to detected id if not in payload
+        const pathParams = extractPathParams(path);
         if(pathParams.length){
           const key = pathParams[0];
           path = path.replace(`{${key}}`, encodeURIComponent(String(id)));
@@ -982,13 +1087,11 @@ function renderCrud(label, opCreate, opList, opUpdate, { adminOnly=false } = {})
     return out;
   }
 
-  // first auto load
   refreshList();
 }
 
 function renderDebug(){
   const host = el("page");
-
   const box = document.createElement("div");
   box.className = "grid";
 
@@ -1005,10 +1108,23 @@ function renderDebug(){
           `).join("")}
         </tbody>
       </table>
-      <div class="hint">If an operation is "-", mapping failed because OpenAPI is missing or paths are named differently.</div>
+      <div class="hint">لو me مش متكشف، هتستخدم JWT fallback. لو userById متكشف، هيتجرب بعد الـJWT.</div>
     </div>
   `;
   box.appendChild(ops);
+
+  const who = document.createElement("div");
+  who.className = "card";
+  who.innerHTML = `
+    <div class="hd"><h3>WhoAmI Fix</h3><span class="muted">Normalize userId</span></div>
+    <div class="bd grid">
+      <button class="btn primary" id="btnWho">WhoAmI (try /me then JWT then /users/{id})</button>
+      <div class="muted">Current detected me: <span class="mono">${escapeHtml(opToText(store.ops.me))}</span></div>
+      <div class="muted">Current detected userById: <span class="mono">${escapeHtml(opToText(store.ops.userById))}</span></div>
+      <textarea id="whoResp" readonly></textarea>
+    </div>
+  `;
+  box.appendChild(who);
 
   const raw = document.createElement("div");
   raw.className = "card";
@@ -1048,6 +1164,18 @@ function renderDebug(){
 
   host.appendChild(box);
 
+  who.querySelector("#btnWho").onclick = async ()=>{
+    try{
+      if(!store.token) throw new Error("Not authenticated.");
+      const u = await refreshMeSmart();
+      who.querySelector("#whoResp").value = JSON.stringify(u, null, 2);
+      toast("ok","WhoAmI OK", `userId=${getUserId()}`);
+    }catch(e){
+      who.querySelector("#whoResp").value = `${e.message}\n\n${e.data ? JSON.stringify(e.data,null,2) : ""}`.trim();
+      toast("danger","WhoAmI failed", e.message);
+    }
+  };
+
   raw.querySelector("#send").onclick = async ()=>{
     try{
       const method = raw.querySelector("#m").value;
@@ -1073,11 +1201,14 @@ function renderDebug(){
    ========================= */
 el("btnReloadSpec").onclick = async ()=>{
   try{
+    setBusy(true);
     await loadSpec();
     toast("ok","Spec reloaded", store.specUrl || "not found");
     goto(currentPage);
   }catch(e){
     toast("danger","Reload failed", e.message);
+  }finally{
+    setBusy(false);
   }
 };
 
@@ -1104,18 +1235,38 @@ el("btnCopyToken").onclick = async ()=>{
   }
 };
 
+el("btnClearUser").onclick = ()=>{
+  store.user = null;
+  localStorage.removeItem("jp_user");
+  setAuthUI();
+  toast("warn","User cleared","Local user removed.");
+};
+
 /* =========================
    BOOT
    ========================= */
 (async function init(){
   setAuthUI();
   renderNav();
-  await loadSpec();
-  goto(store.token ? "courses" : "login");
+  setBusy(true);
+  try{
+    await loadSpec();
+
+    // لو فيه token، ظبط userId فوراً
+    if(store.token){
+      await refreshMeSmart();
+    }
+
+    goto(store.token ? "courses" : "login");
+  }finally{
+    setBusy(false);
+  }
 })();
 </script>
 </body>
 </html>
+
+
 
 
 
