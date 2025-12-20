@@ -3,303 +3,421 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Just Presence Admin Portal (Frontend)</title>
+  <title>Smart Campus - Frontend</title>
   <style>
     :root{
-      --bg:#0b1220; --card:#0f1b33; --card2:#0c1730; --txt:#e7eefc; --muted:#a9b7d6;
-      --line:#1e2b4e; --accent:#7aa7ff; --ok:#4ade80; --warn:#ffd166; --danger:#ff6b6b;
+      --bg:#0b1220;
+      --card:#0f1b33;
+      --card2:#0c1730;
+      --txt:#e7eefc;
+      --muted:#a9b7d6;
+      --line:#1e2b4e;
+      --accent:#7aa7ff;
+      --accent2:#9bffcf;
+      --danger:#ff6b6b;
+      --warn:#ffd166;
+      --ok:#4ade80;
       --shadow: 0 18px 50px rgba(0,0,0,.35);
-      --radius: 16px;
-      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --radius: 18px;
+      --radius2: 14px;
       --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
     }
     *{box-sizing:border-box}
-    body{margin:0; font-family:var(--font); background:radial-gradient(1200px 900px at 10% 10%, #101e3d 0%, var(--bg) 55%) fixed; color:var(--txt);}
+    body{
+      margin:0;
+      background: radial-gradient(1200px 800px at 15% 10%, rgba(122,167,255,.15), transparent 55%),
+                  radial-gradient(900px 600px at 85% 20%, rgba(155,255,207,.10), transparent 55%),
+                  var(--bg);
+      color:var(--txt);
+      font-family:var(--font);
+      min-height:100vh;
+    }
     a{color:var(--accent); text-decoration:none}
-    .wrap{max-width:1200px; margin:0 auto; padding:18px}
-    .topbar{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 16px; background:rgba(15,27,51,.75); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); backdrop-filter: blur(10px);}
-    .brand{display:flex; flex-direction:column; gap:2px}
-    .brand .title{font-weight:800; letter-spacing:.3px}
-    .brand .sub{font-size:12px; color:var(--muted)}
-    .row{display:grid; grid-template-columns: 320px 1fr; gap:16px; margin-top:16px}
-    @media (max-width:980px){ .row{grid-template-columns:1fr} }
-    .card{background:rgba(15,27,51,.78); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden;}
-    .card .hd{padding:14px 16px; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between; gap:10px}
-    .card .hd h3{margin:0; font-size:14px; letter-spacing:.2px}
-    .card .bd{padding:14px 16px}
-    .pill{font-size:12px; padding:4px 10px; border-radius:999px; background:rgba(122,167,255,.12); border:1px solid rgba(122,167,255,.35); color:var(--txt)}
-    .pill.ok{background:rgba(74,222,128,.12); border-color:rgba(74,222,128,.35)}
-    .pill.warn{background:rgba(255,209,102,.12); border-color:rgba(255,209,102,.35)}
-    .pill.danger{background:rgba(255,107,107,.12); border-color:rgba(255,107,107,.35)}
-    .btn{appearance:none; border:1px solid var(--line); background:rgba(12,23,48,.9); color:var(--txt); padding:10px 12px; border-radius:12px; cursor:pointer; font-weight:600}
-    .btn:hover{border-color:rgba(122,167,255,.55)}
-    .btn.primary{background:rgba(122,167,255,.18); border-color:rgba(122,167,255,.55)}
-    .btn.danger{background:rgba(255,107,107,.12); border-color:rgba(255,107,107,.45)}
-    .btn:disabled{opacity:.55; cursor:not-allowed}
-    .grid{display:grid; gap:12px}
-    .nav{display:grid; gap:8px}
-    .nav button{width:100%; text-align:left}
-    .nav .active{border-color:rgba(122,167,255,.8); background:rgba(122,167,255,.18)}
-    .kv{display:grid; grid-template-columns: 1fr auto; gap:10px; align-items:center}
-    .muted{color:var(--muted); font-size:12px}
-    label{display:block; font-size:12px; color:var(--muted); margin-bottom:6px}
+    .wrap{max-width:1100px; margin:0 auto; padding:24px}
+    .topbar{
+      display:flex; align-items:center; justify-content:space-between;
+      gap:12px; margin-bottom:16px;
+    }
+    .brand{
+      display:flex; align-items:center; gap:10px;
+      padding:12px 14px; border:1px solid var(--line);
+      background:linear-gradient(180deg, rgba(15,27,51,.9), rgba(12,23,48,.85));
+      border-radius:999px; box-shadow:var(--shadow);
+    }
+    .dot{width:10px; height:10px; border-radius:50%; background:var(--accent2); box-shadow:0 0 18px rgba(155,255,207,.45)}
+    .brand b{letter-spacing:.3px}
+    .pill{
+      display:flex; align-items:center; gap:10px;
+      border:1px solid var(--line);
+      background:rgba(15,27,51,.65);
+      border-radius:999px;
+      padding:8px 10px;
+    }
+    .pill small{color:var(--muted)}
+    .btn{
+      border:1px solid var(--line);
+      background:rgba(122,167,255,.12);
+      color:var(--txt);
+      padding:10px 12px;
+      border-radius:12px;
+      cursor:pointer;
+      transition:.15s transform, .15s opacity, .15s background;
+      font-weight:600;
+    }
+    .btn:hover{transform:translateY(-1px); background:rgba(122,167,255,.18)}
+    .btn:disabled{opacity:.55; cursor:not-allowed; transform:none}
+    .btn.ghost{background:transparent}
+    .btn.danger{background:rgba(255,107,107,.12)}
+    .btn.danger:hover{background:rgba(255,107,107,.18)}
+    .grid{display:grid; grid-template-columns: 1.2fr .8fr; gap:16px}
+    @media (max-width: 940px){ .grid{grid-template-columns:1fr} }
+    .card{
+      border:1px solid var(--line);
+      background:linear-gradient(180deg, rgba(15,27,51,.88), rgba(12,23,48,.84));
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    .card .hd{
+      padding:16px 16px 12px;
+      border-bottom:1px solid var(--line);
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+    }
+    .card .hd h2{margin:0; font-size:16px}
+    .card .bd{padding:16px}
+    .muted{color:var(--muted)}
+    .tabs{display:flex; gap:8px; flex-wrap:wrap}
+    .tab{
+      padding:10px 12px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:rgba(12,23,48,.55);
+      cursor:pointer;
+      font-weight:700;
+      color:var(--muted);
+      user-select:none;
+    }
+    .tab.active{
+      color:var(--txt);
+      background:rgba(122,167,255,.18);
+      border-color:rgba(122,167,255,.4);
+    }
+    .row{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+    @media (max-width:700px){ .row{grid-template-columns:1fr} }
+    label{display:block; font-size:12px; color:var(--muted); margin:0 0 6px}
     input, select, textarea{
-      width:100%; padding:10px 12px; border-radius:12px; border:1px solid var(--line);
-      background:rgba(12,23,48,.9); color:var(--txt); outline:none;
+      width:100%;
+      padding:12px 12px;
+      border-radius:14px;
+      border:1px solid var(--line);
+      background:rgba(11,18,32,.55);
+      color:var(--txt);
+      outline:none;
     }
-    textarea{min-height:110px; font-family:var(--mono); font-size:12px}
-    .hint{font-size:12px; color:var(--muted); margin-top:6px}
-    .split{display:grid; grid-template-columns:1fr 1fr; gap:10px}
-    @media (max-width:520px){ .split{grid-template-columns:1fr} }
-    .toast{position:fixed; right:18px; bottom:18px; width:min(420px, calc(100vw - 36px)); display:grid; gap:10px; z-index:99}
-    .titem{padding:12px 12px; border-radius:14px; border:1px solid var(--line); box-shadow:var(--shadow); background:rgba(12,23,48,.95)}
-    .titem .t{font-weight:800; font-size:13px; margin-bottom:4px}
-    .titem.ok{border-color:rgba(74,222,128,.4)}
-    .titem.warn{border-color:rgba(255,209,102,.4)}
-    .titem.danger{border-color:rgba(255,107,107,.4)}
-    .titem pre{margin:8px 0 0; white-space:pre-wrap; word-break:break-word; font-family:var(--mono); font-size:12px; color:#dbe7ff}
-    table{width:100%; border-collapse:collapse; font-size:12px}
-    th,td{padding:10px 8px; border-bottom:1px solid rgba(30,43,78,.7); vertical-align:top}
-    th{color:var(--muted); font-weight:700; text-align:left}
-    .small{font-size:12px}
-    .mono{font-family:var(--mono)}
-    .right{display:flex; gap:8px; align-items:center}
-    .sep{height:1px; background:rgba(30,43,78,.7); margin:10px 0}
-    .badge{font-size:11px; padding:3px 8px; border-radius:999px; border:1px solid rgba(169,183,214,.35); color:var(--muted)}
-
-    /* busy overlay */
-    .busy-overlay{
-      position:fixed; inset:0;
-      background:rgba(0,0,0,.35);
-      display:none;
-      place-items:center;
-      z-index:1000;
-      backdrop-filter: blur(3px);
+    textarea{min-height:92px; resize:vertical}
+    input:focus, select:focus, textarea:focus{border-color:rgba(122,167,255,.55); box-shadow:0 0 0 3px rgba(122,167,255,.10)}
+    .actions{display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:12px}
+    .note{
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px dashed rgba(169,183,214,.35);
+      color:var(--muted);
+      background:rgba(12,23,48,.35);
+      font-size:12px;
+      line-height:1.35;
     }
-    .busy-overlay.show{ display:grid; }
-    .spinner{
-      width:46px; height:46px;
-      border-radius:50%;
-      border:4px solid rgba(255,255,255,.18);
-      border-top-color: rgba(122,167,255,.95);
-      animation:spin 900ms linear infinite;
-      box-shadow: var(--shadow);
+    .toast{
+      position:fixed; right:18px; bottom:18px;
+      display:flex; flex-direction:column; gap:10px;
+      z-index:9999;
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    .toast .t{
+      min-width:280px;
+      max-width:380px;
+      border:1px solid var(--line);
+      background:rgba(15,27,51,.92);
+      border-radius:16px;
+      box-shadow:var(--shadow);
+      padding:12px 12px;
+      display:flex; gap:10px;
+      align-items:flex-start;
+      animation: pop .18s ease-out;
+    }
+    @keyframes pop{from{transform:translateY(8px); opacity:.5}to{transform:none; opacity:1}}
+    .badge{
+      font-size:11px;
+      padding:5px 8px;
+      border-radius:999px;
+      border:1px solid rgba(169,183,214,.25);
+      background:rgba(169,183,214,.08);
+      color:var(--muted);
+      font-weight:800;
+      letter-spacing:.2px;
+      white-space:nowrap;
+    }
+    .badge.ok{border-color:rgba(74,222,128,.28); background:rgba(74,222,128,.10); color:rgba(74,222,128,.95)}
+    .badge.warn{border-color:rgba(255,209,102,.28); background:rgba(255,209,102,.10); color:rgba(255,209,102,.95)}
+    .badge.danger{border-color:rgba(255,107,107,.28); background:rgba(255,107,107,.10); color:rgba(255,107,107,.95)}
+    .kvs{display:grid; grid-template-columns: 120px 1fr; gap:8px 12px; font-size:12px; color:var(--muted)}
+    .kvs b{color:var(--txt); font-weight:800}
+    code.inline{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono"; font-size:12px; color:rgba(155,255,207,.95)}
   </style>
 </head>
+
 <body>
   <div class="wrap">
     <div class="topbar">
       <div class="brand">
-        <div class="title">Just Presence — Frontend</div>
-        <div class="sub">Auto-mapped from Swagger/OpenAPI. Base: <span class="mono" id="baseTxt"></span></div>
+        <span class="dot"></span>
+        <div>
+          <b>Smart Campus</b>
+          <div class="muted" style="font-size:12px">Frontend Demo (API-Linked)</div>
+        </div>
       </div>
-      <div class="right">
-        <span id="authPill" class="pill warn">Not Authenticated</span>
-        <button class="btn" id="btnReloadSpec">Reload API Spec</button>
-        <button class="btn danger" id="btnLogout" disabled>Logout</button>
+
+      <div class="pill">
+        <small id="envTxt">API: …</small>
+        <span id="authBadge" class="badge warn">GUEST</span>
+        <button class="btn ghost" id="btnSwagger">Swagger</button>
+        <button class="btn danger" id="btnLogout" style="display:none">Logout</button>
       </div>
     </div>
 
-    <div class="row">
+    <div class="grid">
       <div class="card">
-        <div class="hd"><h3>Menu</h3><span class="badge" id="specBadge">spec: -</span></div>
-        <div class="bd grid">
-          <div class="nav" id="nav"></div>
-          <div class="sep"></div>
-          <div class="grid">
-            <div class="kv">
-              <div>
-                <div class="small"><b>Swagger UI</b></div>
-                <div class="muted mono" id="swaggerUrl"></div>
-              </div>
-              <button class="btn" id="btnOpenSwagger">Open</button>
-            </div>
-            <div class="kv">
-              <div>
-                <div class="small"><b>Token</b></div>
-                <div class="muted">Stored in localStorage</div>
-              </div>
-              <button class="btn" id="btnCopyToken">Copy</button>
-            </div>
-          </div>
+        <div class="hd">
+          <h2 id="pageTitle">Login</h2>
+          <div class="tabs" id="tabs"></div>
         </div>
+        <div class="bd" id="page"></div>
       </div>
 
       <div class="card">
         <div class="hd">
-          <h3 id="pageTitle">Loading…</h3>
-          <span class="muted" id="pageHint"></span>
+          <h2>Runtime Info</h2>
+          <span class="badge" id="roleBadge">ROLE: -</span>
         </div>
-        <div class="bd" id="page"></div>
+        <div class="bd">
+          <div class="note" style="margin-bottom:12px">
+            Edit the config at the top of the JS (baseUrl/endpoints/payload fields) to match your Swagger exactly.<br/>
+            This frontend stores token in <code class="inline">localStorage</code> and sends it as <code class="inline">Authorization: Bearer &lt;token&gt;</code>.
+          </div>
+
+          <div class="kvs">
+            <div>Base URL</div><b id="kvBase">-</b>
+            <div>Token</div><b id="kvToken">-</b>
+            <div>User ID</div><b id="kvUserId">-</b>
+            <div>Email</div><b id="kvEmail">-</b>
+            <div>Role</div><b id="kvRole">-</b>
+          </div>
+
+          <div class="actions" style="margin-top:14px">
+            <button class="btn" id="btnWhoAmI">WhoAmI</button>
+            <button class="btn ghost" id="btnTestAuth">Test Auth Call</button>
+          </div>
+
+          <div class="note" style="margin-top:12px">
+            If requests fail from hosting: fix CORS in backend and ensure frontend uses HTTPS.
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
   <div class="toast" id="toast"></div>
 
-  <div class="busy-overlay" id="busy">
-    <div class="spinner" aria-label="Loading"></div>
-  </div>
-
 <script>
 /* =========================
-   CONFIG
+   1) CONFIG (EDIT THIS)
    ========================= */
-const CONFIG = {
+const API = {
+  // Your backend base URL:
   baseUrl: "https://just-presence-production-79e0.up.railway.app",
-  swaggerUi: "https://just-presence-production-79e0.up.railway.app/swagger-ui/index.html#/",
-  openApiCandidates: [
-    "/v3/api-docs",
-    "/v3/api-docs?group=default",
-    "/api-docs",
-    "/swagger/v1/swagger.json",
-    "/openapi.json"
-  ],
-  validation: {
-    password: { min: 8, max: 72 },
-    email: { pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/i },
-    phone: { pattern: /^[0-9+\-\s()]{6,}$/ }
+
+  // Swagger UI link (for quick open):
+  swaggerUrl: "https://just-presence-production-79e0.up.railway.app/swagger-ui/index.html#/",
+
+  // Endpoints: CHANGE THESE PATHS to match Swagger exactly.
+  // Common patterns:
+  // - auth: /api/auth/login, /auth/login, /login
+  // - register: /api/auth/register
+  // - admin create: /admin/students, /admin/teachers
+  // - courses: /courses
+  // - canteen items: /canteen/items
+  endpoints: {
+    login:        { method: "POST", path: "/auth/login" },
+    register:     { method: "POST", path: "/auth/register" },
+    whoami:       { method: "GET",  path: "/auth/me" },          // optional
+    addCourse:    { method: "POST", path: "/courses" },
+    addCanteen:   { method: "POST", path: "/canteen/items" },
+    addStudent:   { method: "POST", path: "/admin/students" },
+    addTeacher:   { method: "POST", path: "/admin/teachers" },
   },
-  requestTimeoutMs: 20000
+
+  // Payload fields mapping: CHANGE field names to match backend DTOs.
+  // Keep your UI labels, but map them to exact JSON keys backend expects.
+  payloadMaps: {
+    login: (v) => ({
+      email: v.email,              // maybe "username" in some backends
+      password: v.password
+    }),
+    register: (v) => ({
+      fullName: v.fullName,        // maybe "name"
+      email: v.email,
+      password: v.password,
+      role: v.role                 // maybe backend assigns role automatically
+    }),
+    addCourse: (v) => ({
+      name: v.courseName,          // maybe "courseName"
+      code: v.courseCode,          // maybe "code"
+      credits: Number(v.credits),  // maybe "creditHours"
+      teacherId: v.teacherId ? Number(v.teacherId) : null
+    }),
+    addCanteen: (v) => ({
+      name: v.itemName,
+      price: Number(v.price),
+      quantity: Number(v.quantity),
+      category: v.category || null
+    }),
+    addStudent: (v) => ({
+      fullName: v.fullName,
+      email: v.email,
+      password: v.password,
+      level: v.level ? Number(v.level) : null,
+      department: v.department || null
+    }),
+    addTeacher: (v) => ({
+      fullName: v.fullName,
+      email: v.email,
+      password: v.password,
+      department: v.department || null,
+      title: v.title || null
+    }),
+  },
+
+  // Validation rules
+  validation: {
+    passwordMin: 8
+  }
 };
 
 /* =========================
-   STATE
+   2) STATE
    ========================= */
 const store = {
-  token: localStorage.getItem("jp_token") || "",
-  user: safeJson(localStorage.getItem("jp_user")) || null,
-  spec: null,
-  specUrl: null,
-  ops: {
-    login: null,
-    register: null,
-    me: null,
-    createCourse: null,
-    listCourses: null,
-    updateCourse: null,
-    createCanteenItem: null,
-    listCanteenItems: null,
-    updateCanteenItem: null,
-    createStudent: null,
-    listStudents: null,
-    updateStudent: null,
-    createTeacher: null,
-    listTeachers: null,
-    updateTeacher: null
-  }
+  get token(){ return localStorage.getItem("sc_token") || ""; },
+  set token(v){ v ? localStorage.setItem("sc_token", v) : localStorage.removeItem("sc_token"); },
+
+  get user(){ try { return JSON.parse(localStorage.getItem("sc_user") || "null"); } catch { return null; } },
+  set user(v){ v ? localStorage.setItem("sc_user", JSON.stringify(v)) : localStorage.removeItem("sc_user"); },
 };
 
-const el = (id)=>document.getElementById(id);
+const state = {
+  tab: "login",   // login | register | admin
+  busy: false
+};
 
 /* =========================
-   UI HELPERS
+   3) HELPERS
    ========================= */
-function toast(kind, title, detail){
-  const host = el("toast");
-  const item = document.createElement("div");
-  item.className = `titem ${kind||""}`;
-  item.innerHTML = `
-    <div class="t">${escapeHtml(title||"")}</div>
-    ${detail ? `<pre>${escapeHtml(String(detail))}</pre>` : ``}
+const $ = (sel) => document.querySelector(sel);
+
+function toast(type, title, msg){
+  const el = document.createElement("div");
+  const badgeClass = type === "ok" ? "ok" : type === "warn" ? "warn" : "danger";
+  el.className = "t";
+  el.innerHTML = `
+    <span class="badge ${badgeClass}">${type.toUpperCase()}</span>
+    <div>
+      <div style="font-weight:900; margin-bottom:2px">${escapeHtml(title)}</div>
+      <div style="color:var(--muted); font-size:12px; line-height:1.35">${escapeHtml(msg)}</div>
+    </div>
   `;
-  host.appendChild(item);
-  setTimeout(()=>{ item.style.opacity="0"; item.style.transform="translateY(8px)"; }, 4200);
-  setTimeout(()=>{ item.remove(); }, 4800);
-}
-
-let __busyDepth = 0;
-function setBusy(isBusy){
-  const overlay = el("busy");
-  if(isBusy){
-    __busyDepth++;
-    overlay.classList.add("show");
-    snapshotDisable(true);
-  }else{
-    __busyDepth = Math.max(0, __busyDepth - 1);
-    if(__busyDepth===0){
-      overlay.classList.remove("show");
-      snapshotDisable(false);
-    }
-  }
-}
-
-function snapshotDisable(disable){
-  const nodes = document.querySelectorAll("button, input, select, textarea");
-  nodes.forEach(n=>{
-    // never block open swagger + copy token
-    if(n.id==="btnOpenSwagger" || n.id==="btnCopyToken") return;
-
-    if(disable){
-      if(!n.dataset.prevDisabled) n.dataset.prevDisabled = n.disabled ? "1" : "0";
-      n.disabled = true;
-    }else{
-      const prev = n.dataset.prevDisabled;
-      if(prev!==undefined){
-        n.disabled = (prev==="1");
-        delete n.dataset.prevDisabled;
-      }
-    }
-  });
-
-  // restore auth-locked buttons state properly
-  setAuthUI();
+  $("#toast").appendChild(el);
+  setTimeout(()=>{ el.style.opacity="0"; el.style.transform="translateY(8px)"; el.style.transition="200ms"; }, 3200);
+  setTimeout(()=>{ el.remove(); }, 3600);
 }
 
 function escapeHtml(s){
-  const str = String(s ?? "");
-  return str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  return String(s ?? "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
 }
-function safeJson(s){ try{ return JSON.parse(s); }catch{ return null; } }
+
+function isEmail(email){
+  // practical email regex
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i.test(String(email||"").trim());
+}
+
+function validatePassword(pw){
+  const p = String(pw||"");
+  if(p.length < API.validation.passwordMin) return `Password must be at least ${API.validation.passwordMin} characters`;
+  // exceptions & sanity (no spaces, etc.)
+  if(/\s/.test(p)) return "Password must not contain spaces";
+  return "";
+}
+
+function safeJsonParse(text){
+  try { return JSON.parse(text); } catch { return null; }
+}
+
+function decodeJwt(token){
+  // best-effort decode (no verify)
+  try{
+    const parts = token.split(".");
+    if(parts.length !== 3) return null;
+    const payload = parts[1].replace(/-/g,'+').replace(/_/g,'/');
+    const json = atob(payload);
+    return JSON.parse(json);
+  }catch{ return null; }
+}
+
+function currentRole(){
+  const u = store.user;
+  if(u?.role) return u.role;
+  // fallback from jwt
+  const p = decodeJwt(store.token);
+  // adapt possible claims
+  return p?.role || p?.roles?.[0] || p?.authorities?.[0] || "-";
+}
+
+function setBusy(b){
+  state.busy = b;
+  render();
+}
 
 /* =========================
-   API CLIENT (timeout + better errors)
+   4) API CLIENT
    ========================= */
-async function apiFetch(path, { method="GET", headers={}, body=null, query=null, noAuth=false } = {}){
-  const url = new URL(CONFIG.baseUrl + path);
-  if(query){
-    Object.entries(query).forEach(([k,v])=>{
-      if(v===undefined || v===null || v==="") return;
-      url.searchParams.set(k, String(v));
-    });
+async function apiCall(key, body=null, extraOpts={}){
+  const ep = API.endpoints[key];
+  if(!ep) throw new Error(`Endpoint not configured: ${key}`);
+
+  const url = API.baseUrl + ep.path;
+  const headers = Object.assign(
+    { "Accept":"application/json" },
+    (body ? { "Content-Type":"application/json" } : {}),
+    extraOpts.headers || {}
+  );
+
+  if(store.token){
+    headers["Authorization"] = `Bearer ${store.token}`;
   }
 
-  const h = { "Accept":"application/json", ...headers };
-  if(store.token && !noAuth) h["Authorization"] = `Bearer ${store.token}`;
+  const res = await fetch(url, {
+    method: ep.method,
+    headers,
+    body: body ? JSON.stringify(body) : undefined,
+  });
 
-  let payload = body;
-  if(body && typeof body === "object" && !(body instanceof FormData)){
-    h["Content-Type"] = "application/json";
-    payload = JSON.stringify(body);
-  }
-
-  const ctrl = new AbortController();
-  const t = setTimeout(()=>ctrl.abort(), CONFIG.requestTimeoutMs);
-
-  let res, text, data;
-  try{
-    res = await fetch(url.toString(), { method, headers: h, body: payload, signal: ctrl.signal });
-    text = await res.text();
-    try{ data = text ? JSON.parse(text) : null; }catch{ data = text; }
-  }catch(e){
-    if(e && e.name==="AbortError"){
-      const err = new Error("Request timeout");
-      err.status = 0;
-      err.data = null;
-      throw err;
-    }
-    const err = new Error(e?.message || "Network error");
-    err.status = 0;
-    err.data = null;
-    throw err;
-  }finally{
-    clearTimeout(t);
-  }
+  const text = await res.text();
+  const data = safeJsonParse(text) ?? text;
 
   if(!res.ok){
-    const msg = (data && (data.message || data.error || data.detail)) ? (data.message || data.error || data.detail) : (res.statusText || `HTTP ${res.status}`);
+    const msg = typeof data === "string" ? data : (data?.message || data?.error || JSON.stringify(data));
     const err = new Error(msg || `HTTP ${res.status}`);
     err.status = res.status;
     err.data = data;
@@ -309,936 +427,474 @@ async function apiFetch(path, { method="GET", headers={}, body=null, query=null,
 }
 
 /* =========================
-   OPENAPI LOADING + MAPPING
+   5) UI RENDER
    ========================= */
-async function loadSpec(){
-  store.spec = null;
-  store.specUrl = null;
-  el("specBadge").textContent = "spec: loading…";
+function renderTabs(){
+  const isAuthed = !!store.token;
+  const role = currentRole();
+  const tabs = [];
 
-  let lastErr = null;
-  for(const p of CONFIG.openApiCandidates){
-    try{
-      // spec endpoints غالباً public، فبنبعتها من غير Bearer لتفادي 401 لو فيه فلتر
-      const data = await apiFetch(p, { method:"GET", noAuth:true });
-      if(data && (data.openapi || data.swagger) && data.paths){
-        store.spec = data;
-        store.specUrl = CONFIG.baseUrl + p;
-        el("specBadge").textContent = "spec: loaded";
-        deriveOps();
-        return;
-      }
-    }catch(e){
-      lastErr = e;
-    }
-  }
-
-  el("specBadge").textContent = "spec: not found";
-  toast("danger","OpenAPI spec not reachable",
-        "Backend must expose JSON (ex: /v3/api-docs). Swagger UI alone is not enough for auto-linking.\n\nLast error:\n" + (lastErr ? (lastErr.message || String(lastErr)) : "unknown"));
-}
-
-function deriveOps(){
-  Object.keys(store.ops).forEach(k=>store.ops[k]=null);
-
-  const spec = store.spec;
-  if(!spec || !spec.paths) return;
-
-  const candidates = [];
-  for(const [path, methods] of Object.entries(spec.paths)){
-    for(const [m, op] of Object.entries(methods || {})){
-      if(!op || typeof op !== "object") continue;
-      candidates.push({ path, method: String(m).toUpperCase(), op });
-    }
-  }
-
-  const pick = (preds) => {
-    for(const pred of preds){
-      const found = candidates.find(pred);
-      if(found) return found;
-    }
-    return null;
-  };
-
-  const has = (s, ...parts) => {
-    const t = String(s||"").toLowerCase();
-    return parts.every(p => t.includes(String(p).toLowerCase()));
-  };
-
-  store.ops.login = pick([
-    x => x.method==="POST" && (has(x.path,"/auth","login") || has(x.op.operationId,"login")),
-    x => x.method==="POST" && (has(x.op.summary,"login") || has(x.op.description,"login"))
-  ]);
-
-  store.ops.register = pick([
-    x => x.method==="POST" && (has(x.path,"/auth","register") || has(x.op.operationId,"register") || has(x.path,"/register")),
-    x => x.method==="POST" && ((has(x.op.summary,"register") || has(x.op.description,"register")) || (has(x.op.summary,"sign") && has(x.op.summary,"up")))
-  ]);
-
-  store.ops.me = pick([
-    x => x.method==="GET" && (has(x.path,"/auth","me") || has(x.op.operationId,"me") || has(x.path,"/me")),
-    x => x.method==="GET" && (has(x.op.summary,"profile") || has(x.op.summary,"current user"))
-  ]);
-
-  const crud = (entity) => {
-    const e = entity.toLowerCase();
-    const create = pick([
-      x => x.method==="POST" && (has(x.path, `/${e}`) || has(x.path, `/${e}s`)) && !has(x.path,"/search"),
-      x => x.method==="POST" && (has(x.op.operationId, "create", e) || has(x.op.operationId, "add", e)),
-      x => x.method==="POST" && (has(x.op.summary, "create", e) || has(x.op.summary, "add", e))
-    ]);
-    const list = pick([
-      x => x.method==="GET" && (has(x.path, `/${e}`) || has(x.path, `/${e}s`)) && !has(x.path,"/{") && !has(x.path,"/search"),
-      x => x.method==="GET" && (has(x.op.operationId, "get", e) || has(x.op.operationId, "list", e)),
-      x => x.method==="GET" && (has(x.op.summary, "list", e) || has(x.op.summary, "get", e)) && !has(x.path,"/{")
-    ]);
-    const update = pick([
-      x => (x.method==="PUT" || x.method==="PATCH") && (has(x.path, `/${e}`) || has(x.path, `/${e}s`)) && has(x.path,"/{"),
-      x => (x.method==="PUT" || x.method==="PATCH") && (has(x.op.operationId, "update", e) || has(x.op.summary, "update", e)),
-    ]);
-    return { create, list, update };
-  };
-
-  const course = crud("course");
-  store.ops.createCourse = course.create;
-  store.ops.listCourses = course.list;
-  store.ops.updateCourse = course.update;
-
-  const canteen = crud("canteen");
-  store.ops.createCanteenItem = pick([
-    x => x.method==="POST" && (has(x.path,"canteen") && (has(x.path,"item") || has(x.path,"items"))),
-    () => canteen.create
-  ].map(fn => (typeof fn==="function" ? fn : (x)=>fn)));
-
-  // fix pick() inputs above: keep it simple
-  store.ops.createCanteenItem = pick([
-    x => x.method==="POST" && (has(x.path,"canteen") && (has(x.path,"item") || has(x.path,"items"))),
-    x => canteen.create === x
-  ]);
-
-  store.ops.listCanteenItems = pick([
-    x => x.method==="GET" && (has(x.path,"canteen") && (has(x.path,"item") || has(x.path,"items"))) && !has(x.path,"/{"),
-    x => canteen.list === x
-  ]);
-
-  store.ops.updateCanteenItem = pick([
-    x => (x.method==="PUT" || x.method==="PATCH") && (has(x.path,"canteen") && (has(x.path,"item") || has(x.path,"items"))) && has(x.path,"/{"),
-    x => canteen.update === x
-  ]);
-
-  const student = crud("student");
-  store.ops.createStudent = student.create;
-  store.ops.listStudents = student.list;
-  store.ops.updateStudent = student.update;
-
-  const teacher = crud("teacher");
-  store.ops.createTeacher = teacher.create;
-  store.ops.listTeachers = teacher.list;
-  store.ops.updateTeacher = teacher.update;
-}
-
-function opToText(op){
-  if(!op) return "-";
-  return `${op.method} ${op.path}`;
-}
-
-/* robust schema deref: handles $ref + allOf */
-function getRequestSchema(op){
-  if(!op || !op.op) return null;
-  const rb = op.op.requestBody;
-  if(!rb || !rb.content) return null;
-
-  const json = rb.content["application/json"] || rb.content["application/*+json"];
-  const schema = (json && json.schema) ? json.schema : (Object.values(rb.content)[0]?.schema || null);
-  if(!schema) return null;
-
-  return normalizeSchema(derefSchemaDeep(schema));
-}
-
-function normalizeSchema(schema){
-  if(!schema) return null;
-  if(schema.allOf && Array.isArray(schema.allOf) && schema.allOf.length){
-    const merged = { type:"object", properties:{}, required:[] };
-    schema.allOf.map(s=>normalizeSchema(derefSchemaDeep(s))).forEach(s=>{
-      if(!s) return;
-      if(s.properties) Object.assign(merged.properties, s.properties);
-      if(Array.isArray(s.required)) merged.required.push(...s.required);
-    });
-    merged.required = Array.from(new Set(merged.required));
-    return merged;
-  }
-  return schema;
-}
-
-function derefSchemaDeep(schema, depth=0){
-  if(!schema || depth>8) return schema;
-  const s = derefSchema(schema);
-  if(s.allOf) return { ...s, allOf: s.allOf.map(x=>derefSchemaDeep(x, depth+1)) };
-  if(s.oneOf) return { ...s, oneOf: s.oneOf.map(x=>derefSchemaDeep(x, depth+1)) };
-  if(s.anyOf) return { ...s, anyOf: s.anyOf.map(x=>derefSchemaDeep(x, depth+1)) };
-  return s;
-}
-
-function derefSchema(schema){
-  const spec = store.spec;
-  if(!schema || !spec) return schema;
-
-  if(schema.$ref){
-    const ref = String(schema.$ref);
-    const key = ref.split("/").pop();
-    const comps = (spec.components && spec.components.schemas) ? spec.components.schemas : {};
-    return comps[key] ? comps[key] : schema;
-  }
-  return schema;
-}
-
-/* =========================
-   FORM GENERATION + VALIDATION
-   ========================= */
-function buildFormFromSchema(schema, { mode="create" } = {}){
-  const wrap = document.createElement("div");
-  wrap.className = "grid";
-
-  if(!schema || schema.type!=="object"){
-    wrap.innerHTML = `
-      <div class="muted">
-        No usable request schema found in OpenAPI for this endpoint.
-        Use the JSON editor below and send raw payload.
-      </div>
-      <label>Raw JSON Body</label>
-      <textarea id="rawJson" placeholder='{"example":"value"}'></textarea>
-    `;
-    return {
-      el: wrap,
-      getValue: () => {
-        const t = wrap.querySelector("#rawJson").value.trim();
-        if(!t) return {};
-        return JSON.parse(t);
-      },
-      validate: () => ({ ok:true })
-    };
-  }
-
-  const props = schema.properties || {};
-  const required = new Set(schema.required || []);
-  const fields = [];
-
-  for(const [name, def0] of Object.entries(props)){
-    const def = def0 || {};
-    const f = document.createElement("div");
-    const id = `f_${name}_${Math.random().toString(16).slice(2)}`;
-
-    const labelTxt = `${name}${required.has(name) ? " *" : ""}`;
-    const type = (def.format==="email" || name.toLowerCase().includes("email")) ? "email"
-               : (def.format==="password" || name.toLowerCase().includes("password")) ? "password"
-               : (def.type==="integer" || def.type==="number") ? "number"
-               : "text";
-
-    let inputEl;
-
-    if(def.enum && Array.isArray(def.enum)){
-      inputEl = document.createElement("select");
-      inputEl.id = id;
-      inputEl.innerHTML = `<option value="">Select…</option>` + def.enum.map(v=>`<option value="${escapeHtml(String(v))}">${escapeHtml(String(v))}</option>`).join("");
-    }else if(def.type==="boolean"){
-      inputEl = document.createElement("select");
-      inputEl.id = id;
-      inputEl.innerHTML = `<option value="">Select…</option><option value="true">true</option><option value="false">false</option>`;
-    }else if(def.type==="object" || def.type==="array"){
-      inputEl = document.createElement("textarea");
-      inputEl.id = id;
-      inputEl.placeholder = def.type==="array" ? "[]" : "{}";
-      inputEl.className = "mono";
-    }else{
-      inputEl = document.createElement("input");
-      inputEl.id = id;
-      inputEl.type = type;
-      if(type==="password"){
-        inputEl.autocomplete = mode==="create" ? "new-password" : "current-password";
-      }
-    }
-
-    const desc = def.description || def.title || "";
-    f.innerHTML = `<label for="${id}">${escapeHtml(labelTxt)}</label>`;
-    f.appendChild(inputEl);
-    if(desc) {
-      const d = document.createElement("div");
-      d.className="hint";
-      d.textContent = desc;
-      f.appendChild(d);
-    }
-
-    fields.push({ name, def, required: required.has(name), inputEl });
-    wrap.appendChild(f);
-  }
-
-  const validate = () => {
-    const errors = [];
-    for(const fld of fields){
-      const n = fld.name;
-      const v = getFieldValue(fld);
-
-      if(fld.required && (v===undefined || v===null || v==="" )){
-        errors.push(`${n} is required`);
-        continue;
-      }
-      if(v===undefined || v===null || v==="") continue;
-
-      const lname = n.toLowerCase();
-      if(lname.includes("email") || fld.def.format==="email"){
-        if(!CONFIG.validation.email.pattern.test(String(v))) errors.push(`Invalid email: ${n}`);
-      }
-      if(lname.includes("password") || fld.def.format==="password"){
-        const s = String(v);
-        if(s.length < CONFIG.validation.password.min) errors.push(`Password too short (${CONFIG.validation.password.min}+): ${n}`);
-        if(s.length > CONFIG.validation.password.max) errors.push(`Password too long (${CONFIG.validation.password.max} max): ${n}`);
-      }
-      if(lname.includes("phone") || lname.includes("mobile")){
-        if(!CONFIG.validation.phone.pattern.test(String(v))) errors.push(`Invalid phone: ${n}`);
-      }
-    }
-    return errors.length ? { ok:false, errors } : { ok:true };
-  };
-
-  const getValue = () => {
-    const obj = {};
-    for(const fld of fields){
-      const v = getFieldValue(fld);
-      if(v===undefined) continue;
-      if(v==="" && !fld.required) continue;
-      obj[fld.name] = v;
-    }
-    return obj;
-  };
-
-  return { el: wrap, getValue, validate };
-}
-
-function getFieldValue(fld){
-  const node = fld.inputEl;
-  const def = fld.def || {};
-
-  if(node.tagName === "TEXTAREA"){
-    const t = node.value.trim();
-    if(!t) return fld.required ? "" : undefined;
-    try { return JSON.parse(t); } catch { return t; }
-  }
-  if(node.tagName === "SELECT"){
-    const v = node.value;
-    if(v==="") return fld.required ? "" : undefined;
-    if(def.type==="boolean") return v === "true";
-    return v;
-  }
-  const raw = node.value;
-  if(raw === "") return fld.required ? "" : undefined;
-  if(def.type==="integer") return parseInt(raw,10);
-  if(def.type==="number") return Number(raw);
-  return raw;
-}
-
-/* =========================
-   PAGES
-   ========================= */
-const pages = [
-  { key:"login", title:"Login", hint:"Authenticate and store JWT", render: renderLogin },
-  { key:"register", title:"Register", hint:"Create an account (if backend supports it)", render: renderRegister },
-  { key:"courses", title:"Courses", hint:"Add / list / update courses", render: ()=>renderCrud("Course", store.ops.createCourse, store.ops.listCourses, store.ops.updateCourse) },
-  { key:"canteen", title:"Canteen Items", hint:"Add / list / update canteen items", render: ()=>renderCrud("Canteen Item", store.ops.createCanteenItem, store.ops.listCanteenItems, store.ops.updateCanteenItem) },
-  { key:"students", title:"Students (Admin)", hint:"Add / list / update students", render: ()=>renderCrud("Student", store.ops.createStudent, store.ops.listStudents, store.ops.updateStudent, { adminOnly:true }) },
-  { key:"teachers", title:"Teachers (Admin)", hint:"Add / list / update teachers", render: ()=>renderCrud("Teacher", store.ops.createTeacher, store.ops.listTeachers, store.ops.updateTeacher, { adminOnly:true }) },
-  { key:"debug", title:"Debug", hint:"See detected endpoints and call raw operations", render: renderDebug }
-];
-
-let currentPage = "login";
-
-function renderNav(){
-  const nav = el("nav");
-  nav.innerHTML = "";
-  pages.forEach(p=>{
-    const b = document.createElement("button");
-    b.className = "btn " + (p.key===currentPage ? "active" : "");
-    b.textContent = p.title;
-    b.onclick = ()=>goto(p.key);
-    nav.appendChild(b);
-  });
-}
-
-function goto(key){
-  currentPage = key;
-  renderNav();
-  const p = pages.find(x=>x.key===key);
-  el("pageTitle").textContent = p ? p.title : key;
-  el("pageHint").textContent = p ? p.hint : "";
-  const host = el("page");
-  host.innerHTML = "";
-  (p ? p.render : renderDebug)();
-}
-
-function setAuthUI(){
-  el("baseTxt").textContent = CONFIG.baseUrl;
-  el("swaggerUrl").textContent = CONFIG.swaggerUi;
-
-  const pill = el("authPill");
-  const btnLogout = el("btnLogout");
-
-  if(store.token){
-    pill.className = "pill ok";
-    pill.textContent = "Authenticated";
-    btnLogout.disabled = false;
+  if(!isAuthed){
+    tabs.push({id:"login", label:"Login"});
+    tabs.push({id:"register", label:"Register"});
   }else{
-    pill.className = "pill warn";
-    pill.textContent = "Not Authenticated";
-    btnLogout.disabled = true;
+    tabs.push({id:"admin", label:"Dashboard"});
   }
+
+  const wrap = $("#tabs");
+  wrap.innerHTML = "";
+  for(const t of tabs){
+    const b = document.createElement("div");
+    b.className = "tab" + (state.tab === t.id ? " active" : "");
+    b.textContent = t.label;
+    b.onclick = () => { state.tab = t.id; render(); };
+    wrap.appendChild(b);
+  }
+
+  // title
+  const titleMap = {login:"Login", register:"Register", admin:"Dashboard"};
+  $("#pageTitle").textContent = titleMap[state.tab] || "Smart Campus";
+
+  // badges
+  $("#authBadge").textContent = isAuthed ? "AUTH" : "GUEST";
+  $("#authBadge").className = "badge " + (isAuthed ? "ok" : "warn");
+  $("#btnLogout").style.display = isAuthed ? "inline-block" : "none";
+  $("#roleBadge").textContent = "ROLE: " + role;
+  $("#roleBadge").className = "badge " + (role === "ADMIN" ? "ok" : role === "-" ? "warn" : "badge");
+
+  // runtime info
+  $("#envTxt").textContent = "API: " + API.baseUrl;
+  $("#kvBase").textContent = API.baseUrl;
+  $("#kvToken").textContent = store.token ? (store.token.slice(0,18) + "…") : "-";
+  $("#kvUserId").textContent = store.user?.id ?? store.user?.userId ?? "-";
+  $("#kvEmail").textContent = store.user?.email ?? "-";
+  $("#kvRole").textContent = role ?? "-";
 }
 
-function renderLogin(){
-  const host = el("page");
-  const op = store.ops.login;
-  const schema = getRequestSchema(op);
-  const form = buildFormFromSchema(schema, { mode:"login" });
+function render(){
+  renderTabs();
 
-  const box = document.createElement("div");
-  box.className = "grid";
+  const page = $("#page");
+  page.innerHTML = "";
 
-  const info = document.createElement("div");
-  info.className = "muted";
-  info.innerHTML = `
-    Detected login endpoint: <span class="mono">${escapeHtml(opToText(op))}</span>
-    <div class="hint">If login mapping is wrong, open Debug and use raw call.</div>
+  if(state.tab === "login") page.appendChild(viewLogin());
+  else if(state.tab === "register") page.appendChild(viewRegister());
+  else page.appendChild(viewDashboard());
+}
+
+/* =========================
+   6) VIEWS
+   ========================= */
+function viewLogin(){
+  const root = document.createElement("div");
+  root.innerHTML = `
+    <div class="note" style="margin-bottom:12px">
+      Uses <code class="inline">${escapeHtml(API.endpoints.login.method)} ${escapeHtml(API.endpoints.login.path)}</code>
+      and sends JSON payload based on <code class="inline">payloadMaps.login</code>.
+    </div>
+
+    <div class="row">
+      <div>
+        <label>Email</label>
+        <input id="loginEmail" placeholder="name@example.com" autocomplete="email" />
+      </div>
+      <div>
+        <label>Password</label>
+        <input id="loginPassword" type="password" placeholder="••••••••" autocomplete="current-password" />
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn" id="btnLogin">${state.busy ? "Logging in..." : "Login"}</button>
+      <button class="btn ghost" id="btnGoRegister">Go to Register</button>
+    </div>
   `;
-  box.appendChild(info);
-  box.appendChild(form.el);
 
-  const actions = document.createElement("div");
-  actions.className = "split";
-  actions.innerHTML = `
-    <button class="btn primary" id="doLogin">Login</button>
-    <button class="btn" id="goRegister">Go to Register</button>
-  `;
-  box.appendChild(actions);
+  root.querySelector("#btnGoRegister").onclick = () => { state.tab = "register"; render(); };
+  root.querySelector("#btnLogin").onclick = async () => {
+    if(state.busy) return;
 
-  host.appendChild(box);
+    const email = root.querySelector("#loginEmail").value.trim();
+    const password = root.querySelector("#loginPassword").value;
 
-  host.querySelector("#goRegister").onclick = ()=>goto("register");
-  host.querySelector("#doLogin").onclick = async ()=>{
+    if(!isEmail(email)) return toast("warn","Invalid Email","Enter a valid email address.");
+    const pwErr = validatePassword(password);
+    if(pwErr) return toast("warn","Invalid Password", pwErr);
+
     setBusy(true);
     try{
-      if(!op) throw new Error("Login operation not found in spec.");
-      const v = form.validate();
-      if(!v.ok) throw new Error(v.errors.join("\n"));
+      const payload = API.payloadMaps.login({email, password});
+      const data = await apiCall("login", payload);
 
-      const payload = form.getValue();
-      const data = await apiFetch(op.path, { method: op.method, body: payload });
-
-      const token = (data && (data.token || data.accessToken || data.jwt || data.id_token))
-        ? (data.token || data.accessToken || data.jwt || data.id_token)
-        : (data && data.data && (data.data.token || data.data.accessToken || data.data.jwt)) || null;
-
-      if(!token) throw new Error("Login succeeded but token not found in response. Check response in Debug.");
+      // adapt token extraction patterns
+      const token = data?.token || data?.accessToken || data?.jwt || data?.data?.token;
+      if(!token) throw new Error("Login success but token not found in response. Update token extraction.");
 
       store.token = token;
-      localStorage.setItem("jp_token", store.token);
 
-      toast("ok","Login success","Token stored.");
-      setAuthUI();
-
-      if(store.ops.me){
-        try{
-          const me = await apiFetch(store.ops.me.path, { method: store.ops.me.method });
-          store.user = me;
-          localStorage.setItem("jp_user", JSON.stringify(me));
-        }catch{}
+      // adapt user extraction patterns
+      const user = data?.user || data?.data?.user || data?.profile || null;
+      if(user) store.user = user;
+      else{
+        // best effort decode jwt
+        const p = decodeJwt(token);
+        store.user = p ? { email: p.email || email, role: p.role || p.roles?.[0] || "-" } : { email };
       }
 
-      goto("courses");
+      toast("ok","Logged in","Token saved. Opening dashboard.");
+      state.tab = "admin";
     }catch(e){
-      toast("danger","Login failed", `${e.message}\n\n${e.data ? JSON.stringify(e.data,null,2) : ""}`.trim());
+      toast("danger","Login Failed", e.message || "Unknown error");
     }finally{
       setBusy(false);
     }
   };
+
+  return root;
 }
 
-function renderRegister(){
-  const host = el("page");
-  const op = store.ops.register;
-  const schema = getRequestSchema(op);
-  const form = buildFormFromSchema(schema, { mode:"register" });
-
-  const box = document.createElement("div");
-  box.className = "grid";
-
-  const info = document.createElement("div");
-  info.className = "muted";
-  info.innerHTML = `
-    Detected register endpoint: <span class="mono">${escapeHtml(opToText(op))}</span>
-    <div class="hint">Email/password validation enforced client-side.</div>
-  `;
-  box.appendChild(info);
-  box.appendChild(form.el);
-
-  const actions = document.createElement("div");
-  actions.className = "split";
-  actions.innerHTML = `
-    <button class="btn primary" id="doRegister">Register</button>
-    <button class="btn" id="goLogin">Go to Login</button>
-  `;
-  box.appendChild(actions);
-
-  host.appendChild(box);
-
-  host.querySelector("#goLogin").onclick = ()=>goto("login");
-  host.querySelector("#doRegister").onclick = async ()=>{
-    setBusy(true);
-    try{
-      if(!op) throw new Error("Register operation not found in spec.");
-      const v = form.validate();
-      if(!v.ok) throw new Error(v.errors.join("\n"));
-
-      const payload = form.getValue();
-      const data = await apiFetch(op.path, { method: op.method, body: payload });
-      toast("ok","Register success", JSON.stringify(data,null,2));
-      goto("login");
-    }catch(e){
-      toast("danger","Register failed", `${e.message}\n\n${e.data ? JSON.stringify(e.data,null,2) : ""}`.trim());
-    }finally{
-      setBusy(false);
-    }
-  };
-}
-
-function renderCrud(label, opCreate, opList, opUpdate, { adminOnly=false } = {}){
-  const host = el("page");
-  const box = document.createElement("div");
-  box.className = "grid";
-
-  const gate = document.createElement("div");
-  gate.className = "muted";
-  gate.innerHTML = `
-    <div><b>${escapeHtml(label)}</b></div>
-    <div class="hint">
-      Create: <span class="mono">${escapeHtml(opToText(opCreate))}</span><br/>
-      List: <span class="mono">${escapeHtml(opToText(opList))}</span><br/>
-      Update: <span class="mono">${escapeHtml(opToText(opUpdate))}</span>
+function viewRegister(){
+  const root = document.createElement("div");
+  root.innerHTML = `
+    <div class="note" style="margin-bottom:12px">
+      Uses <code class="inline">${escapeHtml(API.endpoints.register.method)} ${escapeHtml(API.endpoints.register.path)}</code>.
+      If backend assigns role automatically, set role to empty or remove it in <code class="inline">payloadMaps.register</code>.
     </div>
-  `;
-  box.appendChild(gate);
 
-  const authNote = document.createElement("div");
-  authNote.className = "muted";
-  authNote.innerHTML = adminOnly
-    ? `Admin-only screen. Backend enforces role; frontend blocks if not logged in.`
-    : `Token is required for protected endpoints.`;
-  box.appendChild(authNote);
-
-  const createCard = document.createElement("div");
-  createCard.className = "card";
-  createCard.innerHTML = `<div class="hd"><h3>Create ${escapeHtml(label)}</h3><span class="muted">POST</span></div><div class="bd" id="createBox"></div>`;
-  box.appendChild(createCard);
-
-  const listCard = document.createElement("div");
-  listCard.className = "card";
-  listCard.innerHTML = `<div class="hd"><h3>${escapeHtml(label)} List</h3><div class="right"><button class="btn" id="btnRefresh">Refresh</button></div></div><div class="bd" id="listBox"></div>`;
-  box.appendChild(listCard);
-
-  host.appendChild(box);
-
-  const createHost = createCard.querySelector("#createBox");
-  if(!opCreate){
-    createHost.innerHTML = `<div class="muted">Create endpoint not detected. Use Debug.</div>`;
-  }else{
-    const schema = getRequestSchema(opCreate);
-    const form = buildFormFromSchema(schema, { mode:"create" });
-    createHost.appendChild(form.el);
-
-    const btn = document.createElement("button");
-    btn.className = "btn primary";
-    btn.textContent = `Create ${label}`;
-    btn.onclick = async ()=>{
-      setBusy(true);
-      try{
-        if(!store.token) throw new Error("Not authenticated.");
-        const v = form.validate();
-        if(!v.ok) throw new Error(v.errors.join("\n"));
-
-        const payload = form.getValue();
-        let payload = form.getValue();
-
-// شيل أي قيم فاضية
-payload = Object.fromEntries(
-  Object.entries(payload).filter(([_,v]) => !(v===undefined || v===null || v===""))
-);
-
-// userId (رقم) → user:{id}
-if(payload.userId !== undefined && payload.user === undefined){
-  const uid = payload.userId;
-  delete payload.userId;
-  payload.user = { id: uid };
-}
-
-// شيل studentId لو موجود (الـ DB بيولّده)
-if(payload.studentId !== undefined){
-  delete payload.studentId;
-}
-
-        const data = await apiFetch(opCreate.path, { method: opCreate.method, body: payload });
-        toast("ok", `${label} created`, JSON.stringify(data,null,2));
-        await refreshList();
-      }catch(e){
-        toast("danger", `Create ${label} failed`, `${e.message}\n\n${e.data ? JSON.stringify(e.data,null,2) : ""}`.trim());
-      }finally{
-        setBusy(false);
-      }
-    };
-    createHost.appendChild(document.createElement("div")).style.height="8px";
-    createHost.appendChild(btn);
-  }
-
-  const listHost = listCard.querySelector("#listBox");
-  listCard.querySelector("#btnRefresh").onclick = refreshList;
-
-  async function refreshList(){
-    setBusy(true);
-    try{
-      if(!opList){
-        listHost.innerHTML = `<div class="muted">List endpoint not detected. Use Debug.</div>`;
-        return;
-      }
-      if(!store.token) throw new Error("Not authenticated.");
-
-      const data = await apiFetch(opList.path, { method: opList.method });
-      const rows = normalizeList(data);
-
-      listHost.innerHTML = "";
-      if(!rows.length){
-        listHost.innerHTML = `<div class="muted">No items returned.</div><div class="hint mono">${escapeHtml(JSON.stringify(data,null,2))}</div>`;
-        return;
-      }
-
-      const table = document.createElement("table");
-      const keys = collectKeys(rows, 8);
-
-      table.innerHTML = `
-        <thead>
-          <tr>
-            ${keys.map(k=>`<th>${escapeHtml(k)}</th>`).join("")}
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${rows.map((r,i)=>`
-            <tr>
-              ${keys.map(k=>`<td class="mono">${escapeHtml(toCell(r?.[k]))}</td>`).join("")}
-              <td>
-                <button class="btn" data-i="${i}" data-act="edit">Edit</button>
-              </td>
-            </tr>
-          `).join("")}
-        </tbody>
-      `;
-      listHost.appendChild(table);
-
-      table.querySelectorAll("button[data-act='edit']").forEach(b=>{
-        b.onclick = ()=>openEdit(rows[Number(b.dataset.i)]);
-      });
-
-    }catch(e){
-      listHost.innerHTML = `<div class="muted">Failed to load list.</div>`;
-      toast("danger", "List failed", `${e.message}\n\n${e.data ? JSON.stringify(e.data,null,2) : ""}`.trim());
-    }finally{
-      setBusy(false);
-    }
-  }
-
-  function normalizeList(data){
-    if(!data) return [];
-    if(Array.isArray(data)) return data;
-    if(Array.isArray(data.items)) return data.items;
-    if(Array.isArray(data.content)) return data.content;
-    if(Array.isArray(data.data)) return data.data;
-    for(const v of Object.values(data)){
-      if(Array.isArray(v)) return v;
-    }
-    return [];
-  }
-
-  function collectKeys(rows, limit){
-    const freq = new Map();
-    rows.forEach(r=>{
-      if(!r || typeof r !== "object") return;
-      Object.keys(r).forEach(k=> freq.set(k, (freq.get(k)||0)+1));
-    });
-    return [...freq.entries()].sort((a,b)=>b[1]-a[1]).slice(0,limit).map(x=>x[0]);
-  }
-
-  function toCell(v){
-    if(v===null || v===undefined) return "";
-    if(typeof v === "object") return JSON.stringify(v);
-    return String(v);
-  }
-
-  function pickId(obj){
-    if(!obj || typeof obj!=="object") return null;
-    return obj.id ?? obj._id ?? obj.userId ?? obj.studentId ?? obj.teacherId ?? obj.courseId ?? obj.itemId ?? null;
-  }
-
-  function openEdit(row){
-    if(!opUpdate){
-      toast("warn","Update not available","Update endpoint not detected. Use Debug.");
-      return;
-    }
-    const id = pickId(row);
-    if(id===null || id===undefined || id===""){
-      toast("warn","Cannot edit","No id field detected in list item.");
-      return;
-    }
-
-    const modal = document.createElement("div");
-    modal.style.position="fixed";
-    modal.style.inset="0";
-    modal.style.background="rgba(0,0,0,.55)";
-    modal.style.display="grid";
-    modal.style.placeItems="center";
-    modal.style.padding="18px";
-    modal.style.zIndex="999";
-
-    const panel = document.createElement("div");
-    panel.className="card";
-    panel.style.width="min(980px, 100%)";
-
-    const schema = getRequestSchema(opUpdate);
-    const form = buildFormFromSchema(schema, { mode:"update" });
-    prefill(form.el, row);
-
-    panel.innerHTML = `
-      <div class="hd">
-        <h3>Edit ${escapeHtml(label)} <span class="muted mono">id=${escapeHtml(String(id))}</span></h3>
-        <div class="right">
-          <button class="btn" id="close">Close</button>
-        </div>
-      </div>
-      <div class="bd" id="body"></div>
-    `;
-    panel.querySelector("#close").onclick = ()=>modal.remove();
-
-    const body = panel.querySelector("#body");
-    body.appendChild(form.el);
-
-    const btns = document.createElement("div");
-    btns.className="split";
-    btns.style.marginTop="10px";
-    btns.innerHTML = `
-      <button class="btn primary" id="save">Save</button>
-      <button class="btn" id="raw">Show Raw Row</button>
-    `;
-    body.appendChild(btns);
-
-    btns.querySelector("#raw").onclick = ()=>toast("warn","Raw row", JSON.stringify(row,null,2));
-
-    btns.querySelector("#save").onclick = async ()=>{
-      setBusy(true);
-      try{
-        if(!store.token) throw new Error("Not authenticated.");
-        const v = form.validate();
-        if(!v.ok) throw new Error(v.errors.join("\n"));
-
-        const payload = form.getValue();
-
-        let path = opUpdate.path;
-        const pathParams = extractPathParams(path);
-        if(pathParams.length){
-          const key = pathParams[0];
-          path = path.replace(`{${key}}`, encodeURIComponent(String(id)));
-        }
-
-        const data = await apiFetch(path, { method: opUpdate.method, body: payload });
-        toast("ok", `${label} updated`, JSON.stringify(data,null,2));
-        modal.remove();
-        await refreshList();
-      }catch(e){
-        toast("danger", `Update ${label} failed`, `${e.message}\n\n${e.data ? JSON.stringify(e.data,null,2) : ""}`.trim());
-      }finally{
-        setBusy(false);
-      }
-    };
-
-    modal.appendChild(panel);
-    document.body.appendChild(modal);
-  }
-
-  function prefill(root, obj){
-    root.querySelectorAll("input, select, textarea").forEach(inp=>{
-      const id = inp.id || "";
-      const m = id.match(/^f_(.+?)_/);
-      if(!m) return;
-      const key = m[1];
-      const val = obj?.[key];
-      if(val===undefined) return;
-
-      if(inp.tagName==="TEXTAREA"){
-        inp.value = (typeof val === "object") ? JSON.stringify(val,null,2) : String(val);
-        return;
-      }
-      if(inp.tagName==="SELECT"){
-        inp.value = String(val);
-        return;
-      }
-      inp.value = String(val);
-    });
-  }
-
-  function extractPathParams(path){
-    const out = [];
-    const re = /\{([^}]+)\}/g;
-    let m;
-    while((m=re.exec(path))) out.push(m[1]);
-    return out;
-  }
-
-  refreshList();
-}
-
-function renderDebug(){
-  const host = el("page");
-
-  const box = document.createElement("div");
-  box.className = "grid";
-
-  const ops = document.createElement("div");
-  ops.className = "card";
-  ops.innerHTML = `
-    <div class="hd"><h3>Detected Operations</h3><span class="muted">Best-effort mapping</span></div>
-    <div class="bd">
-      <table>
-        <thead><tr><th>Key</th><th>Endpoint</th></tr></thead>
-        <tbody>
-          ${Object.entries(store.ops).map(([k,v])=>`
-            <tr><td class="mono">${escapeHtml(k)}</td><td class="mono">${escapeHtml(opToText(v))}</td></tr>
-          `).join("")}
-        </tbody>
-      </table>
-      <div class="hint">If an operation is "-", mapping failed because OpenAPI is missing or paths are named differently.</div>
-    </div>
-  `;
-  box.appendChild(ops);
-
-  const raw = document.createElement("div");
-  raw.className = "card";
-  raw.innerHTML = `
-    <div class="hd"><h3>Raw Call</h3><span class="muted">Manual request to any path</span></div>
-    <div class="bd grid">
-      <div class="split">
-        <div>
-          <label>Method</label>
-          <select id="m">
-            <option>GET</option><option>POST</option><option>PUT</option><option>PATCH</option><option>DELETE</option>
-          </select>
-        </div>
-        <div>
-          <label>Path (starts with /)</label>
-          <input id="p" placeholder="/api/..." value="/" />
-        </div>
-      </div>
-      <div class="split">
-        <div>
-          <label>Query (JSON object)</label>
-          <textarea id="q" placeholder='{"page":0,"size":10}'></textarea>
-        </div>
-        <div>
-          <label>Body (JSON object)</label>
-          <textarea id="b" placeholder='{"key":"value"}'></textarea>
-        </div>
-      </div>
-      <button class="btn primary" id="send">Send</button>
+    <div class="row">
       <div>
-        <label>Response</label>
-        <textarea id="r" readonly></textarea>
+        <label>Full Name</label>
+        <input id="regName" placeholder="Full Name" autocomplete="name" />
+      </div>
+      <div>
+        <label>Role (if backend allows)</label>
+        <select id="regRole">
+          <option value="STUDENT">STUDENT</option>
+          <option value="TEACHER">TEACHER</option>
+          <option value="ADMIN">ADMIN</option>
+        </select>
       </div>
     </div>
+
+    <div class="row" style="margin-top:12px">
+      <div>
+        <label>Email</label>
+        <input id="regEmail" placeholder="name@example.com" autocomplete="email" />
+      </div>
+      <div>
+        <label>Password</label>
+        <input id="regPassword" type="password" placeholder="At least ${API.validation.passwordMin} chars" autocomplete="new-password" />
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn" id="btnRegister">${state.busy ? "Creating..." : "Register"}</button>
+      <button class="btn ghost" id="btnGoLogin">Go to Login</button>
+    </div>
   `;
-  box.appendChild(raw);
 
-  host.appendChild(box);
+  root.querySelector("#btnGoLogin").onclick = () => { state.tab="login"; render(); };
 
-  raw.querySelector("#send").onclick = async ()=>{
+  root.querySelector("#btnRegister").onclick = async () => {
+    if(state.busy) return;
+
+    const fullName = root.querySelector("#regName").value.trim();
+    const email = root.querySelector("#regEmail").value.trim();
+    const password = root.querySelector("#regPassword").value;
+    const role = root.querySelector("#regRole").value;
+
+    if(fullName.length < 2) return toast("warn","Invalid Name","Enter a valid full name.");
+    if(!isEmail(email)) return toast("warn","Invalid Email","Enter a valid email address.");
+    const pwErr = validatePassword(password);
+    if(pwErr) return toast("warn","Invalid Password", pwErr);
+
     setBusy(true);
     try{
-      const method = raw.querySelector("#m").value;
-      const path = raw.querySelector("#p").value.trim();
-      const qtxt = raw.querySelector("#q").value.trim();
-      const btxt = raw.querySelector("#b").value.trim();
+      const payload = API.payloadMaps.register({fullName, email, password, role});
+      const data = await apiCall("register", payload);
 
-      const query = qtxt ? JSON.parse(qtxt) : null;
-      const body = btxt ? JSON.parse(btxt) : null;
-
-      const data = await apiFetch(path, { method, query, body });
-      raw.querySelector("#r").value = JSON.stringify(data,null,2);
-      toast("ok","Request success", `${method} ${path}`);
+      toast("ok","Registered","Account created. Now login.");
+      state.tab = "login";
     }catch(e){
-      raw.querySelector("#r").value = `${e.message}\n\n${e.data ? JSON.stringify(e.data,null,2) : ""}`.trim();
-      toast("danger","Request failed", e.message);
+      toast("danger","Register Failed", e.message || "Unknown error");
     }finally{
       setBusy(false);
     }
   };
+
+  return root;
+}
+
+function viewDashboard(){
+  const role = currentRole();
+  const isAdmin = String(role).toUpperCase().includes("ADMIN");
+
+  const root = document.createElement("div");
+  root.innerHTML = `
+    <div class="note" style="margin-bottom:12px">
+      Dashboard calls:
+      <br/>• <code class="inline">${escapeHtml(API.endpoints.addCourse.method)} ${escapeHtml(API.endpoints.addCourse.path)}</code>
+      <br/>• <code class="inline">${escapeHtml(API.endpoints.addCanteen.method)} ${escapeHtml(API.endpoints.addCanteen.path)}</code>
+      <br/>• <code class="inline">${escapeHtml(API.endpoints.addStudent.method)} ${escapeHtml(API.endpoints.addStudent.path)}</code> (Admin)
+      <br/>• <code class="inline">${escapeHtml(API.endpoints.addTeacher.method)} ${escapeHtml(API.endpoints.addTeacher.path)}</code> (Admin)
+    </div>
+
+    <div class="card" style="margin-bottom:14px">
+      <div class="hd"><h2>Add Course</h2><span class="badge">COURSE</span></div>
+      <div class="bd">
+        <div class="row">
+          <div><label>Course Name</label><input id="cName" placeholder="e.g. Data Structures" /></div>
+          <div><label>Course Code</label><input id="cCode" placeholder="e.g. CS201" /></div>
+        </div>
+        <div class="row" style="margin-top:12px">
+          <div><label>Credits</label><input id="cCredits" type="number" min="0" step="1" placeholder="3" /></div>
+          <div><label>Teacher ID (optional)</label><input id="cTeacherId" type="number" min="1" step="1" placeholder="12" /></div>
+        </div>
+        <div class="actions">
+          <button class="btn" id="btnAddCourse">Add Course</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:14px">
+      <div class="hd"><h2>Add Canteen Item</h2><span class="badge">CANTEEN</span></div>
+      <div class="bd">
+        <div class="row">
+          <div><label>Item Name</label><input id="iName" placeholder="e.g. Sandwich" /></div>
+          <div><label>Category (optional)</label><input id="iCat" placeholder="e.g. Food" /></div>
+        </div>
+        <div class="row" style="margin-top:12px">
+          <div><label>Price</label><input id="iPrice" type="number" min="0" step="0.01" placeholder="25.00" /></div>
+          <div><label>Quantity</label><input id="iQty" type="number" min="0" step="1" placeholder="50" /></div>
+        </div>
+        <div class="actions">
+          <button class="btn" id="btnAddItem">Add Item</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:14px; ${isAdmin ? "" : "opacity:.55"}">
+      <div class="hd">
+        <h2>Add Student (Admin)</h2>
+        <span class="badge ${isAdmin ? "ok" : "warn"}">${isAdmin ? "ADMIN" : "LOCKED"}</span>
+      </div>
+      <div class="bd">
+        <div class="row">
+          <div><label>Full Name</label><input id="sName" placeholder="Student Name" ${isAdmin ? "" : "disabled"} /></div>
+          <div><label>Email</label><input id="sEmail" placeholder="student@example.com" ${isAdmin ? "" : "disabled"} /></div>
+        </div>
+        <div class="row" style="margin-top:12px">
+          <div><label>Password</label><input id="sPass" type="password" placeholder="••••••••" ${isAdmin ? "" : "disabled"} /></div>
+          <div><label>Level (optional)</label><input id="sLevel" type="number" min="1" step="1" placeholder="1" ${isAdmin ? "" : "disabled"} /></div>
+        </div>
+        <div class="row" style="margin-top:12px">
+          <div><label>Department (optional)</label><input id="sDept" placeholder="CS" ${isAdmin ? "" : "disabled"} /></div>
+          <div></div>
+        </div>
+        <div class="actions">
+          <button class="btn" id="btnAddStudent" ${isAdmin ? "" : "disabled"}>Add Student</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:6px; ${isAdmin ? "" : "opacity:.55"}">
+      <div class="hd">
+        <h2>Add Teacher (Admin)</h2>
+        <span class="badge ${isAdmin ? "ok" : "warn"}">${isAdmin ? "ADMIN" : "LOCKED"}</span>
+      </div>
+      <div class="bd">
+        <div class="row">
+          <div><label>Full Name</label><input id="tName" placeholder="Teacher Name" ${isAdmin ? "" : "disabled"} /></div>
+          <div><label>Email</label><input id="tEmail" placeholder="teacher@example.com" ${isAdmin ? "" : "disabled"} /></div>
+        </div>
+        <div class="row" style="margin-top:12px">
+          <div><label>Password</label><input id="tPass" type="password" placeholder="••••••••" ${isAdmin ? "" : "disabled"} /></div>
+          <div><label>Title (optional)</label><input id="tTitle" placeholder="Dr / Mr / Ms" ${isAdmin ? "" : "disabled"} /></div>
+        </div>
+        <div class="row" style="margin-top:12px">
+          <div><label>Department (optional)</label><input id="tDept" placeholder="CS" ${isAdmin ? "" : "disabled"} /></div>
+          <div></div>
+        </div>
+        <div class="actions">
+          <button class="btn" id="btnAddTeacher" ${isAdmin ? "" : "disabled"}>Add Teacher</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // handlers
+  root.querySelector("#btnAddCourse").onclick = async () => {
+    if(state.busy) return;
+    const v = {
+      courseName: root.querySelector("#cName").value.trim(),
+      courseCode: root.querySelector("#cCode").value.trim(),
+      credits: root.querySelector("#cCredits").value,
+      teacherId: root.querySelector("#cTeacherId").value
+    };
+    if(v.courseName.length < 2) return toast("warn","Invalid","Course name required.");
+    if(v.courseCode.length < 2) return toast("warn","Invalid","Course code required.");
+    if(String(v.credits||"").trim()==="") return toast("warn","Invalid","Credits required.");
+
+    setBusy(true);
+    try{
+      const payload = API.payloadMaps.addCourse(v);
+      await apiCall("addCourse", payload);
+      toast("ok","Course Added","Saved in backend.");
+      root.querySelector("#cName").value="";
+      root.querySelector("#cCode").value="";
+      root.querySelector("#cCredits").value="";
+      root.querySelector("#cTeacherId").value="";
+    }catch(e){
+      toast("danger","Add Course Failed", e.message || "Unknown error");
+    }finally{ setBusy(false); }
+  };
+
+  root.querySelector("#btnAddItem").onclick = async () => {
+    if(state.busy) return;
+    const v = {
+      itemName: root.querySelector("#iName").value.trim(),
+      category: root.querySelector("#iCat").value.trim(),
+      price: root.querySelector("#iPrice").value,
+      quantity: root.querySelector("#iQty").value
+    };
+    if(v.itemName.length < 2) return toast("warn","Invalid","Item name required.");
+    if(String(v.price||"").trim()==="") return toast("warn","Invalid","Price required.");
+    if(String(v.quantity||"").trim()==="") return toast("warn","Invalid","Quantity required.");
+
+    setBusy(true);
+    try{
+      const payload = API.payloadMaps.addCanteen(v);
+      await apiCall("addCanteen", payload);
+      toast("ok","Item Added","Saved in backend.");
+      root.querySelector("#iName").value="";
+      root.querySelector("#iCat").value="";
+      root.querySelector("#iPrice").value="";
+      root.querySelector("#iQty").value="";
+    }catch(e){
+      toast("danger","Add Item Failed", e.message || "Unknown error");
+    }finally{ setBusy(false); }
+  };
+
+  const btnAddStudent = root.querySelector("#btnAddStudent");
+  if(btnAddStudent){
+    btnAddStudent.onclick = async () => {
+      if(!isAdmin) return toast("warn","Forbidden","Admin only.");
+      if(state.busy) return;
+
+      const v = {
+        fullName: root.querySelector("#sName").value.trim(),
+        email: root.querySelector("#sEmail").value.trim(),
+        password: root.querySelector("#sPass").value,
+        level: root.querySelector("#sLevel").value,
+        department: root.querySelector("#sDept").value.trim(),
+      };
+      if(v.fullName.length < 2) return toast("warn","Invalid","Name required.");
+      if(!isEmail(v.email)) return toast("warn","Invalid","Valid email required.");
+      const pwErr = validatePassword(v.password);
+      if(pwErr) return toast("warn","Invalid Password", pwErr);
+
+      setBusy(true);
+      try{
+        const payload = API.payloadMaps.addStudent(v);
+        await apiCall("addStudent", payload);
+        toast("ok","Student Added","Saved in backend.");
+        root.querySelector("#sName").value="";
+        root.querySelector("#sEmail").value="";
+        root.querySelector("#sPass").value="";
+        root.querySelector("#sLevel").value="";
+        root.querySelector("#sDept").value="";
+      }catch(e){
+        toast("danger","Add Student Failed", e.message || "Unknown error");
+      }finally{ setBusy(false); }
+    };
+  }
+
+  const btnAddTeacher = root.querySelector("#btnAddTeacher");
+  if(btnAddTeacher){
+    btnAddTeacher.onclick = async () => {
+      if(!isAdmin) return toast("warn","Forbidden","Admin only.");
+      if(state.busy) return;
+
+      const v = {
+        fullName: root.querySelector("#tName").value.trim(),
+        email: root.querySelector("#tEmail").value.trim(),
+        password: root.querySelector("#tPass").value,
+        title: root.querySelector("#tTitle").value.trim(),
+        department: root.querySelector("#tDept").value.trim(),
+      };
+      if(v.fullName.length < 2) return toast("warn","Invalid","Name required.");
+      if(!isEmail(v.email)) return toast("warn","Invalid","Valid email required.");
+      const pwErr = validatePassword(v.password);
+      if(pwErr) return toast("warn","Invalid Password", pwErr);
+
+      setBusy(true);
+      try{
+        const payload = API.payloadMaps.addTeacher(v);
+        await apiCall("addTeacher", payload);
+        toast("ok","Teacher Added","Saved in backend.");
+        root.querySelector("#tName").value="";
+        root.querySelector("#tEmail").value="";
+        root.querySelector("#tPass").value="";
+        root.querySelector("#tTitle").value="";
+        root.querySelector("#tDept").value="";
+      }catch(e){
+        toast("danger","Add Teacher Failed", e.message || "Unknown error");
+      }finally{ setBusy(false); }
+    };
+  }
+
+  return root;
 }
 
 /* =========================
-   TOPBAR ACTIONS
+   7) TOPBAR ACTIONS
    ========================= */
-el("btnReloadSpec").onclick = async ()=>{
-  setBusy(true);
-  try{
-    await loadSpec();
-    toast("ok","Spec reloaded", store.specUrl || "not found");
-    goto(currentPage);
-  }catch(e){
-    toast("danger","Reload failed", e.message);
-  }finally{
-    setBusy(false);
-  }
-};
+$("#btnSwagger").onclick = () => window.open(API.swaggerUrl, "_blank", "noopener,noreferrer");
 
-el("btnLogout").onclick = ()=>{
+$("#btnLogout").onclick = () => {
   store.token = "";
   store.user = null;
-  localStorage.removeItem("jp_token");
-  localStorage.removeItem("jp_user");
-  setAuthUI();
-  toast("warn","Logged out","");
-  goto("login");
+  state.tab = "login";
+  toast("ok","Logged out","Local session cleared.");
+  render();
 };
 
-el("btnOpenSwagger").onclick = ()=> window.open(CONFIG.swaggerUi, "_blank");
-
-el("btnCopyToken").onclick = async ()=>{
+$("#btnWhoAmI").onclick = async () => {
+  if(!store.token) return toast("warn","Not Authenticated","Login first.");
+  setBusy(true);
   try{
-    await navigator.clipboard.writeText(store.token || "");
-    toast("ok","Copied","Token copied to clipboard.");
-  }catch{
-    toast("danger","Copy failed","Browser blocked clipboard.");
-  }
+    const data = await apiCall("whoami");
+    // store user if returned
+    if(data && typeof data === "object") store.user = data?.user || data;
+    toast("ok","WhoAmI","Fetched user info.");
+  }catch(e){
+    toast("danger","WhoAmI Failed", e.message || "Update whoami endpoint if not available.");
+  }finally{ setBusy(false); }
+};
+
+$("#btnTestAuth").onclick = async () => {
+  if(!store.token) return toast("warn","Not Authenticated","Login first.");
+  setBusy(true);
+  try{
+    // quick test: call addCourse with dummy? NO. safer: call whoami if exists.
+    const data = await apiCall("whoami");
+    toast("ok","Auth OK","Token accepted.");
+  }catch(e){
+    toast("danger","Auth Test Failed", e.message || "Token rejected or whoami endpoint not configured.");
+  }finally{ setBusy(false); }
 };
 
 /* =========================
-   BOOT
+   8) INIT
    ========================= */
-(async function init(){
-  setAuthUI();
-  renderNav();
-  setBusy(true);
-  try{
-    await loadSpec();
-  }finally{
-    setBusy(false);
-  }
-  goto(store.token ? "courses" : "login");
+(function init(){
+  // default tab based on token
+  state.tab = store.token ? "admin" : "login";
+  render();
 })();
 </script>
 </body>
 </html>
-
 
 
 
