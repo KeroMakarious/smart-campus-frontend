@@ -455,9 +455,10 @@ function buildFormFromSchema(schema, { mode="create" } = {}){
   const required = new Set(schema.required || []);
   const fields = [];
 
-  for(const [name, def] of Object.entries(props)){
-    // IMPORTANT: skip only generic "id" on CREATE (not studentId/userId)
-    if(mode === "create" && String(name).toLowerCase() === "id") continue;
+ for(const [name, def] of Object.entries(props)){
+  // اسقط id فقط لو مش مطلوب (مش required) عشان لو مطلوب لازم يدخل
+  if(mode === "create" && name.toLowerCase() === "id" && !required.has(name)) continue;
+
 
     const f = document.createElement("div");
     const id = `f_${name}_${Math.random().toString(16).slice(2)}`;
@@ -1220,3 +1221,4 @@ el("btnResolveUserId").onclick = resolveUserId;
 </script>
 </body>
 </html>
+
