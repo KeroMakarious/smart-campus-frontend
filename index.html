@@ -236,7 +236,7 @@ const API = {
   endpoints: {
     login:      { method:"POST", path:"/api/auth/login" },
     register:   { method:"POST", path:"/api/auth/register" },
-    whoami:     { method:"GET",  path:"/api/auth/me" },     // FIXED
+    whoami:     { method:"GET",  path:"/api/auth/login" },     // FIXED
     addCourse:  { method:"POST", path:"/api/courses" },
     addCanteen: { method:"POST", path:"/api/canteen/items" },
     addStudent: { method:"POST", path:"/api/students" },
@@ -910,6 +910,7 @@ $("#btnTestAuth").onclick = async () => {
 </script>
 </body>
 </html>
+
 
 
 
